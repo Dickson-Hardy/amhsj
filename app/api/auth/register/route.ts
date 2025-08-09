@@ -98,9 +98,13 @@ export async function POST(request: NextRequest) {
     // Handle role-specific registration
     await handleRoleSpecificRegistration(newUser.id, registrationData.role, registrationData)
 
-    // Send verification email
-    const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify?token=${verificationToken}&email=${registrationData.email}`
-    await sendEmailVerification(registrationData.email, registrationData.name, verificationUrl)
+    // Send verification email (best-effort)
+    const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify?token=${verificationToken}&email=${encodeURIComponent(registrationData.email)}`
+    try {
+      await sendEmailVerification(registrationData.email, registrationData.name, verificationUrl)
+    } catch (e) {
+      console.warn("Email verification send failed, continuing registration:", e)
+    }
 
     return NextResponse.json(
       { 
