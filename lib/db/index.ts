@@ -1,18 +1,21 @@
-import { drizzle } from "drizzle-orm/neon-http"
-import { neon, neonConfig } from "@neondatabase/serverless"
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
 import * as schema from "./schema"
 
-// fetchConnectionCache is now always true by default in newer SDKs; avoid setting to silence deprecation warnings
-// neonConfig.fetchConnectionCache = true
-
-// Create connection with pooling
-const sql = neon(process.env.DATABASE_URL!)
+// Create connection with pooling - postgres.js supports transactions
+const sql = postgres(process.env.DATABASE_URL!, {
+  max: 20, // Maximum number of connections
+  idle_timeout: 20, // Idle timeout in seconds
+  connect_timeout: 10, // Connect timeout in seconds
+  ssl: "require", // Require SSL for Neon
+})
 
 // Create Drizzle instance with schema
 export const db = drizzle(sql, { 
   schema,
   logger: process.env.NODE_ENV === "development",
 })
+
 // Expose raw SQL connection for direct queries
 export { sql }
 

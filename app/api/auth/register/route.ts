@@ -102,9 +102,52 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (existingUser.length > 0) {
+      // If account exists, decide whether to resend verification or return conflict
+      const userCols = await getExistingColumns('users')
+      const hasIsVerified = userCols.has('is_verified')
+      const hasEmailToken = userCols.has('email_verification_token')
+
+      let isVerifiedVal: boolean | undefined
+      let currentToken: string | null | undefined
+      if (hasIsVerified) {
+        const r1 = await sql`select is_verified from users where email = ${normalized.email} limit 1`
+        isVerifiedVal = (r1 as any[])?.[0]?.is_verified ?? undefined
+      }
+      if (hasEmailToken) {
+        const r2 = await sql`select email_verification_token from users where email = ${normalized.email} limit 1`
+        currentToken = (r2 as any[])?.[0]?.email_verification_token
+      }
+
+      // If unverified and we can manage tokens, resend verification email
+      if (hasEmailToken && (isVerifiedVal === false || isVerifiedVal === undefined || currentToken)) {
+        let tokenToUse: string | null | undefined = currentToken
+        const newToken = crypto.randomBytes(32).toString("hex")
+        try {
+          await sql`update users set email_verification_token = ${newToken} where email = ${normalized.email}`
+          tokenToUse = newToken
+        } catch (e) {
+          // If update fails, fallback to existing token if any
+          console.warn('Failed to set new verification token, falling back:', e)
+        }
+        if (tokenToUse) {
+          const baseUrl = process.env.NEXTAUTH_URL || `${request.nextUrl.origin}`
+          const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${tokenToUse}&email=${encodeURIComponent(normalized.email!)}`
+          try {
+            await sendEmailVerification(normalized.email!, normalized.name!, verificationUrl)
+          } catch (e) {
+            console.warn("Resend verification failed (existing account):", e)
+          }
+          return NextResponse.json(
+            { message: "Account already exists. Verification email resent if not verified." },
+            { status: 200 }
+          )
+        }
+      }
+
+      // Otherwise, return conflict to indicate existing account
       return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+        { error: "User already exists. Please sign in." },
+        { status: 409 }
       )
     }
 
@@ -119,49 +162,92 @@ export async function POST(request: NextRequest) {
 
     // Discover existing columns for compatibility with legacy schemas
     const userColumns = await getExistingColumns('users')
-    const insertCandidate = {
+    // Prepare basic user insert data - only include core fields that should exist in all schemas
+    const basicUserData = {
       email: normalized.email!,
-      password: hashedPassword,
       name: normalized.name!,
-      role: normalized.role!,
+      password: hashedPassword,
+      role,
       affiliation: normalized.affiliation,
       orcid: normalized.orcid,
-      researchInterests: normalized.researchInterests && normalized.researchInterests.length > 0 ? normalized.researchInterests : [],
-      expertise: normalized.expertise && normalized.expertise.length > 0 ? normalized.expertise : [],
-      specializations: normalized.specializations && normalized.specializations.length > 0 ? normalized.specializations : [],
-      languagesSpoken: normalized.languagesSpoken && normalized.languagesSpoken.length > 0 ? normalized.languagesSpoken : [],
-      isVerified: false,
-      emailVerificationToken: verificationToken,
-      profileCompleteness,
-      applicationStatus: normalized.role === "author" ? "approved" : "pending",
-      isActive: true,
+      email_verification_token: verificationToken,
+      is_active: true,
+      is_verified: false,
+      profile_completeness: calculateProfileCompleteness(normalized),
+      created_at: new Date(),
+      updated_at: new Date(),
     }
-    const userInsertValues = filterToExistingColumns(insertCandidate, userColumns)
-    const shouldSendVerification = 'email_verification_token' in userInsertValues
 
-    // Execute all DB writes in a transaction for consistency
-    let newUserArr
+    // Only include fields that exist in the actual database schema
+    const userInsertValues: any = filterToExistingColumns(basicUserData, userColumns)
+    
+    // Add JSONB fields if they exist in the schema
+    const expertise = toStringArray(normalized.expertise) || []
+    const specializations = toStringArray(normalized.specializations) || []  
+    const languagesSpoken = toStringArray(normalized.languagesSpoken) || []
+    const researchInterests = toStringArray(normalized.researchInterests) || []
+    
+    if (userColumns.has('expertise')) {
+      userInsertValues.expertise = expertise
+    }
+    if (userColumns.has('specializations')) {
+      userInsertValues.specializations = specializations
+    }
+    if (userColumns.has('languages_spoken')) {
+      userInsertValues.languages_spoken = languagesSpoken
+    }
+    if (userColumns.has('research_interests')) {
+      userInsertValues.research_interests = researchInterests
+    }
+    const shouldSendVerification = userColumns.has('email_verification_token') && verificationToken
+
+    // Execute all DB writes - try transaction first, fallback to sequential if not supported
+    let newUserArr: { id: string }[] = []
+    let useTransaction = true
+    
+    // Check if transactions are supported (neon-http doesn't support them)
     try {
-      newUserArr = await db.transaction(async (tx) => {
-        const inserted = await tx
-          .insert(users)
-          .values(userInsertValues as any)
-          .returning({ id: users.id })
-
-  const createdUser = inserted[0]
-        await handleRoleSpecificRegistrationTx(tx as any, createdUser.id, normalized.role!, normalized)
-        return inserted
+      // Test transaction support with a dummy operation
+      await db.transaction(async (tx) => {
+        // Just test if transaction API is available
+        return []
       })
-    } catch (txErr) {
-      // Fallback: sequential writes without a transaction (for drivers without tx support)
-      console.warn("Transaction not supported or failed; falling back to sequential writes:", txErr)
+    } catch (txErr: any) {
+      if (txErr?.message?.includes('No transactions support') || 
+          txErr?.message?.includes('transaction') ||
+          txErr?.code === 'TRANSACTION_NOT_SUPPORTED') {
+        useTransaction = false
+        console.log("Transactions not supported by driver, using sequential writes")
+      }
+    }
+
+    if (useTransaction) {
+      try {
+        newUserArr = await db.transaction(async (tx) => {
+          const inserted = await tx
+            .insert(users)
+            .values(userInsertValues as any)
+            .returning({ id: users.id })
+
+          const createdUser = inserted[0]
+          await handleRoleSpecificRegistrationTx(tx as any, createdUser.id, normalized.role!, normalized)
+          return inserted
+        })
+      } catch (txErr) {
+        console.warn("Transaction failed, falling back to sequential writes:", txErr)
+        useTransaction = false
+      }
+    }
+    
+    if (!useTransaction) {
+      // Fallback: sequential writes without a transaction
       const inserted = await db
         .insert(users)
         .values(userInsertValues as any)
-  .returning({ id: users.id })
+        .returning({ id: users.id })
 
       const createdUser = inserted[0]
-  await handleRoleSpecificRegistration(createdUser.id, normalized.role!, normalized)
+      await handleRoleSpecificRegistration(createdUser.id, normalized.role!, normalized)
       newUserArr = inserted
     }
 
