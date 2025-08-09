@@ -1,0 +1,69 @@
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { articles } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
+
+export async function GET() {
+  try {
+    const publishedArticles = await db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        publishedDate: articles.publishedDate,
+        updatedAt: articles.updatedAt,
+      })
+      .from(articles)
+      .where(eq(articles.status, "published"))
+
+    const baseUrl = process.env.NEXTAUTH_URL || "https://amhsj.org"
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/about</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/archive</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/editorial-board</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  ${publishedArticles
+    .map(
+      (article) => `
+  <url>
+    <loc>${baseUrl}/article/${article.id}</loc>
+    <lastmod>${(article.updatedAt || article.publishedDate || new Date()).toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+    )
+    .join("")}
+</urlset>`
+
+    return new NextResponse(sitemap, {
+      headers: {
+        "Content-Type": "application/xml",
+        "Cache-Control": "s-maxage=86400, stale-while-revalidate",
+      },
+    })
+  } catch (error) {
+    console.error("Sitemap generation error:", error)
+    return new NextResponse("Error generating sitemap", { status: 500 })
+  }
+}
