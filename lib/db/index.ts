@@ -2,8 +2,8 @@ import { drizzle } from "drizzle-orm/neon-http"
 import { neon, neonConfig } from "@neondatabase/serverless"
 import * as schema from "./schema"
 
-// Configure Neon for better performance
-neonConfig.fetchConnectionCache = true
+// fetchConnectionCache is now always true by default in newer SDKs; avoid setting to silence deprecation warnings
+// neonConfig.fetchConnectionCache = true
 
 // Create connection with pooling
 const sql = neon(process.env.DATABASE_URL!)

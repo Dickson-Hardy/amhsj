@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { db } from "@/lib/db"
+import { db, sql } from "@/lib/db"
 import { users, userApplications, userQualifications, userPublications, userReferences, reviewerProfiles, editorProfiles } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { sendEmailVerification } from "@/lib/email-hybrid"
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await db
-      .select()
+      .select({ id: users.id })
       .from(users)
       .where(eq(users.email, normalized.email))
       .limit(1)
@@ -117,33 +117,39 @@ export async function POST(request: NextRequest) {
     // Calculate profile completeness
     const profileCompleteness = calculateProfileCompleteness(normalized)
 
+    // Discover existing columns for compatibility with legacy schemas
+    const userColumns = await getExistingColumns('users')
+    const insertCandidate = {
+      email: normalized.email!,
+      password: hashedPassword,
+      name: normalized.name!,
+      role: normalized.role!,
+      affiliation: normalized.affiliation,
+      orcid: normalized.orcid,
+      researchInterests: normalized.researchInterests && normalized.researchInterests.length > 0 ? normalized.researchInterests : [],
+      expertise: normalized.expertise && normalized.expertise.length > 0 ? normalized.expertise : [],
+      specializations: normalized.specializations && normalized.specializations.length > 0 ? normalized.specializations : [],
+      languagesSpoken: normalized.languagesSpoken && normalized.languagesSpoken.length > 0 ? normalized.languagesSpoken : [],
+      isVerified: false,
+      emailVerificationToken: verificationToken,
+      profileCompleteness,
+      applicationStatus: normalized.role === "author" ? "approved" : "pending",
+      isActive: true,
+    }
+    const userInsertValues = filterToExistingColumns(insertCandidate, userColumns)
+    const shouldSendVerification = 'email_verification_token' in userInsertValues
+
     // Execute all DB writes in a transaction for consistency
     let newUserArr
     try {
       newUserArr = await db.transaction(async (tx) => {
         const inserted = await tx
           .insert(users)
-          .values({
-            email: normalized.email!,
-            password: hashedPassword,
-            name: normalized.name!,
-            role: normalized.role!,
-            affiliation: normalized.affiliation,
-            orcid: normalized.orcid,
-            researchInterests: normalized.researchInterests && normalized.researchInterests.length > 0 ? normalized.researchInterests : [],
-            expertise: normalized.expertise && normalized.expertise.length > 0 ? normalized.expertise : [],
-            specializations: normalized.specializations && normalized.specializations.length > 0 ? normalized.specializations : [],
-            languagesSpoken: normalized.languagesSpoken && normalized.languagesSpoken.length > 0 ? normalized.languagesSpoken : [],
-            isVerified: false,
-            emailVerificationToken: verificationToken,
-            profileCompleteness,
-            applicationStatus: normalized.role === "author" ? "approved" : "pending",
-            isActive: true,
-          })
-          .returning()
+          .values(userInsertValues as any)
+          .returning({ id: users.id })
 
   const createdUser = inserted[0]
-  await handleRoleSpecificRegistrationTx(tx as any, createdUser.id, normalized.role!, normalized)
+        await handleRoleSpecificRegistrationTx(tx as any, createdUser.id, normalized.role!, normalized)
         return inserted
       })
     } catch (txErr) {
@@ -151,24 +157,8 @@ export async function POST(request: NextRequest) {
       console.warn("Transaction not supported or failed; falling back to sequential writes:", txErr)
       const inserted = await db
         .insert(users)
-        .values({
-          email: normalized.email!,
-          password: hashedPassword,
-          name: normalized.name!,
-          role: normalized.role!,
-          affiliation: normalized.affiliation,
-          orcid: normalized.orcid,
-          researchInterests: normalized.researchInterests && normalized.researchInterests.length > 0 ? normalized.researchInterests : [],
-          expertise: normalized.expertise && normalized.expertise.length > 0 ? normalized.expertise : [],
-          specializations: normalized.specializations && normalized.specializations.length > 0 ? normalized.specializations : [],
-          languagesSpoken: normalized.languagesSpoken && normalized.languagesSpoken.length > 0 ? normalized.languagesSpoken : [],
-          isVerified: false,
-          emailVerificationToken: verificationToken,
-          profileCompleteness,
-          applicationStatus: normalized.role === "author" ? "approved" : "pending",
-          isActive: true,
-        })
-        .returning()
+        .values(userInsertValues as any)
+  .returning({ id: users.id })
 
       const createdUser = inserted[0]
   await handleRoleSpecificRegistration(createdUser.id, normalized.role!, normalized)
@@ -180,10 +170,14 @@ export async function POST(request: NextRequest) {
     // Send verification email (best-effort)
     const baseUrl = process.env.NEXTAUTH_URL || `${request.nextUrl.origin}`
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalized.email!)}`
-    try {
-      await sendEmailVerification(normalized.email!, normalized.name!, verificationUrl)
-    } catch (e) {
-      console.warn("Email verification send failed, continuing registration:", e)
+    if (shouldSendVerification) {
+      try {
+        await sendEmailVerification(normalized.email!, normalized.name!, verificationUrl)
+      } catch (e) {
+        console.warn("Email verification send failed, continuing registration:", e)
+      }
+    } else {
+      console.warn("Skipping verification email: email_verification_token column not present in users table")
     }
 
     return NextResponse.json(
@@ -215,123 +209,163 @@ async function handleRoleSpecificRegistration(
   registrationData: RegistrationData
 ) {
   if (role === "reviewer") {
+    const hasReviewerProfiles = await hasTable('reviewer_profiles')
+    const hasUserApplications = await hasTable('user_applications')
+    const hasUserQualifications = await hasTable('user_qualifications')
+    const hasUserPublications = await hasTable('user_publications')
+    const hasUserReferences = await hasTable('user_references')
+
     // Create reviewer profile
-    await db.insert(reviewerProfiles).values({
-      userId,
-      maxReviewsPerMonth: registrationData.maxReviewsPerMonth || 3,
-      availabilityStatus: registrationData.availabilityStatus || "available",
-    })
+    if (hasReviewerProfiles) {
+      const cols = await getExistingColumns('reviewer_profiles')
+      const values = filterToExistingColumns({
+        userId,
+        maxReviewsPerMonth: registrationData.maxReviewsPerMonth || 3,
+        availabilityStatus: registrationData.availabilityStatus || "available",
+      }, cols)
+      await db.insert(reviewerProfiles).values(values as any)
+    }
 
     // Create application record
-    await db.insert(userApplications).values({
-      userId,
-      requestedRole: "reviewer",
-      currentRole: "author",
-      applicationData: registrationData,
-      status: "pending",
-    })
+    if (hasUserApplications) {
+      const cols = await getExistingColumns('user_applications')
+      const values = filterToExistingColumns({
+        userId,
+        requestedRole: "reviewer",
+        currentRole: "author",
+        applicationData: buildApplicationData(registrationData),
+        status: "pending",
+      }, cols)
+      await db.insert(userApplications).values(values as any)
+    }
 
     // Add qualifications
-    if (registrationData.qualifications?.length) {
+    if (hasUserQualifications && registrationData.qualifications?.length) {
       for (const qual of registrationData.qualifications) {
-        await db.insert(userQualifications).values({
+        const cols = await getExistingColumns('user_qualifications')
+        const values = filterToExistingColumns({
           userId,
           type: "degree",
           title: qual.degree,
           institution: qual.institution,
           endDate: new Date(qual.year, 0, 1),
           description: qual.field,
-        })
+        }, cols)
+        await db.insert(userQualifications).values(values as any)
       }
     }
 
     // Add publications
-    if (registrationData.publications?.length) {
+    if (hasUserPublications && registrationData.publications?.length) {
       for (const pub of registrationData.publications) {
-        await db.insert(userPublications).values({
+        const cols = await getExistingColumns('user_publications')
+        const values = filterToExistingColumns({
           userId,
           title: pub.title,
           journal: pub.journal,
           year: pub.year,
           doi: pub.doi,
           authorRole: pub.role,
-        })
+        }, cols)
+        await db.insert(userPublications).values(values as any)
       }
     }
 
     // Add references
-    if (registrationData.references?.length) {
+    if (hasUserReferences && registrationData.references?.length) {
       for (const ref of registrationData.references) {
-        await db.insert(userReferences).values({
+        const cols = await getExistingColumns('user_references')
+        const values = filterToExistingColumns({
           userId,
           referenceName: ref.name,
           referenceEmail: ref.email,
           referenceAffiliation: ref.affiliation,
           relationship: ref.relationship,
-        })
+        }, cols)
+        await db.insert(userReferences).values(values as any)
       }
     }
   }
 
   if (role === "editor") {
+    const hasEditorProfiles = await hasTable('editor_profiles')
+    const hasUserApplications = await hasTable('user_applications')
+    const hasUserQualifications = await hasTable('user_qualifications')
+    const hasUserPublications = await hasTable('user_publications')
+    const hasUserReferences = await hasTable('user_references')
+
     // Create editor profile
-    await db.insert(editorProfiles).values({
-      userId,
-      editorType: "associate", // Default type
-      assignedSections: registrationData.specializations || [],
-      editorialExperience: registrationData.editorialExperience 
-        ? JSON.stringify(registrationData.editorialExperience)
-        : null,
-      maxWorkload: 10, // Default workload
-    })
+    if (hasEditorProfiles) {
+      const cols = await getExistingColumns('editor_profiles')
+      const values = filterToExistingColumns({
+        userId,
+        editorType: "associate", // Default type
+        assignedSections: registrationData.specializations || [],
+        editorialExperience: registrationData.editorialExperience 
+          ? JSON.stringify(registrationData.editorialExperience)
+          : null,
+        maxWorkload: 10, // Default workload
+      }, cols)
+      await db.insert(editorProfiles).values(values as any)
+    }
 
     // Create application record
-    await db.insert(userApplications).values({
-      userId,
-      requestedRole: "editor",
-      currentRole: "author",
-      applicationData: registrationData,
-      status: "pending",
-    })
+    if (hasUserApplications) {
+      const cols = await getExistingColumns('user_applications')
+      const values = filterToExistingColumns({
+        userId,
+        requestedRole: "editor",
+        currentRole: "author",
+        applicationData: buildApplicationData(registrationData),
+        status: "pending",
+      }, cols)
+      await db.insert(userApplications).values(values as any)
+    }
 
     // Add qualifications
-    if (registrationData.qualifications?.length) {
+    if (hasUserQualifications && registrationData.qualifications?.length) {
       for (const qual of registrationData.qualifications) {
-        await db.insert(userQualifications).values({
+        const cols = await getExistingColumns('user_qualifications')
+        const values = filterToExistingColumns({
           userId,
           type: "degree",
           title: qual.degree,
           institution: qual.institution,
           endDate: new Date(qual.year, 0, 1),
           description: qual.field,
-        })
+        }, cols)
+        await db.insert(userQualifications).values(values as any)
       }
     }
 
     // Add publications
-    if (registrationData.publications?.length) {
+    if (hasUserPublications && registrationData.publications?.length) {
       for (const pub of registrationData.publications) {
-        await db.insert(userPublications).values({
+        const cols = await getExistingColumns('user_publications')
+        const values = filterToExistingColumns({
           userId,
           title: pub.title,
           journal: pub.journal,
           year: pub.year,
           doi: pub.doi,
           authorRole: pub.role,
-        })
+        }, cols)
+        await db.insert(userPublications).values(values as any)
       }
     }
 
     // Add references
-    if (registrationData.references?.length) {
+    if (hasUserReferences && registrationData.references?.length) {
       for (const ref of registrationData.references) {
-        await db.insert(userReferences).values({
+        const cols = await getExistingColumns('user_references')
+        const values = filterToExistingColumns({
           userId,
           referenceName: ref.name,
           referenceEmail: ref.email,
           referenceAffiliation: ref.affiliation,
           relationship: ref.relationship,
-        })
+        }, cols)
+        await db.insert(userReferences).values(values as any)
       }
     }
   }
@@ -345,113 +379,153 @@ async function handleRoleSpecificRegistrationTx(
   registrationData: RegistrationData
 ) {
   if (role === "reviewer") {
-    await tx.insert(reviewerProfiles).values({
-      userId,
-      maxReviewsPerMonth: registrationData.maxReviewsPerMonth || 3,
-      availabilityStatus: registrationData.availabilityStatus || "available",
-    })
+    const hasReviewerProfiles = await hasTable('reviewer_profiles')
+    const hasUserApplications = await hasTable('user_applications')
+    const hasUserQualifications = await hasTable('user_qualifications')
+    const hasUserPublications = await hasTable('user_publications')
+    const hasUserReferences = await hasTable('user_references')
 
-    await tx.insert(userApplications).values({
-      userId,
-      requestedRole: "reviewer",
-      currentRole: "author",
-      applicationData: buildApplicationData(registrationData),
-      status: "pending",
-    })
+    if (hasReviewerProfiles) {
+      const cols = await getExistingColumns('reviewer_profiles')
+      const values = filterToExistingColumns({
+        userId,
+        maxReviewsPerMonth: registrationData.maxReviewsPerMonth || 3,
+        availabilityStatus: registrationData.availabilityStatus || "available",
+      }, cols)
+      await tx.insert(reviewerProfiles).values(values as any)
+    }
 
-    if (registrationData.qualifications?.length) {
+    if (hasUserApplications) {
+      const cols = await getExistingColumns('user_applications')
+      const values = filterToExistingColumns({
+        userId,
+        requestedRole: "reviewer",
+        currentRole: "author",
+        applicationData: buildApplicationData(registrationData),
+        status: "pending",
+      }, cols)
+      await tx.insert(userApplications).values(values as any)
+    }
+
+    if (hasUserQualifications && registrationData.qualifications?.length) {
       for (const qual of registrationData.qualifications) {
-        await tx.insert(userQualifications).values({
+        const cols = await getExistingColumns('user_qualifications')
+        const values = filterToExistingColumns({
           userId,
           type: "degree",
           title: qual.degree,
           institution: qual.institution,
           endDate: new Date(qual.year, 0, 1),
           description: qual.field,
-        })
+        }, cols)
+        await tx.insert(userQualifications).values(values as any)
       }
     }
 
-    if (registrationData.publications?.length) {
+    if (hasUserPublications && registrationData.publications?.length) {
       for (const pub of registrationData.publications) {
-        await tx.insert(userPublications).values({
+        const cols = await getExistingColumns('user_publications')
+        const values = filterToExistingColumns({
           userId,
           title: pub.title,
           journal: pub.journal,
           year: pub.year,
           doi: pub.doi,
           authorRole: pub.role,
-        })
+        }, cols)
+        await tx.insert(userPublications).values(values as any)
       }
     }
 
-    if (registrationData.references?.length) {
+    if (hasUserReferences && registrationData.references?.length) {
       for (const ref of registrationData.references) {
-        await tx.insert(userReferences).values({
+        const cols = await getExistingColumns('user_references')
+        const values = filterToExistingColumns({
           userId,
           referenceName: ref.name,
           referenceEmail: ref.email,
           referenceAffiliation: ref.affiliation,
           relationship: ref.relationship,
-        })
+        }, cols)
+        await tx.insert(userReferences).values(values as any)
       }
     }
   }
 
   if (role === "editor") {
-    await tx.insert(editorProfiles).values({
-      userId,
-      editorType: "associate",
-      assignedSections: registrationData.specializations || [],
-      editorialExperience: registrationData.editorialExperience 
-        ? JSON.stringify(registrationData.editorialExperience)
-        : null,
-      maxWorkload: 10,
-    })
+    const hasEditorProfiles = await hasTable('editor_profiles')
+    const hasUserApplications = await hasTable('user_applications')
+    const hasUserQualifications = await hasTable('user_qualifications')
+    const hasUserPublications = await hasTable('user_publications')
+    const hasUserReferences = await hasTable('user_references')
 
-    await tx.insert(userApplications).values({
-      userId,
-      requestedRole: "editor",
-      currentRole: "author",
-      applicationData: buildApplicationData(registrationData),
-      status: "pending",
-    })
+    if (hasEditorProfiles) {
+      const cols = await getExistingColumns('editor_profiles')
+      const values = filterToExistingColumns({
+        userId,
+        editorType: "associate",
+        assignedSections: registrationData.specializations || [],
+        editorialExperience: registrationData.editorialExperience 
+          ? JSON.stringify(registrationData.editorialExperience)
+          : null,
+        maxWorkload: 10,
+      }, cols)
+      await tx.insert(editorProfiles).values(values as any)
+    }
 
-    if (registrationData.qualifications?.length) {
+    if (hasUserApplications) {
+      const cols = await getExistingColumns('user_applications')
+      const values = filterToExistingColumns({
+        userId,
+        requestedRole: "editor",
+        currentRole: "author",
+        applicationData: buildApplicationData(registrationData),
+        status: "pending",
+      }, cols)
+      await tx.insert(userApplications).values(values as any)
+    }
+
+    if (hasUserQualifications && registrationData.qualifications?.length) {
       for (const qual of registrationData.qualifications) {
-        await tx.insert(userQualifications).values({
+        const cols = await getExistingColumns('user_qualifications')
+        const values = filterToExistingColumns({
           userId,
           type: "degree",
           title: qual.degree,
           institution: qual.institution,
           endDate: new Date(qual.year, 0, 1),
           description: qual.field,
-        })
+        }, cols)
+        await tx.insert(userQualifications).values(values as any)
       }
     }
 
-    if (registrationData.publications?.length) {
+    if (hasUserPublications && registrationData.publications?.length) {
       for (const pub of registrationData.publications) {
-        await tx.insert(userPublications).values({
+        const cols = await getExistingColumns('user_publications')
+        const values = filterToExistingColumns({
           userId,
           title: pub.title,
           journal: pub.journal,
           year: pub.year,
           doi: pub.doi,
           authorRole: pub.role,
-        })
+        }, cols)
+        await tx.insert(userPublications).values(values as any)
       }
     }
 
-    if (registrationData.references?.length) {
+    if (hasUserReferences && registrationData.references?.length) {
       for (const ref of registrationData.references) {
-        await tx.insert(userReferences).values({
+        const cols = await getExistingColumns('user_references')
+        const values = filterToExistingColumns({
           userId,
           referenceName: ref.name,
           referenceEmail: ref.email,
           referenceAffiliation: ref.affiliation,
           relationship: ref.relationship,
-        })
+        }, cols)
+        await tx.insert(userReferences).values(values as any)
       }
     }
   }
@@ -511,4 +585,30 @@ function getRegistrationMessage(role: string): string {
     default:
       return "User created successfully. Please check your email for verification."
   }
+}
+
+// Helpers for legacy schema compatibility
+async function getExistingColumns(tableName: string): Promise<Set<string>> {
+  const rows = await sql`select column_name from information_schema.columns where table_schema = 'public' and table_name = ${tableName}`
+  const set = new Set<string>()
+  for (const r of rows as any[]) set.add(r.column_name)
+  return set
+}
+
+async function hasTable(tableName: string): Promise<boolean> {
+  const rows = await sql`select 1 from information_schema.tables where table_schema = 'public' and table_name = ${tableName} limit 1`
+  return (rows as any[]).length > 0
+}
+
+function filterToExistingColumns<T extends Record<string, any>>(obj: T, columns: Set<string>): Partial<T> {
+  const out: Partial<T> = {}
+  for (const [key, val] of Object.entries(obj)) {
+    // Convert camelCase TS keys to snake_case DB columns where needed
+    const snake = key.replace(/[A-Z]/g, m => `_${m.toLowerCase()}`)
+    if (columns.has(snake) || columns.has(key)) {
+      // If the DB column exists with snake_case, map to that key; otherwise keep original
+      ;(out as any)[columns.has(snake) ? snake : key] = val
+    }
+  }
+  return out
 }
