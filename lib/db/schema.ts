@@ -182,8 +182,12 @@ export const pageViews = pgTable("page_views", {
   userAgent: text("user_agent"),
   referrer: text("referrer"),
   sessionId: text("session_id"),
-  timeOnPage: integer("time_on_page"), // in seconds
-  timestamp: timestamp("timestamp").defaultNow(),
+  viewDuration: integer("view_duration"), // in seconds
+  isBot: boolean("is_bot").default(false),
+  pageType: text("page_type").default("abstract"),
+  country: text("country"),
+  city: text("city"),
+  createdAt: timestamp("created_at").defaultNow(),
 })
 
 export const submissions = pgTable("submissions", {
@@ -274,6 +278,24 @@ export const issues = pgTable("issues", {
   status: text("status").notNull().default("draft"), // draft, published, archived
   specialIssue: boolean("special_issue").default(false),
   guestEditors: jsonb("guest_editors").$type<string[]>(),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Email logs table for tracking all email communications
+export const emailLogs = pgTable("email_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  submissionId: uuid("submission_id").references(() => submissions.id),
+  reviewId: uuid("review_id").references(() => reviews.id),
+  toEmail: text("to_email").notNull(),
+  fromEmail: text("from_email").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  emailType: text("email_type").notNull(), // invitation, reminder, notification, etc.
+  status: text("status").notNull().default("sent"), // sent, failed, pending
+  sentAt: timestamp("sent_at").defaultNow(),
+  failureReason: text("failure_reason"),
   metadata: jsonb("metadata").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

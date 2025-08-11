@@ -24,7 +24,7 @@ type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: ToastActionElement
+  action?: ToastActionElement | { label: string; onClick: () => void }
   variant?: "default" | "destructive" | "success" | "warning" | "info" | "loading"
   icon?: React.ReactNode
   duration?: number

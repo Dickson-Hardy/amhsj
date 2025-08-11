@@ -4,10 +4,10 @@ import { authOptions } from "@/lib/auth"
 import { Analytics } from "@/lib/analytics"
 import { logError } from "@/lib/logger"
 
-export async function GET(request: Request, context: { params: { id: string } }) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   try {
-    const { params } = context;
     // Next.js 15+ requires awaiting params if it's a promise
+    const params = await Promise.resolve(context.params);
     const id = params.id;
     const session = await getServerSession(authOptions)
     if (!session?.user || (session.user.id !== id && session.user.role !== "admin")) {

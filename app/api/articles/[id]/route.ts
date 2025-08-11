@@ -7,9 +7,9 @@ import { eq, sql } from "drizzle-orm"
 import { CacheManager } from "@/lib/cache"
 import { logError } from "@/lib/logger"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: articleId } = await params
   try {
-    const articleId = params.id
 
     // Try to get from cache first
     const cached = await CacheManager.getCachedArticle(articleId)
@@ -62,19 +62,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({ success: true, article })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/articles/${params.id}` })
+    logError(error as Error, { endpoint: `/api/articles/${articleId}` })
     return NextResponse.json({ success: false, error: "Failed to fetch article" }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: articleId } = await params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const articleId = params.id
     const body = await request.json()
 
     // Check if user owns the article or is admin/editor
@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({ success: true, article: updatedArticle })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/articles/${params.id} PUT` })
+    logError(error as Error, { endpoint: `/api/articles/${articleId} PUT` })
     return NextResponse.json({ success: false, error: "Failed to update article" }, { status: 500 })
   }
 }

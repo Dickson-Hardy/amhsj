@@ -118,3 +118,6 @@ export const submissionRateLimit = new RateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
   maxRequests: 3,
 })
+
+// Export a default rate limiter for general use
+export const rateLimit = apiRateLimit

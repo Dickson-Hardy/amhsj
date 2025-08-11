@@ -45,7 +45,10 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(conversations.id, conversationId),
-          sql`participants @> '[{"id": "${session.user.id}"}]'::jsonb`
+          sql`EXISTS (
+            SELECT 1 FROM jsonb_array_elements(${conversations.participants}) AS participant
+            WHERE participant->>'id' = ${session.user.id}
+          )`
         )
       )
       .limit(1)
@@ -66,7 +69,7 @@ export async function GET(request: Request) {
       content: msg.content,
       attachments: msg.attachments || [],
       isRead: msg.isRead,
-      timestamp: msg.createdAt.toISOString(),
+      timestamp: msg.createdAt?.toISOString() || new Date().toISOString(),
     }))
 
     return NextResponse.json({
@@ -99,7 +102,10 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(conversations.id, conversationId),
-          sql`participants @> '[{"id": "${session.user.id}"}]'::jsonb`
+          sql`EXISTS (
+            SELECT 1 FROM jsonb_array_elements(${conversations.participants}) AS participant
+            WHERE participant->>'id' = ${session.user.id}
+          )`
         )
       )
       .limit(1)

@@ -9,8 +9,9 @@ import { v4 as uuidv4 } from "uuid"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: manuscriptId } = await params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !["editor", "admin"].includes(session.user.role || "")) {
@@ -18,7 +19,6 @@ export async function POST(
     }
 
     const { reviewerId } = await request.json()
-    const manuscriptId = params.id
 
     // Create a new review assignment
     await db.insert(reviews).values({
@@ -51,7 +51,7 @@ export async function POST(
       message: "Reviewer assigned successfully",
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/manuscripts/${params.id}/assign-reviewer` })
+    logError(error as Error, { endpoint: `/api/manuscripts/${manuscriptId}/assign-reviewer` })
     return NextResponse.json({ success: false, error: "Failed to assign reviewer" }, { status: 500 })
   }
 }

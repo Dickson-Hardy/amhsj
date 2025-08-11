@@ -144,14 +144,14 @@ async function getUserAnalytics(userId: string) {
     // Get monthly view trends for last 6 months
     const trendsResult = await sql`
       SELECT 
-        DATE_TRUNC('month', timestamp) as month,
+        DATE_TRUNC('month', created_at) as month,
         COUNT(*) as views
       FROM page_views 
       WHERE article_id IN (
         SELECT id FROM articles WHERE author_id = ${userId}
       )
-      AND timestamp >= CURRENT_DATE - INTERVAL '6 months'
-      GROUP BY DATE_TRUNC('month', timestamp)
+      AND created_at >= CURRENT_DATE - INTERVAL '6 months'
+      GROUP BY DATE_TRUNC('month', created_at)
       ORDER BY month
     `
     const monthlyViews = trendsResult.rows.map(row => parseInt(row.views as string))
@@ -161,7 +161,7 @@ async function getUserAnalytics(userId: string) {
       SELECT 
         COUNT(*) as reviews_completed,
         AVG(rating) as avg_rating,
-        AVG(EXTRACT(EPOCH FROM (submitted_at - assigned_at))/86400) as avg_review_time_days
+        AVG(EXTRACT(EPOCH FROM (submitted_at - created_at))/86400) as avg_review_time_days
       FROM reviews 
       WHERE reviewer_id = ${userId} AND status = 'completed'
     `
@@ -236,7 +236,7 @@ export async function trackPageView(articleId: string, userId: string | null) {
     userId: userId || null,
     ipAddress: extractClientIp(headersObj),
     userAgent: headersObj.get("user-agent"),
-    timestamp: new Date(),
+    createdAt: new Date(),
     sessionId: getSessionId({ headers: headersObj }),
   });
 }

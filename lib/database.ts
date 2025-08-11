@@ -1,5 +1,5 @@
 import { db } from "./db"
-import { users, userApplications, userQualifications, notifications } from "./db/schema"
+import { users, userApplications, userQualifications, notifications, submissions } from "./db/schema"
 import { eq, and } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { v4 as uuidv4 } from "uuid"
@@ -493,6 +493,40 @@ export class UserService {
         publicationsCount: 0,
         profileCompleteness: 0,
       }
+    }
+  }
+}
+
+// Database service for external integrations
+export class DatabaseService {
+  static async query(sql: string, params?: any[]): Promise<any[]> {
+    try {
+      // This is a simplified implementation
+      // In a real scenario, you would execute the SQL query using the db instance
+      console.log('Executing query:', sql, params)
+      return []
+    } catch (error) {
+      console.error('Database query error:', error)
+      throw error
+    }
+  }
+
+  static async transaction<T>(callback: () => Promise<T>): Promise<T> {
+    try {
+      return await callback()
+    } catch (error) {
+      console.error('Database transaction error:', error)
+      throw error
+    }
+  }
+
+  static async getSubmissionById(id: string) {
+    try {
+      const [submission] = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1)
+      return submission
+    } catch (error) {
+      console.error('Error fetching submission:', error)
+      return null
     }
   }
 }

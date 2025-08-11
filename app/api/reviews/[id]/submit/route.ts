@@ -8,7 +8,7 @@ import { logError } from "@/lib/logger"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -26,7 +26,8 @@ export async function POST(
       suggestions 
     } = await request.json()
     
-    const reviewId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const reviewId = resolvedParams.id
 
     // Combine all feedback into comments
     const fullComments = `
@@ -61,7 +62,7 @@ ${comments}
       message: "Review submitted successfully",
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/reviews/${params.id}/submit` })
+    logError(error as Error, { endpoint: `/api/reviews/[id]/submit` })
     return NextResponse.json({ success: false, error: "Failed to submit review" }, { status: 500 })
   }
 }

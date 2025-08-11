@@ -20,14 +20,15 @@ export const articleVersions = pgTable("article_versions", {
   createdAt: timestamp("created_at").defaultNow(),
 })
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> | { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const articleId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const articleId = resolvedParams.id
 
     const versions = await db
       .select()
@@ -40,12 +41,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       versions,
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/submissions/${params.id}/versions` })
+    logError(error as Error, { endpoint: `/api/submissions/[id]/versions/route`/versions` })
     return NextResponse.json({ success: false, error: "Failed to fetch versions" }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> | { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const { title, abstract, content, files, changeLog } = await request.json()
-    const articleId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const articleId = resolvedParams.id
 
     // Get the latest version number
     const [latestVersion] = await db
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       version: newVersion,
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/submissions/${params.id}/versions POST` })
+    logError(error as Error, { endpoint: `/api/submissions/[id]/versions/route`/versions POST` })
     return NextResponse.json({ success: false, error: "Failed to create version" }, { status: 500 })
   }
 }

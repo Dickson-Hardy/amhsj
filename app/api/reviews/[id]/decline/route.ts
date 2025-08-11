@@ -8,7 +8,7 @@ import { logError } from "@/lib/logger"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -17,7 +17,8 @@ export async function POST(
     }
 
     const { reason } = await request.json()
-    const reviewId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const reviewId = resolvedParams.id
 
     // Update review status to declined
     await db
@@ -33,7 +34,7 @@ export async function POST(
       message: "Review declined successfully",
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/reviews/${params.id}/decline` })
+    logError(error as Error, { endpoint: `/api/reviews/[id]/decline` })
     return NextResponse.json({ success: false, error: "Failed to decline review" }, { status: 500 })
   }
 }

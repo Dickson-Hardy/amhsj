@@ -27,7 +27,10 @@ export async function POST(request: Request) {
         .where(
           and(
             eq(conversations.id, conversationId),
-            sql`participants @> '[{"id": "${session.user.id}"}]'::jsonb`
+            sql`EXISTS (
+              SELECT 1 FROM jsonb_array_elements(${conversations.participants}) AS participant
+              WHERE participant->>'id' = ${session.user.id}
+            )`
           )
         )
         .limit(1)
@@ -47,9 +50,9 @@ export async function POST(request: Request) {
         .set({
           readBy: sql`
             CASE 
-              WHEN read_by IS NULL THEN '[${JSON.stringify(readEntry)}]'::jsonb
-              WHEN NOT (read_by @> '[{"userId": "${session.user.id}"}]'::jsonb) THEN read_by || '[${JSON.stringify(readEntry)}]'::jsonb
-              ELSE read_by
+              WHEN ${messages.readBy} IS NULL THEN ${JSON.stringify([readEntry])}::jsonb
+              WHEN NOT (${messages.readBy} @> ${JSON.stringify([{ userId: session.user.id }])}::jsonb) THEN ${messages.readBy} || ${JSON.stringify([readEntry])}::jsonb
+              ELSE ${messages.readBy}
             END
           `,
           updatedAt: new Date(),

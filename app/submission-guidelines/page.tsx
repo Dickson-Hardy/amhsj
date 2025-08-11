@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { FileText, Upload, CheckCircle, AlertCircle, Download, Clock, Users, Award, BookOpen, Mail } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SubmissionGuidelinesPage() {
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleStartSubmission = () => {
     router.push('/submit')
@@ -24,8 +26,10 @@ export default function SubmissionGuidelinesPage() {
     
     const link = downloadLinks[resourceName as keyof typeof downloadLinks]
     if (link) {
-      // For now, show an alert since we don't have actual files
-      alert(`Download would start for: ${resourceName}\nFile: ${link}`)
+      toast({
+        title: "Download Starting",
+        description: `Download would start for: ${resourceName}`,
+      })
       // In production: window.open(link, '_blank')
     }
   }

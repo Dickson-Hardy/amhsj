@@ -11,7 +11,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
     unoptimized: true,
   },
-  serverExternalPackages: ['winston'],
+  serverExternalPackages: ['winston', 'sharp'],
   async headers() {
     return [
       {

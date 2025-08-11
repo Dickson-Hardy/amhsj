@@ -9,8 +9,9 @@ import { v4 as uuidv4 } from "uuid"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: manuscriptId } = await params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !["editor", "admin"].includes(session.user.role || "")) {
@@ -18,7 +19,6 @@ export async function POST(
     }
 
     const { decision, comments } = await request.json()
-    const manuscriptId = params.id
 
     // Update article status based on decision
     let newStatus = "submitted"
@@ -65,7 +65,7 @@ export async function POST(
       message: "Editorial decision recorded successfully",
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/manuscripts/${params.id}/decision` })
+    logError(error as Error, { endpoint: `/api/manuscripts/${manuscriptId}/decision` })
     return NextResponse.json({ success: false, error: "Failed to record decision" }, { status: 500 })
   }
 }

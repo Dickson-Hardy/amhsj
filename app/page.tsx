@@ -41,6 +41,16 @@ export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [currentIssueArticles, setCurrentIssueArticles] = useState<Article[]>([])
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
+  const [featuredArticles, setFeaturedArticles] = useState<Article[]>([])
+  const [stats, setStats] = useState<Stats>({
+    totalPapers: 0,
+    connectedResearchers: 0,
+    impactFactor: "0.0",
+    smartSolutions: 0
+  })
+  const [currentIssue, setCurrentIssue] = useState<Article | null>(null)
+  const [latestNews, setLatestNews] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
 
   const handleSubmitManuscript = () => {
     if (session) {

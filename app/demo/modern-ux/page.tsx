@@ -126,7 +126,7 @@ const ModernUXDemo: React.FC = () => {
               <Button onClick={() => toast.success("Custom success message with action!", {
                 action: {
                   label: "View Details",
-                  onClick: () => alert("Action clicked!")
+                  onClick: () => toast.info("Action was clicked!")
                 }
               })} variant="secondary" className="w-full">
                 Toast with Action

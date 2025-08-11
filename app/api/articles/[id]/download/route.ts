@@ -4,9 +4,9 @@ import { articles } from "@/lib/db/schema"
 import { eq, sql } from "drizzle-orm"
 import { logError } from "@/lib/logger"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: articleId } = await params
   try {
-    const articleId = params.id
 
     // Increment download count
     await db
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       downloadUrl: `/files/articles/${articleId}/manuscript.pdf`, // Placeholder
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/articles/${params.id}/download` })
+    logError(error as Error, { endpoint: `/api/articles/${articleId}/download` })
     return NextResponse.json({ success: false, error: "Download failed" }, { status: 500 })
   }
 }

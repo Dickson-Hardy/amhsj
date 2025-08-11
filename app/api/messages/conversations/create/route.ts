@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { logError } from "@/lib/logger"
 import { db } from "@/lib/db"
 import { conversations, users } from "@/lib/db/schema"
-import { eq, and } from "drizzle-orm"
+import { eq, and, inArray } from "drizzle-orm"
 
 export async function POST(request: Request) {
   try {
@@ -31,12 +31,7 @@ export async function POST(request: Request) {
         role: users.role,
       })
       .from(users)
-      .where(
-        and(
-          eq(users.id, participantIds[0]),
-          participantIds.length > 1 ? eq(users.id, participantIds[1]) : undefined
-        )
-      )
+      .where(inArray(users.id, participantIds))
 
     if (participants.length !== participantIds.length) {
       return NextResponse.json({ error: "One or more participants not found" }, { status: 400 })

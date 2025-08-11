@@ -1,14 +1,21 @@
 "use client"
 
+import * as React from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
+  ToastAction,
   ToastClose,
   ToastDescription,
   ToastProvider,
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+
+type ActionObject = {
+  label: string
+  onClick: () => void
+}
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -24,7 +31,23 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {action && (
+              React.isValidElement(action) ? (
+                action
+              ) : (
+                typeof action === 'object' && 
+                action !== null && 
+                'label' in action && 
+                'onClick' in action ? (
+                  <ToastAction 
+                    altText={(action as ActionObject).label}
+                    onClick={(action as ActionObject).onClick}
+                  >
+                    {(action as ActionObject).label}
+                  </ToastAction>
+                ) : null
+              )
+            )}
             <ToastClose />
           </Toast>
         )

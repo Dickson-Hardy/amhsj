@@ -435,7 +435,8 @@ export function RealTimeCollaborationEditor({
 
       const data = await response.json()
       if (data.success) {
-        alert('Version created successfully!')
+        // Note: This component would need toast hook integration
+        console.log('Version created successfully!')
       }
     } catch (error) {
       logger.error('Failed to create version:', error)

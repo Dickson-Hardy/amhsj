@@ -8,15 +8,14 @@ import { logError } from "@/lib/logger"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: userId } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user || !["editor", "admin"].includes(session.user.role || "")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-
-    const userId = params.id
 
     // Get current month start date
     const currentMonth = new Date()

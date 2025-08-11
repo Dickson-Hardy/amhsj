@@ -8,7 +8,7 @@ import { logError } from "@/lib/logger"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const reviewId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const reviewId = resolvedParams.id
 
     // Update review status to in_progress
     await db
@@ -29,7 +30,7 @@ export async function POST(
       message: "Review accepted successfully",
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/reviews/${params.id}/accept` })
+    logError(error as Error, { endpoint: `/api/reviews/[id]/accept` })
     return NextResponse.json({ success: false, error: "Failed to accept review" }, { status: 500 })
   }
 }

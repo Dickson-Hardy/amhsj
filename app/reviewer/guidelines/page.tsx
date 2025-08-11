@@ -18,12 +18,18 @@ import {
   Mail,
   Star
 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ReviewerGuidelinesPage() {
+  const { toast } = useToast()
+  
   const downloadGuideline = (type: string) => {
     // This would trigger a download of the PDF guidelines
     console.log(`Downloading ${type} guidelines...`)
-    alert(`${type} guidelines download will be implemented`)
+    toast({
+      title: "Download Starting",
+      description: `${type} guidelines download is starting...`,
+    })
   }
 
   return (

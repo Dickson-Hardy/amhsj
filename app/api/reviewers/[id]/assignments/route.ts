@@ -8,7 +8,7 @@ import { logError } from "@/lib/logger"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const userId = resolvedParams.id
 
     // Verify user can access this data
     if (session.user.id !== userId && !["admin", "editor"].includes(session.user.role || "")) {
@@ -95,7 +96,7 @@ export async function GET(
       assignments,
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/reviewers/${params.id}/assignments` })
+    logError(error as Error, { endpoint: `/api/reviewers/[id]/assignments` })
     return NextResponse.json({ success: false, error: "Failed to fetch reviewer assignments" }, { status: 500 })
   }
 }

@@ -16,6 +16,7 @@
     "migrate": "node scripts/migrate-database.js",
     "seed": "node scripts/seed-database.js",
     "create-admin": "node scripts/create-admin.js",
+    "setup-roles": "node scripts/setup-essential-roles.cjs",
     "backup": "bash scripts/backup-database.sh"
   },
   "dependencies": {

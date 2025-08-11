@@ -8,7 +8,7 @@ import { logError } from "@/lib/logger"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = params.id
+    const { id: userId } = await params
 
     // Get manuscripts assigned to this editor
     const manuscriptResults = await db
@@ -111,7 +111,8 @@ export async function GET(
       manuscripts,
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/editors/${params.id}/manuscripts` })
+    const { id } = await params
+    logError(error as Error, { endpoint: `/api/editors/${id}/manuscripts` })
     return NextResponse.json({ success: false, error: "Failed to fetch editor manuscripts" }, { status: 500 })
   }
 }

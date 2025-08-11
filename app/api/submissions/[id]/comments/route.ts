@@ -19,14 +19,15 @@ export const comments = pgTable("comments", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> | { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const articleId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const articleId = resolvedParams.id
 
     // Check if user has access to this article's comments
     // Implementation would check if user is author, reviewer, or editor
@@ -49,12 +50,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       comments: articleComments,
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/submissions/${params.id}/comments` })
+    logError(error as Error, { endpoint: `/api/submissions/[id]/comments/route`/comments` })
     return NextResponse.json({ success: false, error: "Failed to fetch comments" }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> | { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -62,7 +63,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const { content, type, isPrivate, lineNumber } = await request.json()
-    const articleId = params.id
+    const resolvedParams = await Promise.resolve(params)
+    const articleId = resolvedParams.id
 
     const [newComment] = await db
       .insert(comments)
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       comment: newComment,
     })
   } catch (error) {
-    logError(error as Error, { endpoint: `/api/submissions/${params.id}/comments POST` })
+    logError(error as Error, { endpoint: `/api/submissions/[id]/comments/route`/comments POST` })
     return NextResponse.json({ success: false, error: "Failed to add comment" }, { status: 500 })
   }
 }

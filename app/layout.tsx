@@ -2,13 +2,10 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 import ModernErrorBoundary from "@/components/modern-error-boundary"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/toaster"
-import TawkToWidget from "@/components/tawk-to-widget"
-import FloatingSupportButton from "@/components/floating-support-button"
+import ConditionalLayout from "@/components/conditional-layout"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -85,12 +82,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ModernErrorBoundary>
           <Providers>
-            <Header />
-            <main>{children}</main>
-            <Footer />
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
             <Toaster />
-            <TawkToWidget />
-            <FloatingSupportButton />
           </Providers>
         </ModernErrorBoundary>
       </body>
