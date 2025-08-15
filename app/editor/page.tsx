@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ReviewerAssignmentPanel } from "@/components/editor/reviewer-assignment-panel"
 import {
   Clock,
   FileText,
@@ -33,6 +34,7 @@ import {
   Award,
   Target,
   Settings,
+  Zap,
 } from "lucide-react"
 
 interface Manuscript {
@@ -41,7 +43,7 @@ interface Manuscript {
   authors: string[]
   category: string
   submittedDate: string
-  status: "submitted" | "under_review" | "revision_requested" | "accepted" | "rejected" | "published"
+  status: "submitted" | "technical_check" | "under_review" | "revision_requested" | "accepted" | "rejected" | "published"
   priority: "low" | "medium" | "high" | "urgent"
   reviewers: { id: string; name: string; status: string }[]
   deadline: string
@@ -120,6 +122,8 @@ export default function EditorDashboard() {
     switch (status) {
       case "submitted":
         return "bg-blue-100 text-blue-800"
+      case "technical_check":
+        return "bg-purple-100 text-purple-800"
       case "under_review":
         return "bg-yellow-100 text-yellow-800"
       case "revision_requested":
@@ -129,7 +133,7 @@ export default function EditorDashboard() {
       case "rejected":
         return "bg-red-100 text-red-800"
       case "published":
-        return "bg-purple-100 text-purple-800"
+        return "bg-indigo-100 text-indigo-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -241,8 +245,9 @@ export default function EditorDashboard() {
 
         {/* Main Content */}
         <Tabs defaultValue="workflow" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="workflow">Editorial Workflow</TabsTrigger>
+            <TabsTrigger value="enhanced-assignments">Enhanced Assignments</TabsTrigger>
             <TabsTrigger value="assignments">Reviewer Assignment</TabsTrigger>
             <TabsTrigger value="decisions">Decision Making</TabsTrigger>
             <TabsTrigger value="schedule">Publication Schedule</TabsTrigger>
@@ -260,6 +265,7 @@ export default function EditorDashboard() {
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="submitted">Submitted</SelectItem>
+                    <SelectItem value="technical_check">Technical Check</SelectItem>
                     <SelectItem value="under_review">Under Review</SelectItem>
                     <SelectItem value="revision_requested">Revision Requested</SelectItem>
                   </SelectContent>
@@ -329,70 +335,31 @@ export default function EditorDashboard() {
                               Assign Reviewer
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Assign Reviewer</DialogTitle>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Zap className="h-5 w-5 text-blue-600" />
+                                Enhanced Reviewer Assignment
+                              </DialogTitle>
                               <DialogDescription>
-                                Select a suitable reviewer for "{manuscript.title}"
+                                Intelligent assignment combining author recommendations with system candidates for "{selectedManuscript?.title}"
                               </DialogDescription>
                             </DialogHeader>
-                            <div className="space-y-4">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Reviewer</TableHead>
-                                    <TableHead>Expertise</TableHead>
-                                    <TableHead>Load</TableHead>
-                                    <TableHead>Rating</TableHead>
-                                    <TableHead>Action</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {reviewers.slice(0, 5).map((reviewer) => (
-                                    <TableRow key={reviewer.id}>
-                                      <TableCell>
-                                        <div>
-                                          <div className="font-medium">{reviewer.name}</div>
-                                          <div className="text-sm text-gray-500">{reviewer.email}</div>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell>
-                                        <div className="flex flex-wrap gap-1">
-                                          {reviewer.expertise.slice(0, 2).map((skill, index) => (
-                                            <Badge key={index} variant="secondary" className="text-xs">
-                                              {skill}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      </TableCell>
-                                      <TableCell>
-                                        <Badge variant={reviewer.currentLoad > 3 ? "destructive" : "secondary"}>
-                                          {reviewer.currentLoad} reviews
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                        <div className="flex items-center">
-                                          <Award className="h-4 w-4 text-yellow-500 mr-1" />
-                                          {reviewer.averageRating.toFixed(1)}
-                                        </div>
-                                      </TableCell>
-                                      <TableCell>
-                                        <Button 
-                                          size="sm"
-                                          onClick={() => handleAssignReviewer(manuscript.id, reviewer.id)}
-                                          disabled={reviewer.currentLoad > 3}
-                                        >
-                                          Assign
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
+                            {selectedManuscript && (
+                              <ReviewerAssignmentPanel
+                                articleId={selectedManuscript.id}
+                                articleTitle={selectedManuscript.title}
+                                onAssignmentComplete={(result) => {
+                                  setAssignmentDialog(false)
+                                  setSelectedManuscript(null)
+                                  // Refresh data
+                                  window.location.reload()
+                                }}
+                              />
+                            )}
                           </DialogContent>
                         </Dialog>
-                        {manuscript.status === "under_review" && (
+                        {(manuscript.status === "technical_check" || manuscript.status === "under_review") && (
                           <Dialog open={decisionDialog} onOpenChange={setDecisionDialog}>
                             <DialogTrigger asChild>
                               <Button 
@@ -454,6 +421,143 @@ export default function EditorDashboard() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="enhanced-assignments" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                <Zap className="h-6 w-6 text-blue-600" />
+                Enhanced Reviewer Assignment
+              </h2>
+              <div className="text-sm text-muted-foreground">
+                Intelligent assignment combining author recommendations with system intelligence
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {manuscripts
+                .filter(m => ["submitted", "technical_check"].includes(m.status))
+                .map((manuscript) => (
+                <Card key={manuscript.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CardTitle className="text-lg">{manuscript.title}</CardTitle>
+                          <Badge className={getPriorityColor(manuscript.priority)}>
+                            {manuscript.priority.toUpperCase()}
+                          </Badge>
+                          <Badge className={getStatusColor(manuscript.status)}>
+                            {manuscript.status.replace("_", " ").toUpperCase()}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <Badge variant="secondary">{manuscript.category}</Badge>
+                          <div className="flex items-center">
+                            <CalendarIcon className="h-4 w-4 mr-1" />
+                            Submitted: {new Date(manuscript.submittedDate).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            {manuscript.reviewers.length} reviewers assigned
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
+                          Authors: {manuscript.authors.join(", ")}
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ReviewerAssignmentPanel
+                      articleId={manuscript.id}
+                      articleTitle={manuscript.title}
+                      onAssignmentComplete={(result) => {
+                        console.log('Assignment completed:', result)
+                        // Optionally refresh the data or show success message
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {manuscripts.filter(m => ["submitted", "technical_check"].includes(m.status)).length === 0 && (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                      No manuscripts ready for assignment
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Manuscripts in submitted or technical check status will appear here for enhanced reviewer assignment.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="assignments" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Traditional Reviewer Assignment</h2>
+              <div className="text-sm text-muted-foreground">
+                Standard reviewer assignment workflow
+              </div>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <UserPlus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Traditional Assignment Available
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Use the "Enhanced Assignments" tab for the new intelligent reviewer assignment system.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="decisions" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Editorial Decisions</h2>
+              <div className="text-sm text-muted-foreground">
+                Make final decisions on manuscripts
+              </div>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Decision Making Interface
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Decision making interface will be implemented here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="schedule" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Publication Schedule</h2>
+              <div className="text-sm text-muted-foreground">
+                Manage publication timeline
+              </div>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Publication Schedule
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Publication scheduling interface will be implemented here.
+                </p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">

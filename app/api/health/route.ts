@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { sql } from "@vercel/postgres"
-import { redis } from "@/lib/redis"
+import { initRedis } from "@/lib/redis"
 import { CacheManager } from "@/lib/cache"
 
 export async function GET() {
@@ -89,6 +89,7 @@ export async function GET() {
 
   // Check Redis Connection (non-blocking)
   try {
+    const redis = await initRedis()
     if (redis) {
       const pingResult = await Promise.race([
         redis.ping(),

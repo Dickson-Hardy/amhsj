@@ -20,20 +20,43 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 })
 
+export const authorSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Valid email is required"),
+  orcid: z.string().optional(),
+  institution: z.string().min(1, "Institution is required"),
+  department: z.string().min(1, "Department is required"),
+  country: z.string().min(1, "Country is required"),
+  affiliation: z.string().min(1, "Full affiliation is required"),
+  isCorrespondingAuthor: z.boolean().default(false),
+})
+
+export const recommendedReviewerSchema = z.object({
+  name: z.string().min(1, "Reviewer name is required"),
+  email: z.string().email("Valid email is required"),
+  affiliation: z.string().min(1, "Affiliation is required"),
+  expertise: z.string().optional(),
+})
+
 export const articleSubmissionSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters"),
   abstract: z.string().min(100, "Abstract must be at least 100 characters"),
-  keywords: z.array(z.string()).min(3, "At least 3 keywords required"),
+  keywords: z.array(z.string()).min(4, "At least 4 keywords required"),
   category: z.string().min(1, "Category is required"),
-  coAuthors: z
-    .array(
-      z.object({
-        name: z.string().min(2),
-        email: z.string().email(),
-        affiliation: z.string(),
-      }),
-    )
-    .optional(),
+  authors: z
+    .array(authorSchema)
+    .min(1, "At least one author is required")
+    .refine(
+      (authors) => authors.filter(author => author.isCorrespondingAuthor).length === 1,
+      {
+        message: "Exactly one corresponding author must be designated",
+      }
+    ),
+  recommendedReviewers: z
+    .array(recommendedReviewerSchema)
+    .min(3, "At least 3 recommended reviewers are required")
+    .max(10, "Maximum 10 recommended reviewers allowed"),
   funding: z.string().optional(),
   conflicts: z.string().optional(),
 })

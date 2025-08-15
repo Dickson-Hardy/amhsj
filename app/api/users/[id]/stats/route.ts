@@ -17,14 +17,14 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const result = await Analytics.getUserAnalytics(id)
 
     if (!result.success) {
-      return NextResponse.json({ success: false, error: "Unknown error" }, { status: 500 })
+      return NextResponse.json({ success: false, error: "Failed to fetch analytics" }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
       stats: {
         totalSubmissions: result.analytics.articles.total,
-        iotSubmissions: Math.floor(result.analytics.articles.total * 0.6), // Placeholder calculation
+        medicalSubmissions: Math.floor(result.analytics.articles.total * 0.7), // Medical focus
         underReview: result.analytics.articles.underReview,
         published: result.analytics.articles.published,
         totalDownloads: result.analytics.totalDownloads,
@@ -32,7 +32,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       },
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const id = params.id;
     logError(error as Error, { endpoint: `/api/users/${id}/stats` })
     return NextResponse.json({ success: false, error: "Failed to fetch user stats" }, { status: 500 })

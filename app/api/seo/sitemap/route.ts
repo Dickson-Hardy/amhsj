@@ -5,15 +5,28 @@ import { eq } from "drizzle-orm"
 
 export async function GET() {
   try {
-    const publishedArticles = await db
-      .select({
-        id: articles.id,
-        title: articles.title,
-        publishedDate: articles.publishedDate,
-        updatedAt: articles.updatedAt,
-      })
-      .from(articles)
-      .where(eq(articles.status, "published"))
+    let publishedArticles: any[] = []
+    
+    // Try to fetch articles with a timeout and fallback
+    try {
+      publishedArticles = await Promise.race([
+        db
+          .select({
+            id: articles.id,
+            title: articles.title,
+            publishedDate: articles.publishedDate,
+            updatedAt: articles.updatedAt,
+          })
+          .from(articles)
+          .where(eq(articles.status, "published")),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database query timeout')), 5000)
+        )
+      ]) as any[]
+    } catch (dbError) {
+      console.warn("Database connection failed for sitemap generation, generating basic sitemap:", dbError)
+      // Continue with empty articles array to generate basic sitemap
+    }
 
     const baseUrl = process.env.NEXTAUTH_URL || "https://amhsj.org"
 

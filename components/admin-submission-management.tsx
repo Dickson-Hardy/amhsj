@@ -282,6 +282,7 @@ export default function AdminSubmissionManagement({ submissionId, onClose }: Adm
   const getStatusColor = (status: string) => {
     switch (status) {
       case "submitted": return "bg-blue-100 text-blue-800"
+      case "technical_check": return "bg-purple-100 text-purple-800"
       case "under_review": return "bg-yellow-100 text-yellow-800"
       case "revision_requested": return "bg-orange-100 text-orange-800"
       case "accepted": return "bg-green-100 text-green-800"
@@ -527,6 +528,7 @@ export default function AdminSubmissionManagement({ submissionId, onClose }: Adm
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="submitted">Submitted</SelectItem>
+                        <SelectItem value="technical_check">Technical Check</SelectItem>
                         <SelectItem value="under_review">Under Review</SelectItem>
                         <SelectItem value="revision_requested">Revision Requested</SelectItem>
                         <SelectItem value="accepted">Accepted</SelectItem>

@@ -44,12 +44,19 @@ const getStatusInfo = (status: string) => {
         color: "bg-blue-500",
         progress: 25
       }
+    case "technical_check":
+      return {
+        label: "Technical Check", 
+        description: "Your application is undergoing technical and administrative review",
+        color: "bg-purple-500",
+        progress: 35
+      }
     case "under_review":
       return {
         label: "Under Review", 
         description: "Our editorial committee is reviewing your application",
         color: "bg-yellow-500",
-        progress: 50
+        progress: 65
       }
     case "approved":
       return {
@@ -423,7 +430,7 @@ export default function ApplicationStatusPage() {
               </div>
             )}
 
-            {application.status === "under_review" && (
+            {(application.status === "technical_check" || application.status === "under_review") && (
               <div className="space-y-4">
                 <Alert>
                   <User className="h-4 w-4" />

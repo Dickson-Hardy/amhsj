@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import RouteGuard from "@/components/route-guard"
-import AdminLayout from "@/components/layouts/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -64,30 +63,30 @@ export default function ModernAdminDashboard() {
         if (data.success) {
           setStats(data.stats)
         } else {
-          // Fallback mock data for demo
+          // Keep default empty state
           setStats({
-            totalUsers: 1247,
-            totalArticles: 342,
-            pendingReviews: 23,
-            publishedThisMonth: 15,
-            systemHealth: 98,
-            activeReviewers: 156,
-            pendingApplications: 8,
-            monthlyGrowth: 12.5,
+            totalUsers: 0,
+            totalArticles: 0,
+            pendingReviews: 0,
+            publishedThisMonth: 0,
+            systemHealth: 0,
+            activeReviewers: 0,
+            pendingApplications: 0,
+            monthlyGrowth: 0,
           })
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
-        // Fallback mock data
+        // Keep default empty state on error
         setStats({
-          totalUsers: 1247,
-          totalArticles: 342,
-          pendingReviews: 23,
-          publishedThisMonth: 15,
-          systemHealth: 98,
-          activeReviewers: 156,
-          pendingApplications: 8,
-          monthlyGrowth: 12.5,
+          totalUsers: 0,
+          totalArticles: 0,
+          pendingReviews: 0,
+          publishedThisMonth: 0,
+          systemHealth: 0,
+          activeReviewers: 0,
+          pendingApplications: 0,
+          monthlyGrowth: 0,
         })
       } finally {
         setLoading(false)
@@ -99,7 +98,7 @@ export default function ModernAdminDashboard() {
 
   return (
     <RouteGuard allowedRoles={["admin"]}>
-      <AdminLayout>
+      <div>
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -579,7 +578,7 @@ export default function ModernAdminDashboard() {
             </div>
           </TabsContent>
         </Tabs>
-      </AdminLayout>
+      </div>
     </RouteGuard>
   )
 }

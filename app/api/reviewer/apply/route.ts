@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { userApplications } from "@/lib/db/schema"
 
 export async function POST(req: NextRequest) {
   try {
@@ -112,16 +115,23 @@ async function saveReviewerApplication(userEmail: string, formData: any) {
     //   }
     // })
     
-    // Mock implementation
-    const application = {
-      id: Date.now().toString(),
-      userId: userEmail,
-      ...formData,
+    // Save application to database
+    const [application] = await db.insert(userApplications).values({
+      userId: (session.user as any).id || userEmail,
+      requestedRole: 'reviewer',
+      currentRole: 'author',
       status: 'pending',
-      submittedDate: new Date().toISOString(),
+      applicationData: formData,
+      submittedAt: new Date()
+    }).returning()
+
+    return {
+      id: application.id,
+      userId: application.userId,
+      status: application.status,
+      submittedDate: application.submittedAt.toISOString(),
+      ...formData
     }
-    
-    return application
   } catch (error) {
     console.error('Error saving reviewer application:', error)
     throw new Error('Failed to save application to database')

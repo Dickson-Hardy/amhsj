@@ -23,7 +23,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         category: articles.category,
         status: articles.status,
         submittedDate: articles.submittedDate,
-        updatedAt: articles.updatedAt,
+        createdAt: articles.createdAt,
         reviewerCount: sql<number>`(
           SELECT COUNT(*) FROM ${reviews} 
           WHERE ${reviews.articleId} = ${articles.id}
@@ -38,9 +38,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       ...submission,
       reviewers: submission.reviewerCount || 0,
       comments: 0, // Placeholder - would need to implement comments system
-      lastUpdate: submission.updatedAt || submission.submittedDate,
-      isIoT:
-        submission.category.toLowerCase().includes("clinical") || submission.category.toLowerCase().includes("medical"),
+      lastUpdate: submission.createdAt || submission.submittedDate,
+      isMedical:
+        submission.category.toLowerCase().includes("clinical") || 
+        submission.category.toLowerCase().includes("medical") ||
+        submission.category.toLowerCase().includes("healthcare"),
     }))
 
     return NextResponse.json({
@@ -48,7 +50,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       submissions: formattedSubmissions,
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const id = params.id;
     logError(error as Error, { endpoint: `/api/users/${id}/submissions` })
     return NextResponse.json({ success: false, error: "Failed to fetch submissions" }, { status: 500 })

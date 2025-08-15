@@ -6,6 +6,7 @@ import ModernErrorBoundary from "@/components/modern-error-boundary"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/toaster"
 import ConditionalLayout from "@/components/conditional-layout"
+import RegisterServiceWorker from "@/app/register-sw"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -86,6 +87,7 @@ export default function RootLayout({
               {children}
             </ConditionalLayout>
             <Toaster />
+            <RegisterServiceWorker />
           </Providers>
         </ModernErrorBoundary>
       </body>

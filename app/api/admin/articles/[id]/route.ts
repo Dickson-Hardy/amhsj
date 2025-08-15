@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { articles, users } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 export async function DELETE(
   request: NextRequest,
@@ -50,26 +53,35 @@ export async function DELETE(
 
 async function getArticleById(articleId: string) {
   try {
-    // In a real implementation, fetch from your database:
-    // const article = await prisma.article.findUnique({
-    //   where: { id: articleId },
-    //   include: {
-    //     author: true,
-    //     reviews: true,
-    //     files: true
-    //   }
-    // })
-    
-    // Mock implementation
-    const mockArticle = {
-      id: articleId,
-      title: `Article ${articleId}`,
-      author: 'Dr. Sample Author',
-      status: 'published',
-      createdAt: new Date().toISOString()
-    }
-    
-    return mockArticle
+    // Fetch from database with author information
+    const [article] = await db.select({
+      id: articles.id,
+      title: articles.title,
+      abstract: articles.abstract,
+      content: articles.content,
+      keywords: articles.keywords,
+      category: articles.category,
+      status: articles.status,
+      doi: articles.doi,
+      volume: articles.volume,
+      issue: articles.issue,
+      pages: articles.pages,
+      publishedDate: articles.publishedDate,
+      submittedDate: articles.submittedDate,
+      views: articles.views,
+      downloads: articles.downloads,
+      createdAt: articles.createdAt,
+      updatedAt: articles.updatedAt,
+      // Author information
+      authorName: users.name,
+      authorEmail: users.email,
+      authorAffiliation: users.affiliation
+    })
+    .from(articles)
+    .leftJoin(users, eq(articles.authorId, users.id))
+    .where(eq(articles.id, articleId))
+
+    return article || null
   } catch (error) {
     console.error('Error fetching article:', error)
     return null
@@ -78,25 +90,17 @@ async function getArticleById(articleId: string) {
 
 async function deleteArticleById(articleId: string) {
   try {
-    // In a real implementation, delete from your database:
-    // 1. Delete related reviews
-    // await prisma.review.deleteMany({
-    //   where: { articleId: articleId }
-    // })
-    
-    // 2. Delete related files
-    // await prisma.articleFile.deleteMany({
-    //   where: { articleId: articleId }
-    // })
-    
-    // 3. Delete the article
-    // await prisma.article.delete({
-    //   where: { id: articleId }
-    // })
-    
+    // Delete from database (cascade deletes should handle related records)
+    const [deletedArticle] = await db.delete(articles)
+      .where(eq(articles.id, articleId))
+      .returning()
+
+    if (!deletedArticle) {
+      throw new Error('Article not found')
+    }
+
     console.log(`Article ${articleId} deleted from database`)
-    // Simulate database operation
-    await new Promise(resolve => setTimeout(resolve, 100))
+    return deletedArticle
   } catch (error) {
     console.error('Error deleting article from database:', error)
     throw new Error('Failed to delete article from database')

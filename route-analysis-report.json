@@ -1,0 +1,1020 @@
+{
+  "total": 101,
+  "withMockImplementations": 0,
+  "withoutDbIntegration": 34,
+  "incomplete": [
+    {
+      "path": "app\\api\\admin\\stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 37,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\upload-advertisement\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 143,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\ai\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 420,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\ai-assessment\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 137,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\analytics\\journal-stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 36,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\analytics\\user-stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 44,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\articles\\filters\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 40,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\articles\\[id]\\preview\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 44,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\articles\\[id]\\view\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 23,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\auth\\orcid\\callback\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 93,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\auth\\orcid\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 52,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\auth\\register\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 701,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\auth\\reset-password\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 88,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\auth\\verify-email\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 39,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\auth\\[...nextauth]\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": false,
+      "lineCount": 9,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\collaboration\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 619,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\email\\health\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 71,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\email\\test\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 104,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\errors\\report\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 52,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\health\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 127,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\integrations\\citations\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 187,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\integrations\\doi\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 137,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\integrations\\orcid\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 129,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\integrations\\plagiarism\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 120,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\maintenance\\subscribe\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 46,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\monitoring\\analytics\\events\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 82,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\monitoring\\analytics\\performance\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 85,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\notifications\\[id]\\read\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 51,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\orcid\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 320,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\placeholder\\[...params]\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": false,
+      "lineCount": 34,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\plagiarism\\check\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 183,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\search\\advanced\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 34,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\search\\suggestions\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 21,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\seo\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 227,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\seo\\sitemap\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 70,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": false,
+      "hasErrorHandling": true,
+      "lineCount": 44,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\upload\\advertisement\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 68,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\upload\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 86,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\users\\[id]\\stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 41,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\websocket\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 365,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\workflow\\assign-reviewers\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 36,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\workflow\\submit\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": false,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 34,
+      "issues": []
+    }
+  ],
+  "complete": [
+    {
+      "path": "app\\api\\admin\\advertisements\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 186,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\applications\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 251,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\articles\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 82,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\articles\\[id]\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 129,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\dashboard-stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 116,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\email-settings\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 195,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\reviewer-applications\\[id]\\approve\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 209,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\reviewer-applications\\[id]\\reject\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 177,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\reviewers\\available\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 187,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\seo\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 90,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\settings\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 141,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\submissions\\[id]\\email\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 188,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\submissions\\[id]\\reviewers\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 146,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\submissions\\[id]\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 231,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\submissions\\[id]\\status\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 93,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\admin\\users\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 47,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\analytics\\export\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 204,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\archive\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 562,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\articles\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 108,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\articles\\[id]\\download\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 60,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\articles\\[id]\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 109,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editor-in-chief\\appeals\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 141,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editor-in-chief\\editors\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 123,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editor-in-chief\\metrics\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 119,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editor-in-chief\\submissions\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 161,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editorial-board\\apply\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 259,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editors\\reviewers\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 111,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editors\\[id]\\manuscripts\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 119,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\editors\\[id]\\stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 66,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\external-integrations\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 634,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\integrations\\crossref\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 137,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\manuscripts\\[id]\\assign-reviewer\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 58,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\manuscripts\\[id]\\decision\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 72,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\messages\\conversations\\create\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 79,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\messages\\conversations\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 60,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\messages\\mark-read\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 72,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\messages\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 137,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\metrics\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 161,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\monitoring\\health\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 131,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\monitoring\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 780,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\news\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 165,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\notifications\\mark-all-read\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 43,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\notifications\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 60,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviewer\\apply\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 179,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviewers\\[id]\\assignments\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 103,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviewers\\[id]\\stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 64,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviews\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 81,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviews\\[id]\\accept\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 37,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviews\\[id]\\decline\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 41,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\reviews\\[id]\\submit\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 69,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\search\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 299,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\sections\\[section]\\stats\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 109,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\sections\\[section]\\submissions\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 120,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\submissions\\[id]\\comments\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 90,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\submissions\\[id]\\versions\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": false,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 93,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\user\\profile\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 83,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\users\\[id]\\activities\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 174,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\users\\[id]\\insights\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 104,
+      "issues": []
+    },
+    {
+      "path": "app\\api\\users\\[id]\\submissions\\route.ts",
+      "hasMockImplementation": false,
+      "hasDbImport": true,
+      "hasSchemaImport": true,
+      "hasAuthCheck": true,
+      "hasErrorHandling": true,
+      "lineCount": 59,
+      "issues": []
+    }
+  ],
+  "issues": []
+}

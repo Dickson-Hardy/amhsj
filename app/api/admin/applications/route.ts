@@ -12,7 +12,7 @@ import {
   editorProfiles
 } from "@/lib/db/schema"
 import { eq, and, desc } from "drizzle-orm"
-import { sendTemplateEmail } from "@/lib/email-hybrid"
+import { sendEmail } from "@/lib/email-hybrid"
 
 // GET - Fetch applications for admin/editor review
 export async function GET(request: NextRequest) {
@@ -30,9 +30,30 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10")
     const offset = (page - 1) * limit
 
-    let query = db
+    // Build query conditions
+    let whereConditions = eq(userApplications.status, status)
+    if (role) {
+      whereConditions = and(
+        eq(userApplications.status, status),
+        eq(userApplications.requestedRole, role)
+      )!
+    }
+
+    // Select only existing columns to avoid current_role issue
+    const applications = await db
       .select({
-        application: userApplications,
+        application: {
+          id: userApplications.id,
+          userId: userApplications.userId,
+          requestedRole: userApplications.requestedRole,
+          status: userApplications.status,
+          applicationData: userApplications.applicationData,
+          reviewNotes: userApplications.reviewNotes,
+          reviewedBy: userApplications.reviewedBy,
+          reviewedAt: userApplications.reviewedAt,
+          submittedAt: userApplications.submittedAt,
+          updatedAt: userApplications.updatedAt,
+        },
         user: {
           id: users.id,
           name: users.name,
@@ -45,19 +66,10 @@ export async function GET(request: NextRequest) {
       })
       .from(userApplications)
       .innerJoin(users, eq(userApplications.userId, users.id))
-      .where(eq(userApplications.status, status))
+      .where(whereConditions)
       .orderBy(desc(userApplications.submittedAt))
       .limit(limit)
       .offset(offset)
-
-    if (role) {
-      query = query.where(and(
-        eq(userApplications.status, status),
-        eq(userApplications.requestedRole, role)
-      ))
-    }
-
-    const applications = await query
 
     // Get additional data for each application
     const enrichedApplications = await Promise.all(
@@ -107,9 +119,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 })
     }
 
-    // Get the application
+    // Get the application - select only existing columns
     const [application] = await db
-      .select()
+      .select({
+        id: userApplications.id,
+        userId: userApplications.userId,
+        requestedRole: userApplications.requestedRole,
+        status: userApplications.status,
+        applicationData: userApplications.applicationData,
+        reviewNotes: userApplications.reviewNotes,
+        reviewedBy: userApplications.reviewedBy,
+        reviewedAt: userApplications.reviewedAt,
+        submittedAt: userApplications.submittedAt,
+        updatedAt: userApplications.updatedAt,
+      })
       .from(userApplications)
       .where(eq(userApplications.id, applicationId))
       .limit(1)
@@ -229,7 +252,11 @@ async function sendApplicationApprovalEmail(email: string, name: string, role: s
     </div>
   `
   
-  await sendEmail(email, subject, html)
+  await sendEmail({
+    to: email,
+    subject,
+    html
+  })
 }
 
 async function sendApplicationRejectionEmail(email: string, name: string, role: string, reason?: string) {
@@ -246,5 +273,9 @@ async function sendApplicationRejectionEmail(email: string, name: string, role: 
     </div>
   `
   
-  await sendEmail(email, subject, html)
+  await sendEmail({
+    to: email,
+    subject,
+    html
+  })
 }

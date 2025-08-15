@@ -146,8 +146,10 @@ async function sendEmail({ to, subject, content, from, replyTo }: {
   try {
     // If using Resend (as configured in your env)
     if (process.env.RESEND_API_KEY) {
-      const { Resend } = require('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
+      // Use dynamic import instead of require
+      const resend = await import('resend').then(module => {
+        return new module.Resend(process.env.RESEND_API_KEY)
+      })
       
       const emailData = {
         from: from,
@@ -182,6 +184,6 @@ async function sendEmail({ to, subject, content, from, replyTo }: {
     return { success: true, messageId: 'simulated-' + Date.now() }
   } catch (error) {
     console.error("Email sending failed:", error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }

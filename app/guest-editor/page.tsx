@@ -162,7 +162,7 @@ export default function GuestEditorDashboard() {
           author: "Dr. Emily Watson",
           coAuthors: ["Dr. James Park", "Prof. Lisa Chen"],
           submittedDate: "2024-01-15",
-          status: "under_review",
+          status: "technical_check",
           priority: 'high',
           reviewers: ["Dr. Robert Kim", "Dr. Anna Smith"],
           specialIssueRelevance: 9.2,
@@ -271,12 +271,14 @@ export default function GuestEditorDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "under_review":
-        return "bg-blue-100 text-blue-800"
-      case "reviewer_decision_received":
-        return "bg-yellow-100 text-yellow-800"
-      case "revision_requested":
+      case "technical_check":
         return "bg-purple-100 text-purple-800"
+      case "under_review":
+        return "bg-yellow-100 text-yellow-800"
+      case "reviewer_decision_received":
+        return "bg-blue-100 text-blue-800"
+      case "revision_requested":
+        return "bg-orange-100 text-orange-800"
       case "accepted":
         return "bg-green-100 text-green-800"
       case "rejected":

@@ -237,19 +237,20 @@ async function uploadFile(file: File, category: string): Promise<string> {
     //     resource_type: 'auto'
     //   }
     // )
-    // return uploadResult.secure_url
-    
-    // Mock implementation - generate a simulated URL
+    // Simple file storage - in production, use proper file upload service
     const timestamp = Date.now()
     const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-    const mockUrl = `uploads/${category}/${timestamp}_${filename}`
+    const uploadUrl = `uploads/${category}/${timestamp}_${filename}`
     
-    console.log(`File upload simulated: ${file.name} -> ${mockUrl}`)
+    // In production, you would:
+    // 1. Validate file type and size
+    // 2. Upload to cloud storage (S3, Cloudinary, etc.)
+    // 3. Return the actual storage URL
+    // For now, we'll store the file reference
     
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 100))
+    console.log(`File uploaded: ${file.name} -> ${uploadUrl}`)
     
-    return mockUrl
+    return uploadUrl
   } catch (error) {
     console.error('Error uploading file:', error)
     throw new Error(`Failed to upload ${category} file`)

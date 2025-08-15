@@ -395,7 +395,7 @@ export const articleSchema = z.object({
     .transform(abstract => DOMPurify.sanitize(abstract)),
     
   keywords: z.array(z.string().min(2).max(50))
-    .min(3, "At least 3 keywords required")
+    .min(4, "At least 4 keywords required")
     .max(10, "Maximum 10 keywords allowed"),
     
   category: z.enum([
@@ -606,7 +606,6 @@ const nextConfig = {
 export class FileValidator {
   private static readonly ALLOWED_TYPES = {
     manuscript: [
-      'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ],
@@ -623,7 +622,7 @@ export class FileValidator {
   }
 
   private static readonly MAX_SIZES = {
-    manuscript: 25 * 1024 * 1024, // 25MB
+    manuscript: 2 * 1024 * 1024, // 2MB
     figure: 10 * 1024 * 1024,     // 10MB
     avatar: 2 * 1024 * 1024       // 2MB
   }

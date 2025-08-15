@@ -8,18 +8,22 @@ import {
   users, 
   notifications, 
   reviewerProfiles, 
-  editorProfiles
+  editorProfiles,
+  editorAssignments,
+  recommendedReviewers,
+  reviewInvitations
 } from "./db/schema"
 import { eq, and, sql, inArray, not } from "drizzle-orm"
-import { sendReviewInvitation, sendWorkflowNotification } from "./email"
+import { sendReviewInvitation, sendWorkflowNotification, sendEmail } from "./email"
+import { emailTemplates } from "./email-templates"
 import { v4 as uuidv4 } from "uuid"
 
 // Workflow status types
 export type WorkflowStatus = 
   | "draft"
   | "submitted" 
+  | "technical_check"
   | "under_review"
-  | "peer_review"
   | "revision_requested"
   | "revision_submitted"
   | "accepted"
@@ -44,11 +48,11 @@ export type ReviewRecommendation =
 // Workflow state machine configuration
 export const WORKFLOW_TRANSITIONS: Record<WorkflowStatus, WorkflowStatus[]> = {
   draft: ["submitted", "withdrawn"],
-  submitted: ["under_review", "rejected", "withdrawn"],
-  under_review: ["peer_review", "rejected", "revision_requested"],
-  peer_review: ["revision_requested", "accepted", "rejected"],
+  submitted: ["technical_check", "rejected", "withdrawn"],
+  technical_check: ["under_review", "rejected", "revision_requested"],
+  under_review: ["revision_requested", "accepted", "rejected"],
   revision_requested: ["revision_submitted", "withdrawn"],
-  revision_submitted: ["under_review", "accepted", "rejected"],
+  revision_submitted: ["technical_check", "accepted", "rejected"],
   accepted: ["published"],
   rejected: [],
   published: [],
@@ -227,7 +231,348 @@ export class ReviewerAssignmentService {
   }
 
   /**
-   * Assign reviewers to an article
+   * Enhanced reviewer assignment that considers author recommendations
+   * Follows these steps:
+   * 1. Retrieve author-recommended reviewers
+   * 2. Validate and score recommended reviewers
+   * 3. Find additional qualified reviewers from the system
+   * 4. Rank all potential reviewers by expertise and qualifications
+   * 5. Select the top 2-3 reviewers from the ranked list, including both recommended and system-found reviewers
+   */
+  async assignReviewersWithRecommendations(
+    articleId: string,
+    editorId: string,
+    targetReviewerCount: number = 3,
+    deadline: Date = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000)
+  ): Promise<{
+    success: boolean;
+    assignedReviewers: string[];
+    recommendedUsed: number;
+    systemFound: number;
+    errors: string[];
+    workflow: {
+      step1_recommendedRetrieved: number;
+      step2_recommendedValidated: number;
+      step3_systemCandidates: number;
+      step4_totalRanked: number;
+      step5_finalSelected: number;
+    };
+  }> {
+    const errors: string[] = []
+    const assignedReviewers: string[] = []
+    let recommendedUsedCount = 0
+    let systemFoundCount = 0
+
+    try {
+      // Step 1: Retrieve author-recommended reviewers
+      const article = await db.query.articles.findFirst({
+        where: eq(articles.id, articleId),
+        with: { author: true }
+      })
+
+      if (!article) {
+        throw new Error("Article not found")
+      }
+
+      const recommendedReviewers = await db
+        .select()
+        .from(recommendedReviewers)
+        .where(eq(recommendedReviewers.articleId, articleId))
+
+      console.log(`Step 1: Retrieved ${recommendedReviewers.length} author-recommended reviewers`)
+
+      // Step 2: Validate and score recommended reviewers
+      const validatedRecommended = []
+      for (const recommended of recommendedReviewers) {
+        // Check if recommended reviewer exists in our system
+        const existingUser = await db.query.users.findFirst({
+          where: eq(users.email, recommended.email),
+          with: { reviewerProfile: true }
+        })
+
+        if (existingUser && existingUser.role === "reviewer" && existingUser.isActive) {
+          // Existing reviewer - can be directly assigned
+          const score = await this.scoreRecommendedReviewer(existingUser, article)
+          validatedRecommended.push({
+            id: existingUser.id,
+            email: existingUser.email,
+            name: existingUser.name,
+            score: score,
+            source: 'recommended_existing',
+            recommendedData: recommended
+          })
+        } else {
+          // New reviewer - needs invitation
+          const score = this.scoreNewRecommendedReviewer(recommended, article)
+          validatedRecommended.push({
+            id: `new_${recommended.id}`,
+            email: recommended.email,
+            name: recommended.name,
+            score: score,
+            source: 'recommended_new',
+            recommendedData: recommended
+          })
+        }
+      }
+
+      console.log(`Step 2: Validated ${validatedRecommended.length} recommended reviewers`)
+
+      // Step 3: Find additional qualified reviewers from the system
+      const excludeIds = [
+        article.authorId,
+        ...validatedRecommended.filter(r => r.source === 'recommended_existing').map(r => r.id)
+      ]
+
+      const criteria = {
+        expertise: article.keywords || [],
+        minQualityScore: 70,
+        excludeConflicts: excludeIds
+      }
+
+      const systemCandidates = await this.findSuitableReviewers(articleId, criteria, excludeIds)
+      
+      console.log(`Step 3: Found ${systemCandidates.length} system candidate reviewers`)
+
+      // Step 4: Rank all potential reviewers by expertise and qualifications
+      const allCandidates = [
+        ...validatedRecommended.map(r => ({
+          ...r,
+          // Boost score for recommended reviewers (author knows their expertise)
+          score: r.score * 1.2 // 20% boost for being author-recommended
+        })),
+        ...systemCandidates.map(r => ({
+          ...r,
+          source: 'system_found'
+        }))
+      ].sort((a, b) => b.score - a.score)
+
+      console.log(`Step 4: Ranked ${allCandidates.length} total reviewers`)
+
+      // Step 5: Select the top reviewers (mix of recommended and system-found)
+      const selectedReviewers = []
+      let recommendedSelected = 0
+      let systemSelected = 0
+
+      // First, try to select at least 1-2 recommended reviewers if they score well
+      for (const candidate of allCandidates) {
+        if (selectedReviewers.length >= targetReviewerCount) break
+
+        if ((candidate.source === 'recommended_existing' || candidate.source === 'recommended_new') &&
+            recommendedSelected < 2 && candidate.score >= 0.6) {
+          selectedReviewers.push(candidate)
+          recommendedSelected++
+        }
+      }
+
+      // Then fill remaining slots with best available reviewers
+      for (const candidate of allCandidates) {
+        if (selectedReviewers.length >= targetReviewerCount) break
+        
+        if (!selectedReviewers.find(s => s.id === candidate.id)) {
+          selectedReviewers.push(candidate)
+          if (candidate.source === 'system_found') {
+            systemSelected++
+          } else if (recommendedSelected < 2) {
+            recommendedSelected++
+          }
+        }
+      }
+
+      console.log(`Step 5: Selected ${selectedReviewers.length} final reviewers (${recommendedSelected} recommended, ${systemSelected} system-found)`)
+
+      // Assign the selected reviewers
+      for (const reviewer of selectedReviewers) {
+        try {
+          if (reviewer.source === 'recommended_new') {
+            // Handle new reviewer invitation
+            await this.inviteNewReviewer(reviewer.recommendedData, articleId, editorId, deadline)
+            assignedReviewers.push(reviewer.id)
+            recommendedUsedCount++
+          } else if (reviewer.source === 'recommended_existing' || reviewer.source === 'system_found') {
+            // Assign existing reviewer
+            await this.assignExistingReviewer(reviewer.id, articleId, editorId, deadline)
+            assignedReviewers.push(reviewer.id)
+            
+            if (reviewer.source === 'recommended_existing') {
+              recommendedUsedCount++
+            } else {
+              systemFoundCount++
+            }
+          }
+        } catch (error) {
+          errors.push(`Failed to assign reviewer ${reviewer.name}: ${error}`)
+        }
+      }
+
+      // Update article with assigned reviewers
+      if (assignedReviewers.length > 0) {
+        const currentReviewers = article.reviewerIds as string[] || []
+        const updatedReviewers = [...new Set([...currentReviewers, ...assignedReviewers.filter(id => !id.startsWith('new_'))])]
+        
+        await db
+          .update(articles)
+          .set({
+            reviewerIds: updatedReviewers,
+            status: "under_review",
+            updatedAt: new Date()
+          })
+          .where(eq(articles.id, articleId))
+      }
+
+      return {
+        success: assignedReviewers.length > 0,
+        assignedReviewers,
+        recommendedUsed: recommendedUsedCount,
+        systemFound: systemFoundCount,
+        errors,
+        workflow: {
+          step1_recommendedRetrieved: recommendedReviewers.length,
+          step2_recommendedValidated: validatedRecommended.length,
+          step3_systemCandidates: systemCandidates.length,
+          step4_totalRanked: allCandidates.length,
+          step5_finalSelected: selectedReviewers.length
+        }
+      }
+
+    } catch (error) {
+      console.error("Error assigning reviewers with recommendations:", error)
+      return {
+        success: false,
+        assignedReviewers,
+        recommendedUsed: recommendedUsedCount,
+        systemFound: systemFoundCount,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        workflow: {
+          step1_recommendedRetrieved: 0,
+          step2_recommendedValidated: 0,
+          step3_systemCandidates: 0,
+          step4_totalRanked: 0,
+          step5_finalSelected: 0
+        }
+      }
+    }
+  }
+
+  /**
+   * Score a recommended reviewer who exists in the system
+   */
+  private async scoreRecommendedReviewer(reviewer: any, article: any): Promise<number> {
+    const expertiseMatch = this.calculateExpertiseMatch(
+      reviewer.expertise as string[] || [],
+      article.keywords || []
+    )
+    
+    const profile = reviewer.reviewerProfile
+    const workloadScore = profile ? this.calculateWorkloadScore(
+      profile.currentReviewLoad || 0,
+      profile.maxReviewsPerMonth || 3
+    ) : 0.5
+
+    const qualityScore = profile ? (profile.qualityScore || 70) / 100 : 0.7
+    const reliabilityScore = profile ? this.calculateReliabilityScore(
+      profile.completedReviews || 0,
+      profile.lateReviews || 0
+    ) : 0.5
+
+    return (
+      expertiseMatch * 0.5 +      // Higher weight for expertise since author recommended
+      workloadScore * 0.2 +
+      qualityScore * 0.2 +
+      reliabilityScore * 0.1
+    )
+  }
+
+  /**
+   * Score a new recommended reviewer (not in system)
+   */
+  private scoreNewRecommendedReviewer(recommendedData: any, article: any): Promise<number> {
+    // Base score for author recommendation
+    let score = 0.7
+
+    // Check expertise match if provided
+    if (recommendedData.expertise) {
+      const expertiseKeywords = recommendedData.expertise.toLowerCase().split(',').map((k: string) => k.trim())
+      const articleKeywords = (article.keywords || []).map((k: string) => k.toLowerCase())
+      
+      const matches = expertiseKeywords.filter((exp: string) =>
+        articleKeywords.some((keyword: string) =>
+          keyword.includes(exp) || exp.includes(keyword)
+        )
+      )
+      
+      if (matches.length > 0) {
+        score += 0.2 // Boost for expertise match
+      }
+    }
+
+    // Boost for having institutional affiliation
+    if (recommendedData.affiliation && recommendedData.affiliation.length > 20) {
+      score += 0.1
+    }
+
+    return Promise.resolve(Math.min(score, 1.0))
+  }
+
+  /**
+   * Invite a new reviewer who is not in the system
+   */
+  private async inviteNewReviewer(
+    recommendedData: any,
+    articleId: string,
+    editorId: string,
+    deadline: Date
+  ): Promise<void> {
+    // Mark the recommended reviewer as contacted
+    await db
+      .update(recommendedReviewers)
+      .set({
+        status: 'contacted',
+        contactAttempts: 1,
+        notes: 'Invited to review manuscript',
+        updatedAt: new Date()
+      })
+      .where(eq(recommendedReviewers.id, recommendedData.id))
+
+    // Send invitation email (implementation would go here)
+    console.log(`Sending invitation to new reviewer: ${recommendedData.name} (${recommendedData.email})`)
+  }
+
+  /**
+   * Assign an existing reviewer in the system
+   */
+  private async assignExistingReviewer(
+    reviewerId: string,
+    articleId: string,
+    editorId: string,
+    deadline: Date
+  ): Promise<void> {
+    // Create review invitation record
+    const invitationId = uuidv4()
+    await db.insert(reviewInvitations).values({
+      id: invitationId,
+      articleId,
+      reviewerId,
+      status: 'pending',
+      dueDate: deadline,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+
+    // Update reviewer workload
+    await db
+      .update(reviewerProfiles)
+      .set({
+        currentReviewLoad: sql`${reviewerProfiles.currentReviewLoad} + 1`,
+        lastAssignedDate: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(reviewerProfiles.userId, reviewerId))
+
+    console.log(`Assigned existing reviewer: ${reviewerId}`)
+  }
+
+  /**
+   * Original assign reviewers function (kept for backward compatibility)
    */
   async assignReviewers(
     articleId: string, 
@@ -346,7 +691,7 @@ export class ReviewerAssignmentService {
           .update(articles)
           .set({
             reviewerIds: updatedReviewers,
-            status: "peer_review",
+            status: "under_review",
             updatedAt: new Date()
           })
           .where(eq(articles.id, articleId))
@@ -355,7 +700,7 @@ export class ReviewerAssignmentService {
         await db
           .update(submissions)
           .set({
-            status: "peer_review",
+            status: "under_review",
             updatedAt: new Date()
           })
           .where(eq(submissions.articleId, articleId))
@@ -370,6 +715,21 @@ export class ReviewerAssignmentService {
     } catch (error) {
       console.error("Error assigning reviewers:", error)
       throw error
+    }
+  }
+
+  async getRecommendedReviewers(articleId: string) {
+    try {
+      // Get recommended reviewers from database
+      const recommended = await db
+        .select()
+        .from(recommendedReviewers)
+        .where(eq(recommendedReviewers.articleId, articleId))
+
+      return recommended
+    } catch (error) {
+      console.error('Error getting recommended reviewers:', error, { operation: 'getRecommendedReviewers', articleId })
+      return []
     }
   }
 }
@@ -389,7 +749,23 @@ export class ArticleSubmissionService {
       keywords: string[]
       category: string
       files?: { url: string; type: string; name: string; fileId: string }[]
-      coAuthors?: string[]
+      authors: {
+        firstName: string
+        lastName: string
+        email: string
+        orcid?: string
+        institution: string
+        department: string
+        country: string
+        affiliation: string
+        isCorrespondingAuthor: boolean
+      }[]
+      recommendedReviewers?: {
+        name: string
+        email: string
+        affiliation: string
+        expertise?: string
+      }[]
     },
     authorId: string
   ): Promise<{ success: boolean; article?: any; submissionId?: string; message: string }> {
@@ -403,6 +779,25 @@ export class ArticleSubmissionService {
       }
       if (!articleData.category?.trim()) {
         return { success: false, message: "Category is required" }
+      }
+
+      // Validate authors array
+      if (!articleData.authors || articleData.authors.length === 0) {
+        return { success: false, message: "At least one author is required" }
+      }
+
+      // Validate that exactly one corresponding author is designated
+      const correspondingAuthors = articleData.authors.filter(author => author.isCorrespondingAuthor)
+      if (correspondingAuthors.length !== 1) {
+        return { success: false, message: "Exactly one corresponding author must be designated" }
+      }
+
+      // Validate all authors have required fields
+      for (const author of articleData.authors) {
+        if (!author.firstName || !author.lastName || !author.email || 
+            !author.institution || !author.department || !author.country || !author.affiliation) {
+          return { success: false, message: "All authors must have complete information (name, email, institution, department, country, affiliation)" }
+        }
       }
 
       // Validate author
@@ -427,7 +822,7 @@ export class ArticleSubmissionService {
         category: articleData.category,
         status: "submitted",
         authorId,
-        coAuthors: articleData.coAuthors || [],
+        coAuthors: articleData.authors,
         files: articleData.files || [],
         submittedDate: new Date(),
         createdAt: new Date(),
@@ -451,6 +846,24 @@ export class ArticleSubmissionService {
         updatedAt: new Date()
       })
 
+      // Save recommended reviewers if provided
+      if (articleData.recommendedReviewers && articleData.recommendedReviewers.length > 0) {
+        const reviewersToInsert = articleData.recommendedReviewers.map(reviewer => ({
+          id: uuidv4(),
+          articleId,
+          name: reviewer.name.trim(),
+          email: reviewer.email.trim().toLowerCase(),
+          affiliation: reviewer.affiliation.trim(),
+          expertise: reviewer.expertise?.trim() || null,
+          suggestedBy: authorId,
+          status: "suggested" as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }))
+
+        await db.insert(recommendedReviewers).values(reviewersToInsert)
+      }
+
       // Find suitable editor for initial assignment
       const suitableEditor = await this.findSuitableEditor(articleData.category)
       
@@ -459,7 +872,7 @@ export class ArticleSubmissionService {
           .update(articles)
           .set({
             editorId: suitableEditor.id,
-            status: "under_review",
+            status: "technical_check",
             updatedAt: new Date()
           })
           .where(eq(articles.id, articleId))
@@ -467,7 +880,7 @@ export class ArticleSubmissionService {
         // Update submission status
         await this.updateSubmissionStatus(
           submissionId,
-          "under_review",
+          "technical_check",
           "system",
           "Automatically assigned to editor"
         )
@@ -640,6 +1053,23 @@ export class ArticleSubmissionService {
       return { success: false, message: "Failed to update status" }
     }
   }
+
+  async getArticleDetails(articleId: string) {
+    try {
+      const article = await db.query.articles.findFirst({
+        where: eq(articles.id, articleId),
+        with: {
+          authors: true,
+          submission: true
+        }
+      })
+
+      return article
+    } catch (error) {
+      console.error('Error getting article details:', error, { operation: 'getArticleDetails', articleId })
+      return null
+    }
+  }
 }
 
 /**
@@ -789,7 +1219,7 @@ export class ReviewManagementService {
       return "accepted"
     }
 
-    return "under_review" // Default if unclear
+    return "technical_check" // Default if unclear
   }
 
   /**
@@ -919,6 +1349,176 @@ export class EditorialWorkflow {
   get reviewerAssignment() { return this.reviewerService }
   get submission() { return this.submissionService }
   get review() { return this.reviewService }
+
+  // Editor Assignment Functions
+  async createEditorAssignment(
+    articleId: string,
+    editorId: string,
+    assignedBy?: string,
+    assignmentReason?: string,
+    systemGenerated: boolean = true
+  ): Promise<{ success: boolean; assignmentId?: string; message: string }> {
+    try {
+      // Validate article exists
+      const article = await db.query.articles.findFirst({
+        where: eq(articles.id, articleId),
+        with: {
+          authorId: true
+        }
+      })
+
+      if (!article) {
+        return { success: false, message: "Article not found" }
+      }
+
+      // Validate editor exists and has editor role
+      const editor = await db.query.users.findFirst({
+        where: eq(users.id, editorId)
+      })
+
+      if (!editor) {
+        return { success: false, message: "Editor not found" }
+      }
+
+      if (!["editor", "chief_editor", "associate_editor"].includes(editor.role)) {
+        return { success: false, message: "User is not an editor" }
+      }
+
+      // Check for existing pending assignment
+      const existingAssignment = await db.query.editorAssignments.findFirst({
+        where: and(
+          eq(editorAssignments.articleId, articleId),
+          eq(editorAssignments.editorId, editorId),
+          eq(editorAssignments.status, "pending")
+        )
+      })
+
+      if (existingAssignment) {
+        return { success: false, message: "Assignment already exists for this editor" }
+      }
+
+      // Create assignment with 3-day deadline
+      const assignmentId = uuidv4()
+      const deadline = new Date()
+      deadline.setDate(deadline.getDate() + 3)
+
+      await db.insert(editorAssignments).values({
+        id: assignmentId,
+        articleId,
+        editorId,
+        assignedBy,
+        assignedAt: new Date(),
+        deadline,
+        status: "pending",
+        assignmentReason,
+        systemGenerated,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+
+      // Send assignment email
+      try {
+        const emailContent = emailTemplates.editorAssignment(
+          editor.name,
+          article.title,
+          article.coAuthors ? article.coAuthors.map((author: any) => `${author.firstName} ${author.lastName}`) : [],
+          article.abstract,
+          assignmentId,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/editor/assignment/${assignmentId}`,
+          deadline.toISOString()
+        )
+
+        await sendEmail({
+          to: editor.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        })
+      } catch (emailError) {
+        console.error("Failed to send assignment email:", emailError)
+        // Don't fail the assignment creation for email errors
+      }
+
+      // Create notification
+      await this.createSystemNotification(
+        editorId,
+        "EDITOR_ASSIGNMENT",
+        "New Editorial Assignment",
+        `You have been assigned to review "${article.title}"`,
+        assignmentId
+      )
+
+      return { 
+        success: true, 
+        assignmentId, 
+        message: "Editor assignment created successfully" 
+      }
+
+    } catch (error) {
+      console.error("Error creating editor assignment:", error)
+      return { success: false, message: "Failed to create editor assignment" }
+    }
+  }
+
+  async assignEditorToArticle(
+    articleId: string,
+    assignmentReason?: string
+  ): Promise<{ success: boolean; message: string; assignmentId?: string }> {
+    try {
+      // Get article details
+      const article = await db.query.articles.findFirst({
+        where: eq(articles.id, articleId)
+      })
+
+      if (!article) {
+        return { success: false, message: "Article not found" }
+      }
+
+      // Find suitable editor
+      const suitableEditor = await this.findSuitableEditor(article.category)
+
+      if (!suitableEditor) {
+        return { 
+          success: false, 
+          message: "No suitable editor found for this category" 
+        }
+      }
+
+      // Create the assignment
+      const result = await this.createEditorAssignment(
+        articleId,
+        suitableEditor.id,
+        "system", // system-generated assignment
+        assignmentReason || `Automatically assigned based on expertise in ${article.category}`,
+        true
+      )
+
+      return result
+
+    } catch (error) {
+      console.error("Error assigning editor to article:", error)
+      return { success: false, message: "Failed to assign editor" }
+    }
+  }
+
+  async expireOldAssignments(): Promise<number> {
+    try {
+      const result = await db
+        .update(editorAssignments)
+        .set({
+          status: "expired",
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(editorAssignments.status, "pending"),
+          sql`${editorAssignments.deadline} < NOW()`
+        ))
+
+      return result.rowCount || 0
+    } catch (error) {
+      console.error("Error expiring old assignments:", error)
+      return 0
+    }
+  }
 
   // Legacy exports for compatibility
   assignReviewers = this.reviewerService.assignReviewers.bind(this.reviewerService)

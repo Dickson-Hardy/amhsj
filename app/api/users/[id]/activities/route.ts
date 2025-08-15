@@ -28,14 +28,14 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         title: articles.title,
         status: articles.status,
         submittedDate: articles.submittedDate,
-        updatedAt: articles.updatedAt,
+        createdAt: articles.createdAt,
         category: articles.category
       })
       .from(articles)
       .where(
         and(
           eq(articles.authorId, id),
-          gte(articles.updatedAt, sevenDaysAgo.toISOString())
+          gte(articles.updatedAt, sevenDaysAgo)
         )
       )
       .orderBy(desc(articles.updatedAt))
@@ -47,19 +47,19 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         id: reviews.id,
         articleId: reviews.articleId,
         articleTitle: articles.title,
-        reviewDate: reviews.reviewDate,
+        submittedAt: reviews.submittedAt,
         status: reviews.status,
-        updatedAt: reviews.updatedAt
+        createdAt: reviews.createdAt
       })
       .from(reviews)
       .innerJoin(articles, eq(reviews.articleId, articles.id))
       .where(
         and(
           eq(articles.authorId, id),
-          gte(reviews.updatedAt, sevenDaysAgo.toISOString())
+          gte(reviews.createdAt, sevenDaysAgo)
         )
       )
-      .orderBy(desc(reviews.updatedAt))
+      .orderBy(desc(reviews.createdAt))
       .limit(10)
 
     // Generate activity feed
@@ -98,7 +98,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         type: activityType,
         title: `Article "${article.title}"`,
         description: description,
-        timestamp: article.updatedAt || article.submittedDate,
+        timestamp: article.createdAt || article.submittedDate,
         icon: icon,
         color: color,
         metadata: {
@@ -116,7 +116,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         type: "review_received",
         title: `Review received for "${review.articleTitle}"`,
         description: "received new peer review feedback",
-        timestamp: review.updatedAt,
+        timestamp: review.submittedAt || review.createdAt,
         icon: "MessageSquare",
         color: "text-purple-600",
         metadata: {
@@ -128,7 +128,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     // Sort all activities by timestamp
-    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    activities.sort((a, b) => {
+      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0
+      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0
+      return timeB - timeA
+    })
 
     // Add some general system activities if there are few activities
     if (activities.length < 3) {
@@ -161,7 +165,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       activities: activities.slice(0, 15) // Limit to 15 most recent activities
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const id = params.id;
     logError(error as Error, { endpoint: `/api/users/${id}/activities` })
     return NextResponse.json({ success: false, error: "Failed to fetch activities" }, { status: 500 })

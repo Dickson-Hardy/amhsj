@@ -3,8 +3,29 @@
  * Integrates with Sentry, Google Analytics, and custom monitoring
  */
 
-import * as Sentry from '@sentry/nextjs'
 import { logError, logInfo } from './logger'
+
+// Lazy Sentry initialization
+let Sentry: any = null
+let sentryInitialized = false
+
+async function initSentry() {
+  if (sentryInitialized) return Sentry
+  
+  sentryInitialized = true
+  
+  if (typeof window !== 'undefined' || (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN)) {
+    try {
+      const module = await import('@sentry/nextjs')
+      Sentry = module.default || module
+    } catch (error) {
+      console.warn('Sentry not available:', error)
+      Sentry = null
+    }
+  }
+  
+  return Sentry
+}
 
 // Analytics Events
 export interface AnalyticsEvent {
@@ -46,13 +67,14 @@ export interface SystemHealth {
  * Sentry Error Tracking Integration
  */
 class SentryService {
-  static initialize() {
-    if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
-      Sentry.init({
+  static async initialize() {
+    const sentry = await initSentry()
+    if (sentry && process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
+      sentry.init({
         dsn: process.env.SENTRY_DSN,
         environment: process.env.NODE_ENV,
         tracesSampleRate: 0.1, // 10% sampling for performance
-        beforeSend(event) {
+        beforeSend(event: any) {
           // Filter out non-critical errors in production
           if (event.exception) {
             const error = event.exception.values?.[0]
@@ -68,47 +90,55 @@ class SentryService {
     }
   }
 
-  static captureError(error: Error, context?: Record<string, any>) {
-    if (process.env.NODE_ENV === 'production') {
-      Sentry.withScope(scope => {
+  static async captureError(error: Error, context?: Record<string, any>) {
+    const sentry = await initSentry()
+    if (sentry && process.env.NODE_ENV === 'production') {
+      sentry.withScope((scope: any) => {
         if (context) {
           Object.entries(context).forEach(([key, value]) => {
             scope.setTag(key, String(value))
           })
         }
-        Sentry.captureException(error)
+        sentry.captureException(error)
       })
     } else {
       console.error('Development Error:', error, context)
     }
   }
 
-  static captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, any>) {
-    if (process.env.NODE_ENV === 'production') {
-      Sentry.withScope(scope => {
+  static async captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, any>) {
+    const sentry = await initSentry()
+    if (sentry && process.env.NODE_ENV === 'production') {
+      sentry.withScope((scope: any) => {
         if (context) {
           Object.entries(context).forEach(([key, value]) => {
             scope.setTag(key, String(value))
           })
         }
-        Sentry.captureMessage(message, level)
+        sentry.captureMessage(message, level)
       })
     } else {
       console.log(`Development ${level.toUpperCase()}:`, message, context)
     }
   }
 
-  static setUser(user: { id: string; email?: string; username?: string }) {
-    Sentry.setUser(user)
+  static async setUser(user: { id: string; email?: string; username?: string }) {
+    const sentry = await initSentry()
+    if (sentry) {
+      sentry.setUser(user)
+    }
   }
 
-  static addBreadcrumb(message: string, category?: string, data?: Record<string, any>) {
-    Sentry.addBreadcrumb({
-      message,
-      category,
-      data,
-      timestamp: Date.now() / 1000
-    })
+  static async addBreadcrumb(message: string, category?: string, data?: Record<string, any>) {
+    const sentry = await initSentry()
+    if (sentry) {
+      sentry.addBreadcrumb({
+        message,
+        category,
+        data,
+        timestamp: Date.now() / 1000
+      })
+    }
   }
 }
 
@@ -116,10 +146,12 @@ class SentryService {
  * Google Analytics Integration
  */
 class GoogleAnalyticsService {
-  private static gaId = process.env.GOOGLE_ANALYTICS_ID
+  private static gaId = typeof process !== 'undefined' ? process.env.GOOGLE_ANALYTICS_ID : ''
 
   static initialize() {
-    if (this.gaId && typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return; // Skip on server-side
+    
+    if (this.gaId) {
       // Load GA4 script
       const script = document.createElement('script')
       script.src = `https://www.googletagmanager.com/gtag/js?id=${this.gaId}`
@@ -451,9 +483,9 @@ class SystemHealthService {
  */
 class ProductionMonitoringService {
   
-  static initialize() {
+  static async initialize() {
     // Initialize all monitoring services
-    SentryService.initialize()
+    await SentryService.initialize()
     GoogleAnalyticsService.initialize()
 
     // Register default health checks
@@ -464,7 +496,7 @@ class ProductionMonitoringService {
       setInterval(async () => {
         const health = await SystemHealthService.checkSystemHealth()
         if (health.status !== 'healthy') {
-          SentryService.captureMessage(
+          await SentryService.captureMessage(
             `System health degraded: ${health.status}`,
             'warning',
             { health }
@@ -483,7 +515,7 @@ class ProductionMonitoringService {
   }
 
   static async trackError(error: Error, context?: Record<string, any>) {
-    SentryService.captureError(error, context)
+    await SentryService.captureError(error, context)
     await CustomAnalyticsService.trackSystemEvent('error', {
       error: error.message,
       stack: error.stack,
@@ -509,8 +541,8 @@ class ProductionMonitoringService {
     })
   }
 
-  static setUser(user: { id: string; email?: string; name?: string }) {
-    SentryService.setUser({
+  static async setUser(user: { id: string; email?: string; name?: string }) {
+    await SentryService.setUser({
       id: user.id,
       email: user.email,
       username: user.name

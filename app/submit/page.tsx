@@ -11,11 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Upload, FileText, AlertCircle, CheckCircle, X, Plus, Image, Table, FileSpreadsheet, Mail, Shield, Award } from "lucide-react"
+import { Upload, FileText, AlertCircle, CheckCircle, X, Plus, Image, Table, FileSpreadsheet, Mail, Shield, Award, Globe } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
-import DashboardLayout from "@/components/dashboard-layout"
+import AuthorLayout from "@/components/layouts/author-layout"
+import { RouteGuard } from "@/components/route-guard"
 
 function SubmitPageContent() {
   const { data: session, status } = useSession()
@@ -49,10 +50,35 @@ function SubmitPageContent() {
         lastName: "",
         email: "",
         orcid: "",
+        institution: "",
+        department: "",
+        country: "",
         affiliation: "",
+        isCorrespondingAuthor: true,
+      }
+    ],
+    recommendedReviewers: [
+      {
+        name: "",
+        email: "",
+        affiliation: "",
+        expertise: "",
+      },
+      {
+        name: "",
+        email: "",
+        affiliation: "",
+        expertise: "",
+      },
+      {
+        name: "",
+        email: "",
+        affiliation: "",
+        expertise: "",
       }
     ],
     termsAccepted: false,
+    guidelinesAccepted: false,
   })
 
   // Pre-fill first author with session data
@@ -67,7 +93,11 @@ function SubmitPageContent() {
             lastName: nameParts.slice(1).join(' ') || "",
             email: session.user.email || "",
             orcid: "",
+            institution: "",
+            department: "",
+            country: "",
             affiliation: "",
+            isCorrespondingAuthor: true,
           }
         ]
       }))
@@ -82,18 +112,79 @@ function SubmitPageContent() {
         lastName: "",
         email: "",
         orcid: "",
+        institution: "",
+        department: "",
+        country: "",
         affiliation: "",
+        isCorrespondingAuthor: false,
       }]
     }))
   }
 
-  const handleUpdateAuthor = (index: number, field: string, value: string) => {
+  const handleUpdateAuthor = (index: number, field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       authors: prev.authors.map((author, i) => 
         i === index ? { ...author, [field]: value } : author
       )
     }))
+  }
+
+  const handleSetCorrespondingAuthor = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      authors: prev.authors.map((author, i) => ({
+        ...author,
+        isCorrespondingAuthor: i === index
+      }))
+    }))
+  }
+
+  const handleRemoveAuthor = (index: number) => {
+    if (formData.authors.length > 1) {
+      setFormData(prev => {
+        const newAuthors = prev.authors.filter((_, i) => i !== index)
+        // If removing corresponding author, make first author corresponding
+        if (prev.authors[index].isCorrespondingAuthor && newAuthors.length > 0) {
+          newAuthors[0].isCorrespondingAuthor = true
+        }
+        return {
+          ...prev,
+          authors: newAuthors
+        }
+      })
+    }
+  }
+
+  // Recommended Reviewers Management Functions
+  const handleAddRecommendedReviewer = () => {
+    setFormData(prev => ({
+      ...prev,
+      recommendedReviewers: [...prev.recommendedReviewers, {
+        name: "",
+        email: "",
+        affiliation: "",
+        expertise: "",
+      }]
+    }))
+  }
+
+  const handleUpdateRecommendedReviewer = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      recommendedReviewers: prev.recommendedReviewers.map((reviewer, i) => 
+        i === index ? { ...reviewer, [field]: value } : reviewer
+      )
+    }))
+  }
+
+  const handleRemoveRecommendedReviewer = (index: number) => {
+    if (formData.recommendedReviewers.length > 3) {
+      setFormData(prev => ({
+        ...prev,
+        recommendedReviewers: prev.recommendedReviewers.filter((_, i) => i !== index)
+      }))
+    }
   }
 
   const handleFormChange = (field: string, value: string | boolean) => {
@@ -107,7 +198,7 @@ function SubmitPageContent() {
     // Create file input and trigger click
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = accept || '.pdf,.doc,.docx'
+    input.accept = accept || '.doc,.docx'
     input.multiple = multiple
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files
@@ -184,30 +275,77 @@ function SubmitPageContent() {
         return
       }
       const keywordArray = formData.keywords.split(',').map(k => k.trim()).filter(Boolean)
-      if (keywordArray.length < 3) {
+      if (keywordArray.length < 4) {
         toast({
           variant: "destructive",
           title: "Keywords Required",
-          description: "Please provide at least 3 keywords separated by commas",
+          description: "Please provide at least 4 keywords separated by commas",
         })
         return
       }
     }
     
     if (currentStep === 2) {
-      const firstAuthor = formData.authors[0]
-      if (!firstAuthor.firstName || !firstAuthor.lastName || !firstAuthor.email || !firstAuthor.affiliation) {
+      // Validate all authors have required information
+      const invalidAuthors = formData.authors.filter(author => 
+        !author.firstName || !author.lastName || !author.email || 
+        !author.institution || !author.department || !author.country || !author.affiliation
+      )
+      
+      if (invalidAuthors.length > 0) {
         toast({
           variant: "destructive",
           title: "Author Information Required",
-          description: "Please fill in all required author information",
+          description: "Please fill in all required author information including name, email, institution, department, country, and affiliation",
+        })
+        return
+      }
+
+      // Validate exactly one corresponding author
+      const correspondingAuthors = formData.authors.filter(author => author.isCorrespondingAuthor)
+      if (correspondingAuthors.length !== 1) {
+        toast({
+          variant: "destructive",
+          title: "Corresponding Author Required",
+          description: "Please designate exactly one corresponding author",
+        })
+        return
+      }
+    }
+    
+    if (currentStep === 3) {
+      // Validate recommended reviewers (minimum 3 required)
+      const validReviewers = formData.recommendedReviewers.filter(reviewer => 
+        reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim()
+      )
+      
+      if (validReviewers.length < 3) {
+        toast({
+          variant: "destructive",
+          title: "Minimum 3 Reviewers Required",
+          description: "Please provide at least 3 recommended reviewers with their name, email, and affiliation",
+        })
+        return
+      }
+
+      // Validate email formats
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const invalidEmails = formData.recommendedReviewers.filter(reviewer => 
+        reviewer.email.trim() && !emailRegex.test(reviewer.email.trim())
+      )
+      
+      if (invalidEmails.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Email Addresses",
+          description: "Please provide valid email addresses for all recommended reviewers",
         })
         return
       }
     }
     
     setSubmissionError("") // Clear any previous errors
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -218,6 +356,15 @@ function SubmitPageContent() {
         variant: "destructive",
         title: "Terms and Conditions Required",
         description: "Please accept the terms and conditions to proceed.",
+      })
+      return
+    }
+
+    if (!formData.guidelinesAccepted) {
+      toast({
+        variant: "destructive",
+        title: "Submission Guidelines Acknowledgment Required",
+        description: "You must confirm that your manuscript follows all submission guidelines and formatting requirements.",
       })
       return
     }
@@ -242,11 +389,24 @@ function SubmitPageContent() {
     }
 
     const keywordArray = formData.keywords.split(',').map(k => k.trim()).filter(Boolean)
-    if (keywordArray.length < 3) {
+    if (keywordArray.length < 4) {
       toast({
         variant: "destructive",
         title: "Not Enough Keywords",
-        description: "Please provide at least 3 keywords separated by commas",
+        description: "Please provide at least 4 keywords separated by commas",
+      })
+      return
+    }
+
+    // Validate recommended reviewers
+    const validReviewers = formData.recommendedReviewers.filter(reviewer => 
+      reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim()
+    )
+    if (validReviewers.length < 3) {
+      toast({
+        variant: "destructive",
+        title: "Minimum 3 Reviewers Required",
+        description: "Please provide at least 3 recommended reviewers with complete information",
       })
       return
     }
@@ -263,11 +423,25 @@ function SubmitPageContent() {
         abstract: formData.abstract,
         keywords: keywordArray,
         category: formData.category,
-        coAuthors: formData.authors.slice(1).map(author => ({
-          name: `${author.firstName} ${author.lastName}`.trim(),
+        authors: formData.authors.map(author => ({
+          firstName: author.firstName,
+          lastName: author.lastName,
           email: author.email,
+          orcid: author.orcid,
+          institution: author.institution,
+          department: author.department,
+          country: author.country,
           affiliation: author.affiliation,
-        })).filter(author => author.name && author.email),
+          isCorrespondingAuthor: author.isCorrespondingAuthor,
+        })),
+        recommendedReviewers: formData.recommendedReviewers
+          .filter(reviewer => reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim())
+          .map(reviewer => ({
+            name: reviewer.name.trim(),
+            email: reviewer.email.trim(),
+            affiliation: reviewer.affiliation.trim(),
+            expertise: reviewer.expertise?.trim() || undefined,
+          })),
         funding: formData.funding || undefined,
         conflicts: formData.conflicts || undefined,
       }
@@ -358,8 +532,9 @@ function SubmitPageContent() {
   const steps = [
     { number: 1, title: "Article Information", description: "Basic details about your submission" },
     { number: 2, title: "Authors & Affiliations", description: "Author information and institutional details" },
-    { number: 3, title: "Files & Documents", description: "Upload your manuscript and supporting files" },
-    { number: 4, title: "Review & Submit", description: "Final review before submission" },
+    { number: 3, title: "Recommended Reviewers", description: "Suggest qualified reviewers for your manuscript" },
+    { number: 4, title: "Files & Documents", description: "Upload your manuscript and supporting files" },
+    { number: 5, title: "Review & Submit", description: "Final review before submission" },
   ]
 
   const categories = [
@@ -380,6 +555,54 @@ function SubmitPageContent() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Submit Your Article</h1>
           <p className="text-gray-600">Share your research with the global academic community</p>
+        </div>
+
+        {/* Submission Guidelines Warning */}
+        <div className="mb-8">
+          <Alert className="border-red-200 bg-red-50">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <div className="ml-3">
+              <h3 className="text-lg font-semibold text-red-800 mb-2">
+                ⚠️ Important: Submission Guidelines Compliance Required
+              </h3>
+              <div className="text-red-700 space-y-2">
+                <p className="font-medium">
+                  Manuscripts that do not follow the submission guidelines and formatting requirements will be rejected without review.
+                </p>
+                <div className="bg-red-100 p-4 rounded-lg border border-red-200">
+                  <h4 className="font-semibold mb-2">Before submitting, ensure your manuscript includes:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>✓ Proper formatting according to journal standards</li>
+                    <li>✓ Complete author information for all contributors</li>
+                    <li>✓ Abstract within word limit (250 words max)</li>
+                    <li>✓ Appropriate keywords (4-8 keywords)</li>
+                    <li>✓ Proper citation format and reference list</li>
+                    <li>✓ Required sections: Introduction, Methods, Results, Discussion, Conclusion</li>
+                    <li>✓ High-quality figures and tables with proper captions</li>
+                    <li>✓ Ethics approval documentation (if applicable)</li>
+                    <li>✓ Conflict of interest declaration</li>
+                    <li>✓ Funding information</li>
+                  </ul>
+                </div>
+                <div className="flex items-center gap-4 pt-2">
+                  <Link 
+                    href="/submission-guidelines" 
+                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Read Full Guidelines
+                  </Link>
+                  <Link 
+                    href="/manuscript-template" 
+                    className="inline-flex items-center px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Alert>
         </div>
 
         {/* Progress Steps */}
@@ -419,7 +642,7 @@ function SubmitPageContent() {
             <CardDescription>{steps[currentStep - 1].description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {submissionError && currentStep < 4 && (
+            {submissionError && currentStep < 5 && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{submissionError}</AlertDescription>
@@ -492,7 +715,7 @@ function SubmitPageContent() {
                           : "text-red-500"
                         : "text-red-500"
                     }>
-                      {formData.keywords ? formData.keywords.split(',').map(k => k.trim()).filter(Boolean).length : 0}/3 keywords minimum
+                      {formData.keywords ? formData.keywords.split(',').map(k => k.trim()).filter(Boolean).length : 0}/4 keywords minimum
                     </span>
                   </p>
                 </div>
@@ -529,17 +752,47 @@ function SubmitPageContent() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Please provide information for all authors. The corresponding author will receive all
-                    communications.
+                    Please provide comprehensive information for all authors. Exactly one author must be designated as the corresponding author who will receive all communications.
                   </AlertDescription>
                 </Alert>
 
                 <div className="space-y-6">
                   {formData.authors.map((author, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <h3 className="font-semibold mb-4">
-                        Author {index + 1} {index === 0 && "(Corresponding Author)"}
-                      </h3>
+                    <div key={index} className={`border rounded-lg p-4 ${author.isCorrespondingAuthor ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          Author {index + 1}
+                          {author.isCorrespondingAuthor && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                              Corresponding Author
+                            </span>
+                          )}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          {!author.isCorrespondingAuthor && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSetCorrespondingAuthor(index)}
+                            >
+                              Set as Corresponding
+                            </Button>
+                          )}
+                          {formData.authors.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveAuthor(index)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor={`author${index}-first`}>First Name *</Label>
@@ -547,6 +800,7 @@ function SubmitPageContent() {
                             id={`author${index}-first`} 
                             value={author.firstName}
                             onChange={(e) => handleUpdateAuthor(index, 'firstName', e.target.value)}
+                            placeholder="Enter first name"
                           />
                         </div>
                         <div className="space-y-2">
@@ -555,15 +809,17 @@ function SubmitPageContent() {
                             id={`author${index}-last`} 
                             value={author.lastName}
                             onChange={(e) => handleUpdateAuthor(index, 'lastName', e.target.value)}
+                            placeholder="Enter last name"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor={`author${index}-email`}>Email *</Label>
+                          <Label htmlFor={`author${index}-email`}>Email Address *</Label>
                           <Input 
                             id={`author${index}-email`} 
                             type="email" 
                             value={author.email}
                             onChange={(e) => handleUpdateAuthor(index, 'email', e.target.value)}
+                            placeholder="author@institution.edu"
                           />
                         </div>
                         <div className="space-y-2">
@@ -575,12 +831,94 @@ function SubmitPageContent() {
                             onChange={(e) => handleUpdateAuthor(index, 'orcid', e.target.value)}
                           />
                         </div>
-                        <div className="md:col-span-2 space-y-2">
-                          <Label htmlFor={`author${index}-affiliation`}>Institutional Affiliation *</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor={`author${index}-institution`}>Institution *</Label>
+                          <Input 
+                            id={`author${index}-institution`} 
+                            value={author.institution}
+                            onChange={(e) => handleUpdateAuthor(index, 'institution', e.target.value)}
+                            placeholder="University or Research Institution"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`author${index}-department`}>Department *</Label>
+                          <Input 
+                            id={`author${index}-department`} 
+                            value={author.department}
+                            onChange={(e) => handleUpdateAuthor(index, 'department', e.target.value)}
+                            placeholder="Department or School"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`author${index}-country`}>Country *</Label>
+                          <Select 
+                            value={author.country} 
+                            onValueChange={(value) => handleUpdateAuthor(index, 'country', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Afghanistan">Afghanistan</SelectItem>
+                              <SelectItem value="Albania">Albania</SelectItem>
+                              <SelectItem value="Algeria">Algeria</SelectItem>
+                              <SelectItem value="Argentina">Argentina</SelectItem>
+                              <SelectItem value="Australia">Australia</SelectItem>
+                              <SelectItem value="Austria">Austria</SelectItem>
+                              <SelectItem value="Bangladesh">Bangladesh</SelectItem>
+                              <SelectItem value="Belgium">Belgium</SelectItem>
+                              <SelectItem value="Brazil">Brazil</SelectItem>
+                              <SelectItem value="Canada">Canada</SelectItem>
+                              <SelectItem value="China">China</SelectItem>
+                              <SelectItem value="Denmark">Denmark</SelectItem>
+                              <SelectItem value="Egypt">Egypt</SelectItem>
+                              <SelectItem value="Finland">Finland</SelectItem>
+                              <SelectItem value="France">France</SelectItem>
+                              <SelectItem value="Germany">Germany</SelectItem>
+                              <SelectItem value="Ghana">Ghana</SelectItem>
+                              <SelectItem value="Greece">Greece</SelectItem>
+                              <SelectItem value="India">India</SelectItem>
+                              <SelectItem value="Indonesia">Indonesia</SelectItem>
+                              <SelectItem value="Ireland">Ireland</SelectItem>
+                              <SelectItem value="Israel">Israel</SelectItem>
+                              <SelectItem value="Italy">Italy</SelectItem>
+                              <SelectItem value="Japan">Japan</SelectItem>
+                              <SelectItem value="Kenya">Kenya</SelectItem>
+                              <SelectItem value="Malaysia">Malaysia</SelectItem>
+                              <SelectItem value="Mexico">Mexico</SelectItem>
+                              <SelectItem value="Netherlands">Netherlands</SelectItem>
+                              <SelectItem value="New Zealand">New Zealand</SelectItem>
+                              <SelectItem value="Nigeria">Nigeria</SelectItem>
+                              <SelectItem value="Norway">Norway</SelectItem>
+                              <SelectItem value="Pakistan">Pakistan</SelectItem>
+                              <SelectItem value="Poland">Poland</SelectItem>
+                              <SelectItem value="Portugal">Portugal</SelectItem>
+                              <SelectItem value="Russia">Russia</SelectItem>
+                              <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+                              <SelectItem value="Singapore">Singapore</SelectItem>
+                              <SelectItem value="South Africa">South Africa</SelectItem>
+                              <SelectItem value="South Korea">South Korea</SelectItem>
+                              <SelectItem value="Spain">Spain</SelectItem>
+                              <SelectItem value="Sweden">Sweden</SelectItem>
+                              <SelectItem value="Switzerland">Switzerland</SelectItem>
+                              <SelectItem value="Thailand">Thailand</SelectItem>
+                              <SelectItem value="Turkey">Turkey</SelectItem>
+                              <SelectItem value="Ukraine">Ukraine</SelectItem>
+                              <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
+                              <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                              <SelectItem value="United States">United States</SelectItem>
+                              <SelectItem value="Vietnam">Vietnam</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`author${index}-affiliation`}>Full Affiliation *</Label>
                           <Input 
                             id={`author${index}-affiliation`} 
                             value={author.affiliation}
                             onChange={(e) => handleUpdateAuthor(index, 'affiliation', e.target.value)}
+                            placeholder="Complete institutional affiliation"
                           />
                         </div>
                       </div>
@@ -588,13 +926,153 @@ function SubmitPageContent() {
                   ))}
 
                   <Button variant="outline" className="w-full" onClick={handleAddAuthor}>
-                    + Add Another Author
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Another Author
                   </Button>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Author Summary</h4>
+                    <div className="text-sm text-gray-600">
+                      <p>Total Authors: {formData.authors.length}</p>
+                      <p>Corresponding Author: {formData.authors.find(a => a.isCorrespondingAuthor)?.firstName} {formData.authors.find(a => a.isCorrespondingAuthor)?.lastName || "Not designated"}</p>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
 
             {currentStep === 3 && (
+              <>
+                <div className="space-y-6">
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <AlertCircle className="h-5 w-5 text-blue-600" />
+                    <AlertDescription>
+                      <div className="text-blue-800">
+                        <h4 className="font-semibold mb-2">📝 Recommended Reviewers Guidelines</h4>
+                        <p className="text-sm mb-2">
+                          Please suggest a minimum of <strong>3 qualified reviewers</strong> who can evaluate your manuscript. 
+                          These should be experts in your field who are not co-authors and have no conflicts of interest.
+                        </p>
+                        <ul className="text-sm space-y-1">
+                          <li>• Choose reviewers who are familiar with your research area</li>
+                          <li>• Ensure suggested reviewers have recent publications in relevant journals</li>
+                          <li>• Avoid recommending close collaborators or colleagues from your institution</li>
+                          <li>• Include reviewers from different institutions and countries when possible</li>
+                          <li>• Provide accurate contact information and affiliations</li>
+                        </ul>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Recommended Reviewers
+                        <Badge variant="secondary">Minimum 3 Required</Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Suggest qualified experts to review your manuscript
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {formData.recommendedReviewers.map((reviewer, index) => (
+                        <Card key={index} className="border-gray-200">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-lg">Reviewer {index + 1}</CardTitle>
+                              {formData.recommendedReviewers.length > 3 && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRemoveRecommendedReviewer(index)}
+                                  className="text-red-600 border-red-200 hover:bg-red-50"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor={`reviewer-${index}-name`} className="text-sm font-medium">
+                                  Full Name *
+                                </Label>
+                                <Input
+                                  id={`reviewer-${index}-name`}
+                                  value={reviewer.name}
+                                  onChange={(e) => handleUpdateRecommendedReviewer(index, 'name', e.target.value)}
+                                  placeholder="Dr. John Smith"
+                                  className="mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`reviewer-${index}-email`} className="text-sm font-medium">
+                                  Email Address *
+                                </Label>
+                                <Input
+                                  id={`reviewer-${index}-email`}
+                                  type="email"
+                                  value={reviewer.email}
+                                  onChange={(e) => handleUpdateRecommendedReviewer(index, 'email', e.target.value)}
+                                  placeholder="john.smith@university.edu"
+                                  className="mt-1"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor={`reviewer-${index}-affiliation`} className="text-sm font-medium">
+                                Affiliation *
+                              </Label>
+                              <Input
+                                id={`reviewer-${index}-affiliation`}
+                                value={reviewer.affiliation}
+                                onChange={(e) => handleUpdateRecommendedReviewer(index, 'affiliation', e.target.value)}
+                                placeholder="Department of Medicine, University of Excellence, Country"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`reviewer-${index}-expertise`} className="text-sm font-medium">
+                                Area of Expertise (Optional)
+                              </Label>
+                              <Input
+                                id={`reviewer-${index}-expertise`}
+                                value={reviewer.expertise}
+                                onChange={(e) => handleUpdateRecommendedReviewer(index, 'expertise', e.target.value)}
+                                placeholder="Cardiology, Clinical Research, etc."
+                                className="mt-1"
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddRecommendedReviewer}
+                        className="w-full border-dashed border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Another Reviewer
+                      </Button>
+
+                      <Alert className="border-amber-200 bg-amber-50">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <AlertDescription className="text-amber-800">
+                          <strong>Important:</strong> The editorial team reserves the right to use additional reviewers 
+                          beyond those you recommend. Your suggestions will be considered but are not guaranteed to be selected.
+                        </AlertDescription>
+                      </Alert>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
+
+            {currentStep === 4 && (
               <>
                 <div className="space-y-6">
                   {/* Main Manuscript Upload - Required */}
@@ -611,12 +1089,12 @@ function SubmitPageContent() {
                           <Upload className="h-8 w-8 text-blue-400 mx-auto mb-2" />
                           <p className="text-sm text-blue-600 mb-3">Upload your main manuscript file</p>
                           <Button 
-                            onClick={() => handleChooseFiles('manuscript', '.pdf,.doc,.docx', false)}
+                            onClick={() => handleChooseFiles('manuscript', '.doc,.docx', false)}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
                             Choose Manuscript File
                           </Button>
-                          <p className="text-xs text-blue-500 mt-2">PDF, DOC, DOCX (Max 25MB)</p>
+                          <p className="text-xs text-blue-500 mt-2">DOC, DOCX only (Max 2MB)</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -705,7 +1183,7 @@ function SubmitPageContent() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleChooseFiles('tables', '.xlsx,.csv,.pdf,.doc,.docx')}
+                            onClick={() => handleChooseFiles('tables', '.xlsx,.csv,.doc,.docx')}
                             className="w-full"
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -896,7 +1374,7 @@ function SubmitPageContent() {
               </>
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <>
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
@@ -950,6 +1428,17 @@ function SubmitPageContent() {
                         <span className="font-medium">{formData.authors.length} author{formData.authors.length !== 1 ? 's' : ''}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-gray-600">Corresponding Author:</span>
+                        <span className="font-medium">
+                          {(() => {
+                            const correspondingAuthor = formData.authors.find(a => a.isCorrespondingAuthor)
+                            return correspondingAuthor 
+                              ? `${correspondingAuthor.firstName} ${correspondingAuthor.lastName} (${correspondingAuthor.email})`
+                              : "Not designated"
+                          })()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-gray-600">Keywords:</span>
                         <span className="font-medium">
                           {formData.keywords ? formData.keywords.split(',').length : 0} keywords
@@ -984,6 +1473,21 @@ function SubmitPageContent() {
                       </Link>
                     </Label>
                   </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="guidelines" 
+                      checked={formData.guidelinesAccepted}
+                      onCheckedChange={(checked) => handleFormChange('guidelinesAccepted', checked)}
+                    />
+                    <Label htmlFor="guidelines" className="text-sm font-medium">
+                      <span className="text-red-600">*</span> I confirm that my manuscript follows all{" "}
+                      <Link href="/submission-guidelines" className="text-blue-600 hover:underline font-semibold">
+                        submission guidelines and formatting requirements
+                      </Link>
+                      . I understand that manuscripts not meeting these requirements will be rejected without review.
+                    </Label>
+                  </div>
                 </div>
               </>
             )}
@@ -998,7 +1502,7 @@ function SubmitPageContent() {
                 Previous
               </Button>
 
-              {currentStep < 4 ? (
+              {currentStep < 5 ? (
                 <Button
                   onClick={handleNextStep}
                   className="bg-blue-600 hover:bg-blue-700"
@@ -1012,6 +1516,7 @@ function SubmitPageContent() {
                   disabled={
                     isSubmitting || 
                     !formData.termsAccepted ||
+                    !formData.guidelinesAccepted ||
                     formData.title.length < 10 ||
                     formData.abstract.length < 100 ||
                     !formData.category ||
@@ -1032,8 +1537,10 @@ function SubmitPageContent() {
 
 export default function SubmitPage() {
   return (
-    <DashboardLayout>
-      <SubmitPageContent />
-    </DashboardLayout>
+    <RouteGuard>
+      <AuthorLayout>
+        <SubmitPageContent />
+      </AuthorLayout>
+    </RouteGuard>
   )
 }

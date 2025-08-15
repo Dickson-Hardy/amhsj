@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Analytics } from "@/lib/analytics"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,9 +20,19 @@ export async function GET(request: NextRequest) {
     }
 
     const targetUserId = userId || session.user.id
-    const analytics = await Analytics.getUserAnalytics(targetUserId)
+    const result = await Analytics.getUserAnalytics(targetUserId)
     
-    return NextResponse.json(analytics)
+    if (!result.success) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Failed to fetch user analytics" 
+      }, { status: 500 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      analytics: result.analytics
+    })
   } catch (error) {
     console.error("User analytics API error:", error)
     return NextResponse.json(

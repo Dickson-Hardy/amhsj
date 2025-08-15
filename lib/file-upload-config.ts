@@ -7,15 +7,15 @@ export const FILE_UPLOAD_CONFIG = {
   MAX_TOTAL_SIZE: 100 * 1024 * 1024, // 100MB
   
   // Maximum size per individual file (in bytes)
-  MAX_FILE_SIZE: 25 * 1024 * 1024, // 25MB
+  MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
   
   // Allowed file types by category
   ALLOWED_FILE_TYPES: {
-    manuscript: ['.pdf', '.doc', '.docx'],
+    manuscript: ['.doc', '.docx'],
     figures: ['.png', '.jpg', '.jpeg', '.tiff', '.eps', '.svg'],
-    tables: ['.pdf', '.doc', '.docx', '.xlsx', '.csv'],
-    supplementary: ['.pdf', '.doc', '.docx', '.xlsx', '.csv', '.zip', '.rar'],
-    other: ['.pdf', '.doc', '.docx']
+    tables: ['.doc', '.docx', '.xlsx', '.csv'],
+    supplementary: ['.doc', '.docx', '.xlsx', '.csv', '.zip', '.rar'],
+    other: ['.doc', '.docx']
   },
   
   // Required file categories

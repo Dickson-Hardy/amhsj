@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { userApplications, users, reviewerProfiles } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
+import { sendEmail } from "@/lib/email"
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     
     if (!session?.user || (session.user as any).role !== "admin") {
       return NextResponse.json({ message: "Admin access required" }, { status: 403 })
@@ -21,21 +26,21 @@ export async function POST(
     }
     
     // 2. Update the user's role to 'reviewer'
-    const userUpdateResult = await updateUserRole(updateResult.application.email, 'reviewer')
+    const userUpdateResult = await updateUserRole(updateResult.application.userId, 'reviewer')
     if (!userUpdateResult.success) {
       console.warn('Failed to update user role:', userUpdateResult.error)
     }
     
-    // 3. Send approval email to the applicant
+    // 3. Create reviewer profile
+    await createReviewerProfile(updateResult.application)
+    
+    // 4. Send approval email to the applicant
     await sendApprovalEmail(updateResult.application)
     
-    // 4. Add them to reviewer database/list
-    await addToReviewerDatabase(updateResult.application)
-    
     // 5. Log the approval action
-    await logApplicationAction(applicationId, 'approved', session.user?.email)
+    await logApplicationAction(applicationId, 'approved', (session.user as any).email)
     
-    console.log(`Reviewer application ${applicationId} approved by ${session.user?.email}`)
+    console.log(`Reviewer application ${applicationId} approved by ${(session.user as any).email}`)
     
     return NextResponse.json({ 
       success: true, 
@@ -52,46 +57,55 @@ export async function POST(
 
 async function updateApplicationStatus(applicationId: string, status: string) {
   try {
-    // In a real implementation, this would update your database
-    // For example, with Prisma:
-    // const application = await prisma.reviewerApplication.update({
-    //   where: { id: applicationId },
-    //   data: { 
-    //     status: status,
-    //     approvedAt: new Date(),
-    //     updatedAt: new Date()
-    //   },
-    //   include: { user: true }
-    // })
-    
-    // Mock implementation
-    const mockApplication = {
-      id: applicationId,
-      firstName: "Dr. Sarah",
-      lastName: "Johnson",
-      email: "sarah.johnson@university.edu",
-      primarySpecialty: "Cardiology",
-      institution: "University Medical Center",
-      status: status
+    const [application] = await db.update(userApplications)
+      .set({ 
+        status: status,
+        reviewedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(userApplications.id, applicationId))
+      .returning()
+
+    if (!application) {
+      return { success: false, error: 'Application not found' }
     }
-    
-    return { success: true, application: mockApplication }
+
+    // Get user details
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, application.userId))
+
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    return { 
+      success: true, 
+      application: {
+        ...application,
+        firstName: user.name.split(' ')[0],
+        lastName: user.name.split(' ').slice(1).join(' '),
+        email: user.email,
+        userId: user.id
+      }
+    }
   } catch (error) {
     console.error('Error updating application status:', error)
     return { success: false, error: 'Failed to update application status' }
   }
 }
 
-async function updateUserRole(userEmail: string, newRole: string) {
+async function updateUserRole(userId: string, newRole: string) {
   try {
-    // In a real implementation, this would update the user's role in your database
-    // For example, with Prisma:
-    // const user = await prisma.user.update({
-    //   where: { email: userEmail },
-    //   data: { role: newRole }
-    // })
-    
-    console.log(`Updated user ${userEmail} role to ${newRole}`)
+    await db.update(users)
+      .set({ 
+        role: newRole,
+        applicationStatus: 'approved',
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+
+    console.log(`Updated user ${userId} role to ${newRole}`)
     return { success: true }
   } catch (error) {
     console.error('Error updating user role:', error)
@@ -99,44 +113,42 @@ async function updateUserRole(userEmail: string, newRole: string) {
   }
 }
 
-async function addToReviewerDatabase(application: any) {
+async function createReviewerProfile(application: any) {
   try {
-    // In a real implementation, this would add reviewer-specific data
-    // For example, with Prisma:
-    // await prisma.reviewer.create({
-    //   data: {
-    //     userId: application.userId,
-    //     specialties: application.secondarySpecialties,
-    //     primarySpecialty: application.primarySpecialty,
-    //     availability: 'active',
-    //     maxReviewsPerMonth: parseInt(application.reviewFrequency.split('-')[1] || '6'),
-    //     languageProficiency: application.languageProficiency,
-    //     conflictInstitutions: application.conflictInstitutions
-    //   }
-    // })
+    const applicationData = application.applicationData || {}
     
-    console.log(`Added ${application.firstName} ${application.lastName} to reviewer database`)
+    await db.insert(reviewerProfiles).values({
+      userId: application.userId,
+      availabilityStatus: 'available',
+      maxReviewsPerMonth: parseInt(applicationData.reviewFrequency?.split('-')[1] || '3'),
+      currentReviewLoad: 0,
+      completedReviews: 0,
+      lateReviews: 0,
+      qualityScore: 0,
+      isActive: true,
+      updatedAt: new Date()
+    })
+
+    console.log(`Created reviewer profile for user ${application.userId}`)
   } catch (error) {
-    console.error('Error adding to reviewer database:', error)
+    console.error('Error creating reviewer profile:', error)
+    throw error
   }
 }
 
 async function logApplicationAction(applicationId: string, action: string, adminEmail?: string, notes?: string) {
   try {
-    // In a real implementation, this would log to your database
-    // For example, with Prisma:
-    // await prisma.applicationLog.create({
-    //   data: {
-    //     applicationId: applicationId,
-    //     action: action,
-    //     performedBy: adminEmail,
-    //     notes: notes,
-    //     timestamp: new Date()
-    //   }
-    // })
+    // Create an application log entry
+    // For now, we'll log to console. In production, you might want a separate audit log table
+    const logEntry = {
+      applicationId,
+      action,
+      performedBy: adminEmail,
+      notes,
+      timestamp: new Date().toISOString()
+    }
     
-    console.log(`Action logged: ${action} on application ${applicationId} by ${adminEmail}`)
-    if (notes) console.log(`Notes: ${notes}`)
+    console.log(`Application Action Logged:`, logEntry)
   } catch (error) {
     console.error('Error logging application action:', error)
   }
@@ -144,53 +156,53 @@ async function logApplicationAction(applicationId: string, action: string, admin
 
 async function sendApprovalEmail(application: any) {
   try {
-    // In a real implementation, this would use your email service
-    // For example, with Resend, SendGrid, or Nodemailer:
-    // await emailService.send({
-    //   to: application.email,
-    //   subject: "Reviewer Application Approved - Welcome to AMHSJ",
-    //   html: generateApprovalEmailHTML(application)
-    // })
-    
     const emailContent = {
       to: application.email,
       subject: "Reviewer Application Approved - Welcome to AMHSJ",
-      body: `
-        Dear ${application.firstName} ${application.lastName},
-        
-        Congratulations! Your application to become a reviewer for the African Medical and Health Sciences Journal has been approved.
-        
-        Welcome to our expert reviewer network! As a specialist in ${application.primarySpecialty} from ${application.institution}, you bring valuable expertise to our editorial process.
-        
-        What happens next:
-        
-        1. You will receive access to our reviewer portal within 24 hours
-        2. Our editorial team will send you reviewer guidelines and best practices
-        3. You'll receive information about our review process and timeline expectations
-        4. Your first review assignment may come within the next few weeks, depending on submissions in your area of expertise
-        
-        Your commitment to advancing medical science in Africa is greatly appreciated. Together, we can maintain the highest standards of research publication and contribute to improving healthcare outcomes across the continent.
-        
-        If you have any questions, please don't hesitate to contact our editorial office.
-        
-        Welcome aboard!
-        
-        Best regards,
-        AMHSJ Editorial Team
-        African Medical and Health Sciences Journal
-        
-        ---
-        Next Steps:
-        - Check your email for reviewer portal access
-        - Review our submission guidelines at: ${process.env.NEXTAUTH_URL}/reviewer/guidelines
-        - Update your profile preferences in the reviewer portal
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Welcome to AMHSJ Reviewer Network!</h2>
+          
+          <p>Dear ${application.firstName} ${application.lastName},</p>
+          
+          <p>Congratulations! Your application to become a reviewer for the African Medical and Health Sciences Journal has been <strong>approved</strong>.</p>
+          
+          <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1e40af; margin-top: 0;">What happens next:</h3>
+            <ul style="color: #1e40af;">
+              <li>You will receive access to our reviewer portal within 24 hours</li>
+              <li>Our editorial team will send you reviewer guidelines and best practices</li>
+              <li>You'll receive information about our review process and timeline expectations</li>
+              <li>Your first review assignment may come within the next few weeks</li>
+            </ul>
+          </div>
+          
+          <p>Your commitment to advancing medical science in Africa is greatly appreciated. Together, we can maintain the highest standards of research publication and contribute to improving healthcare outcomes across the continent.</p>
+          
+          <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #92400e; margin-top: 0;">Next Steps:</h4>
+            <ul style="color: #92400e; margin-bottom: 0;">
+              <li>Check your email for reviewer portal access</li>
+              <li>Review our submission guidelines at: <a href="${process.env.NEXTAUTH_URL}/reviewer/guidelines">Reviewer Guidelines</a></li>
+              <li>Update your profile preferences in the reviewer portal</li>
+            </ul>
+          </div>
+          
+          <p>If you have any questions, please don't hesitate to contact our editorial office.</p>
+          
+          <p style="margin-top: 30px;">
+            Best regards,<br>
+            <strong>AMHSJ Editorial Team</strong><br>
+            African Medical and Health Sciences Journal
+          </p>
+        </div>
       `
     }
     
-    console.log('Approval email would be sent:', emailContent)
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sendEmail(emailContent)
+    console.log('Approval email sent successfully')
   } catch (error) {
     console.error('Error sending approval email:', error)
+    // Don't throw error - email failure shouldn't stop the approval process
   }
 }

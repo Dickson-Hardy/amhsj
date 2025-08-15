@@ -75,7 +75,7 @@ interface Appeal {
   submissionTitle: string
   author: string
   appealType: 'decision' | 'reviewer' | 'process'
-  status: 'pending' | 'under_review' | 'resolved'
+  status: 'pending' | 'technical_check' | 'under_review' | 'resolved'
   submittedDate: string
   urgency: 'high' | 'medium' | 'low'
 }
@@ -94,6 +94,7 @@ export default function EditorInChiefDashboard() {
   const [editors, setEditors] = useState<Editor[]>([])
   const [appeals, setAppeals] = useState<Appeal[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [selectedSubmission, setSelectedSubmission] = useState<string | null>(null)
 
   useEffect(() => {
@@ -102,82 +103,63 @@ export default function EditorInChiefDashboard() {
     fetchDashboardData()
   }, [session])
 
+  const refreshDashboard = async () => {
+    setRefreshing(true)
+    await fetchDashboardData()
+    setRefreshing(false)
+  }
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
       
-      // Mock data for now - replace with actual API calls
-      setMetrics({
-        totalSubmissions: 156,
-        acceptanceRate: 23.5,
-        averageReviewTime: 45,
-        impactFactor: 3.2,
-        citationsThisYear: 1250,
-        rejectionsThisMonth: 18,
-      })
-
-      setSubmissions([
-        {
-          id: "1",
-          title: "Novel Approaches to Cardiac Surgery",
-          author: "Dr. Sarah Johnson",
-          section: "Cardiology",
-          submittedDate: "2024-01-15",
-          status: "appeal_pending",
-          priority: 'high',
-          assignedEditor: "Dr. Mike Chen",
-          conflictOfInterest: false,
-          needsEICDecision: true,
-        },
-        {
-          id: "2", 
-          title: "AI Applications in Medical Diagnosis",
-          author: "Prof. Robert Smith",
-          section: "Technology",
-          submittedDate: "2024-01-10",
-          status: "editor_decision_required",
-          priority: 'high',
-          assignedEditor: "Dr. Lisa Wong",
-          conflictOfInterest: true,
-          needsEICDecision: true,
-        }
+      // Fetch real data from APIs
+      const [metricsRes, submissionsRes, editorsRes, appealsRes] = await Promise.all([
+        fetch('/api/editor-in-chief/metrics'),
+        fetch('/api/editor-in-chief/submissions?priority=high'),
+        fetch('/api/editor-in-chief/editors'),
+        fetch('/api/editor-in-chief/appeals?status=pending'),
       ])
 
-      setEditors([
-        {
-          id: "1",
-          name: "Dr. Mike Chen",
-          email: "mike.chen@amhsj.com",
-          role: "section-editor",
-          section: "Cardiology",
-          workload: 8,
-          maxWorkload: 10,
-          performance: 95,
-        },
-        {
-          id: "2",
-          name: "Dr. Lisa Wong", 
-          email: "lisa.wong@amhsj.com",
-          role: "section-editor",
-          section: "Technology",
-          workload: 12,
-          maxWorkload: 10,
-          performance: 88,
+      // Handle metrics
+      if (metricsRes.ok) {
+        const metricsData = await metricsRes.json()
+        if (metricsData.success) {
+          setMetrics(metricsData.metrics)
         }
-      ])
+      } else {
+        console.error('Failed to fetch metrics:', metricsRes.statusText)
+      }
 
-      setAppeals([
-        {
-          id: "1",
-          submissionId: "1",
-          submissionTitle: "Novel Approaches to Cardiac Surgery",
-          author: "Dr. Sarah Johnson",
-          appealType: 'decision',
-          status: 'pending',
-          submittedDate: "2024-01-20",
-          urgency: 'high',
+      // Handle submissions requiring attention
+      if (submissionsRes.ok) {
+        const submissionsData = await submissionsRes.json()
+        if (submissionsData.success) {
+          setSubmissions(submissionsData.submissions)
         }
-      ])
+      } else {
+        console.error('Failed to fetch submissions:', submissionsRes.statusText)
+      }
+
+      // Handle editors
+      if (editorsRes.ok) {
+        const editorsData = await editorsRes.json()
+        if (editorsData.success) {
+          setEditors(editorsData.editors)
+        }
+      } else {
+        console.error('Failed to fetch editors:', editorsRes.statusText)
+      }
+
+      // Handle appeals
+      if (appealsRes.ok) {
+        const appealsData = await appealsRes.json()
+        if (appealsData.success) {
+          setAppeals(appealsData.appeals)
+        }
+      } else {
+        console.error('Failed to fetch appeals:', appealsRes.statusText)
+      }
 
     } catch (error) {
       console.error('Error fetching EIC dashboard data:', error)
@@ -189,9 +171,25 @@ export default function EditorInChiefDashboard() {
   const handleFinalDecision = async (submissionId: string, decision: string) => {
     try {
       // API call to make final decision
-      console.log(`Making final decision: ${decision} for submission ${submissionId}`)
-      // Refresh data
-      fetchDashboardData()
+      const response = await fetch(`/api/submissions/${submissionId}/decision`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          decision,
+          decidedBy: session?.user?.id,
+          role: 'editor-in-chief',
+        }),
+      })
+
+      if (response.ok) {
+        console.log(`Final decision made: ${decision} for submission ${submissionId}`)
+        // Refresh data
+        await refreshDashboard()
+      } else {
+        console.error('Failed to make decision:', response.statusText)
+      }
     } catch (error) {
       console.error('Error making final decision:', error)
     }
@@ -200,8 +198,24 @@ export default function EditorInChiefDashboard() {
   const handleAppealReview = async (appealId: string, decision: string) => {
     try {
       // API call to handle appeal
-      console.log(`Appeal decision: ${decision} for appeal ${appealId}`)
-      fetchDashboardData()
+      const response = await fetch(`/api/appeals/${appealId}/handle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: decision,
+          handledBy: session?.user?.id,
+        }),
+      })
+
+      if (response.ok) {
+        console.log(`Appeal ${decision}: ${appealId}`)
+        // Refresh data
+        await refreshDashboard()
+      } else {
+        console.error('Failed to handle appeal:', response.statusText)
+      }
     } catch (error) {
       console.error('Error handling appeal:', error)
     }
@@ -246,12 +260,23 @@ export default function EditorInChiefDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Crown className="h-8 w-8 text-yellow-600" />
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Editor-in-Chief Dashboard</h1>
-          <p className="text-gray-600">Ultimate editorial authority and journal leadership</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Crown className="h-8 w-8 text-yellow-600" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Editor-in-Chief Dashboard</h1>
+            <p className="text-gray-600">Ultimate editorial authority and journal leadership</p>
+          </div>
         </div>
+        <Button 
+          onClick={refreshDashboard}
+          disabled={refreshing}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Clock className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh Data'}
+        </Button>
       </div>
 
       {/* Key Metrics */}

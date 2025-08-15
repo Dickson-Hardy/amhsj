@@ -30,7 +30,7 @@ async function addSubmissionsTable() {
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         article_id UUID REFERENCES articles(id) ON DELETE CASCADE,
         author_id UUID REFERENCES users(id) ON DELETE SET NULL,
-        status VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'submitted', 'under_review', 'accepted', 'rejected')),
+        status VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'submitted', 'technical_check', 'under_review', 'accepted', 'rejected')),
         status_history JSONB DEFAULT '[]'::jsonb,
         submitted_at TIMESTAMP WITH TIME ZONE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

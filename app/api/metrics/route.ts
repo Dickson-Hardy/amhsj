@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { register, collectDefaultMetrics, Counter, Histogram, Gauge } from 'prom-client';
+import { db } from "@/lib/db"
+import { sql } from "drizzle-orm"
 
 // Collect default metrics
 collectDefaultMetrics({ register });
@@ -60,28 +64,15 @@ const redisConnections = new Gauge({
 
 export async function GET() {
   try {
-    // Update custom metrics with current values
-    // You would typically fetch these from your database
+    const session = await getServerSession(authOptions)
     
-    // Example: Update articles count (replace with actual database queries)
-    // const db = await getDatabase();
-    // const articleCounts = await db.select().from(articles).groupBy(articles.status);
-    // articleCounts.forEach(count => {
-    //   articlesTotal.set({ status: count.status }, count.count);
-    // });
+    // Only admin and monitoring systems can access metrics
+    if (!session || (session.user?.role !== "admin" && session.user?.role !== "monitoring")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-    // For now, setting example values
-    articlesTotal.set({ status: 'published' }, 150);
-    articlesTotal.set({ status: 'under_review' }, 45);
-    articlesTotal.set({ status: 'draft' }, 23);
-    
-    reviewsTotal.set({ status: 'pending' }, 67);
-    reviewsTotal.set({ status: 'completed' }, 203);
-    
-    submissionsToday.set(8);
-    activeUsers.set(12);
-    databaseConnections.set(5);
-    redisConnections.set(3);
+    // Update custom metrics with real database values
+    await updateMetricsFromDatabase()
 
     const metrics = await register.metrics();
     
@@ -97,6 +88,62 @@ export async function GET() {
       { error: 'Failed to generate metrics' },
       { status: 500 }
     );
+  }
+}
+
+async function updateMetricsFromDatabase() {
+  try {
+    // Get article counts by status
+    const articleCounts = await db.execute(sql`
+      SELECT status, COUNT(*) as count 
+      FROM articles 
+      GROUP BY status
+    `)
+    
+    articleCounts.forEach((row: any) => {
+      articlesTotal.set({ status: row.status }, parseInt(row.count))
+    })
+
+    // Get review counts by status
+    const reviewCounts = await db.execute(sql`
+      SELECT status, COUNT(*) as count 
+      FROM reviews 
+      GROUP BY status
+    `)
+    
+    reviewCounts.forEach((row: any) => {
+      reviewsTotal.set({ status: row.status }, parseInt(row.count))
+    })
+
+    // Get today's submissions
+    const todaySubmissions = await db.execute(sql`
+      SELECT COUNT(*) as count 
+      FROM articles 
+      WHERE DATE(created_at) = CURRENT_DATE
+    `)
+    
+    submissionsToday.set(parseInt((todaySubmissions[0] as any)?.count || '0'))
+
+    // Get active users (logged in within last hour)
+    const activeUsersResult = await db.execute(sql`
+      SELECT COUNT(DISTINCT user_id) as count 
+      FROM page_views 
+      WHERE created_at >= NOW() - INTERVAL '1 hour'
+    `)
+    
+    activeUsers.set(parseInt((activeUsersResult[0] as any)?.count || '0'))
+
+    // Database connection metrics (approximate)
+    databaseConnections.set(5) // This would come from connection pool stats
+    redisConnections.set(3) // This would come from Redis connection stats
+
+  } catch (error) {
+    console.error('Error updating metrics from database:', error)
+    // Set default values on error
+    articlesTotal.set({ status: 'published' }, 0)
+    reviewsTotal.set({ status: 'pending' }, 0)
+    submissionsToday.set(0)
+    activeUsers.set(0)
   }
 }
 

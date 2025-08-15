@@ -20,8 +20,15 @@ interface Article {
   status: string
   volume?: string
   issue?: string
-  authors: Array<{ firstName: string; lastName: string }>
+  author?: string
+  authorEmail?: string
+  coAuthors?: Array<{ firstName: string; lastName: string }>
   publishedDate?: string
+}
+
+interface CoAuthor {
+  firstName: string
+  lastName: string
 }
 
 export default function DOIManagementPage() {
@@ -146,15 +153,23 @@ export default function DOIManagementPage() {
     try {
       const csvContent = [
         ['Title', 'DOI', 'Status', 'Volume', 'Issue', 'Registered Date', 'Authors'].join(','),
-        ...articles.map(article => [
-          `"${article.title}"`,
-          article.doi || '',
-          article.doiRegistered ? 'Registered' : (article.doi ? 'Pending' : 'No DOI'),
-          article.volume || '',
-          article.issue || '',
-          article.doiRegisteredAt ? new Date(article.doiRegisteredAt).toLocaleDateString() : '',
-          `"${article.authors.map(a => `${a.firstName} ${a.lastName}`).join('; ')}"`
-        ].join(','))
+        ...articles.map(article => {
+          const authorNames = article.author || 'Unknown Author'
+          const coAuthorNames = article.coAuthors && Array.isArray(article.coAuthors) && article.coAuthors.length > 0 
+            ? (article.coAuthors || []).map((a: CoAuthor) => (a.firstName || '') + ' ' + (a.lastName || '')).join('; ')
+            : ''
+          const allAuthors = coAuthorNames ? authorNames + '; ' + coAuthorNames : authorNames
+          
+          return [
+            '"' + (article.title || '') + '"',
+            article.doi || '',
+            article.doiRegistered ? 'Registered' : (article.doi ? 'Pending' : 'No DOI'),
+            article.volume || '',
+            article.issue || '',
+            article.doiRegisteredAt ? new Date(article.doiRegisteredAt).toLocaleDateString() : '',
+            '"' + allAuthors + '"'
+          ].join(',')
+        })
       ].join('\n')
 
       const blob = new Blob([csvContent], { type: 'text/csv' })
@@ -174,10 +189,12 @@ export default function DOIManagementPage() {
   }
 
   const filteredArticles = articles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.authors.some(author => 
-        `${author.firstName} ${author.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    const authorMatch = (article.author || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const coAuthorMatch = article.coAuthors && Array.isArray(article.coAuthors) && (article.coAuthors || []).some((author: CoAuthor) => 
+      `${author.firstName || ''} ${author.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      authorMatch || coAuthorMatch
     
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'registered' && article.doiRegistered) ||
@@ -303,11 +320,18 @@ export default function DOIManagementPage() {
                   
                   <TableCell>
                     <div className="text-sm">
-                      {article.authors.slice(0, 2).map((author, idx) => (
-                        <div key={idx}>{author.firstName} {author.lastName}</div>
-                      ))}
-                      {article.authors.length > 2 && (
-                        <div className="text-gray-500">+{article.authors.length - 2} more</div>
+                      <div>{article.author || 'Unknown Author'}</div>
+                      {article.coAuthors && Array.isArray(article.coAuthors) && article.coAuthors.length > 0 && (
+                        <>
+                          {(article.coAuthors || []).slice(0, 1).map((author, idx) => (
+                            <div key={idx}>
+                              {author?.firstName || ''} {author?.lastName || ''}
+                            </div>
+                          ))}
+                          {(article.coAuthors || []).length > 1 && (
+                            <div className="text-gray-500">+{(article.coAuthors || []).length - 1} more</div>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>

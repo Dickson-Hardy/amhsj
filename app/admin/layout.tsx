@@ -1,13 +1,14 @@
 import type React from "react"
+import AdminLayout from "@/components/layouts/admin-layout"
 
-export default function AdminLayout({
+export default function AdminLayoutWrapper({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="h-screen overflow-hidden bg-slate-50">
+    <AdminLayout>
       {children}
-    </div>
+    </AdminLayout>
   )
 }

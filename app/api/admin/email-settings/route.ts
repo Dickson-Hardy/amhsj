@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { db } from "@/lib/db"
+import { sql } from "drizzle-orm"
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || session.user?.role !== "admin") {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const settings = await loadEmailSettings()
+    
+    return NextResponse.json({
+      success: true,
+      data: settings
+    })
+    
+  } catch (error) {
+    console.error("Error loading email settings:", error)
+    return NextResponse.json(
+      { error: "Failed to load email settings" },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,30 +64,114 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function loadEmailSettings() {
+  try {
+    const result = await db.execute(sql`
+      SELECT * FROM email_settings WHERE id = 'default'
+    `)
+    
+    if (result.length > 0) {
+      const settings = result[0] as any
+      return {
+        submissionConfirmations: settings.submission_confirmations,
+        reviewAssignments: settings.review_assignments,
+        publicationNotifications: settings.publication_notifications,
+        reviewerReminders: settings.reviewer_reminders,
+        authorNotifications: settings.author_notifications,
+        editorNotifications: settings.editor_notifications,
+        deadlineReminders: settings.deadline_reminders,
+        smtpSettings: {
+          server: settings.smtp_server,
+          port: settings.smtp_port,
+          username: settings.smtp_username,
+          password: settings.smtp_password ? "****" : "",
+          fromEmail: settings.from_email,
+          fromName: settings.from_name
+        }
+      }
+    }
+    
+    // Return default settings if none found
+    return {
+      submissionConfirmations: true,
+      reviewAssignments: true,
+      publicationNotifications: true,
+      reviewerReminders: true,
+      authorNotifications: true,
+      editorNotifications: true,
+      deadlineReminders: true,
+      smtpSettings: {
+        server: "",
+        port: 587,
+        username: "",
+        password: "",
+        fromEmail: "noreply@amjhs.com",
+        fromName: "Academic Medical Journal of Health Sciences"
+      }
+    }
+  } catch (error) {
+    console.error('Error loading email settings:', error)
+    throw new Error('Failed to load email settings')
+  }
+}
+
 async function saveEmailSettings(emailSettings: any) {
   try {
-    // In a real implementation, save to your database:
-    // await prisma.emailSettings.upsert({
-    //   where: { id: 'default' },
-    //   update: {
-    //     submissionConfirmations: emailSettings.submissionConfirmations,
-    //     reviewAssignments: emailSettings.reviewAssignments,
-    //     publicationNotifications: emailSettings.publicationNotifications,
-    //     updatedAt: new Date()
-    //   },
-    //   create: {
-    //     id: 'default',
-    //     submissionConfirmations: emailSettings.submissionConfirmations ?? true,
-    //     reviewAssignments: emailSettings.reviewAssignments ?? true,
-    //     publicationNotifications: emailSettings.publicationNotifications ?? true,
-    //     createdAt: new Date(),
-    //     updatedAt: new Date()
-    //   }
-    // })
+    // Save to database using raw SQL for flexibility
+    await db.execute(sql`
+      INSERT INTO email_settings (
+        id, 
+        submission_confirmations, 
+        review_assignments, 
+        publication_notifications,
+        reviewer_reminders,
+        author_notifications,
+        editor_notifications,
+        deadline_reminders,
+        smtp_server,
+        smtp_port,
+        smtp_username,
+        smtp_password,
+        from_email,
+        from_name,
+        updated_at
+      )
+      VALUES (
+        'default',
+        ${emailSettings.submissionConfirmations || true},
+        ${emailSettings.reviewAssignments || true},
+        ${emailSettings.publicationNotifications || true},
+        ${emailSettings.reviewerReminders || true},
+        ${emailSettings.authorNotifications || true},
+        ${emailSettings.editorNotifications || true},
+        ${emailSettings.deadlineReminders || true},
+        ${emailSettings.smtpSettings?.server || ''},
+        ${emailSettings.smtpSettings?.port || 587},
+        ${emailSettings.smtpSettings?.username || ''},
+        ${emailSettings.smtpSettings?.password || ''},
+        ${emailSettings.smtpSettings?.fromEmail || 'noreply@amjhs.com'},
+        ${emailSettings.smtpSettings?.fromName || 'Academic Medical Journal of Health Sciences'},
+        NOW()
+      )
+      ON CONFLICT (id) 
+      DO UPDATE SET 
+        submission_confirmations = ${emailSettings.submissionConfirmations || true},
+        review_assignments = ${emailSettings.reviewAssignments || true},
+        publication_notifications = ${emailSettings.publicationNotifications || true},
+        reviewer_reminders = ${emailSettings.reviewerReminders || true},
+        author_notifications = ${emailSettings.authorNotifications || true},
+        editor_notifications = ${emailSettings.editorNotifications || true},
+        deadline_reminders = ${emailSettings.deadlineReminders || true},
+        smtp_server = ${emailSettings.smtpSettings?.server || ''},
+        smtp_port = ${emailSettings.smtpSettings?.port || 587},
+        smtp_username = ${emailSettings.smtpSettings?.username || ''},
+        smtp_password = ${emailSettings.smtpSettings?.password || ''},
+        from_email = ${emailSettings.smtpSettings?.fromEmail || 'noreply@amjhs.com'},
+        from_name = ${emailSettings.smtpSettings?.fromName || 'Academic Medical Journal of Health Sciences'},
+        updated_at = NOW()
+    `)
     
-    console.log("Email settings saved:", emailSettings)
-    // Simulate database operation
-    await new Promise(resolve => setTimeout(resolve, 100))
+    console.log("Email settings saved to database:", emailSettings)
   } catch (error) {
     console.error('Error saving email settings:', error)
     throw new Error('Failed to save email settings to database')
@@ -67,18 +180,15 @@ async function saveEmailSettings(emailSettings: any) {
 
 async function logEmailSettingsChange(adminEmail: string, settings: any) {
   try {
-    // In a real implementation, log the change:
-    // await prisma.adminLog.create({
-    //   data: {
-    //     action: 'EMAIL_SETTINGS_UPDATED',
-    //     performedBy: adminEmail,
-    //     details: JSON.stringify(settings),
-    //     timestamp: new Date()
-    //   }
-    // })
+    // Log to admin_logs table
+    await db.execute(sql`
+      INSERT INTO admin_logs (action, performed_by, details, created_at)
+      VALUES ('EMAIL_SETTINGS_UPDATED', ${adminEmail}, ${JSON.stringify(settings)}, NOW())
+    `)
     
     console.log(`Email settings change logged by ${adminEmail}:`, settings)
   } catch (error) {
     console.error('Error logging email settings change:', error)
+    // Don't fail the request if logging fails
   }
 }

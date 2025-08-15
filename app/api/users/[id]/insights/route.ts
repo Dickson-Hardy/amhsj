@@ -17,7 +17,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get insights data for the user
+    // Get insights data for the user  
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
@@ -95,7 +95,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       }
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const id = params.id;
     logError(error as Error, { endpoint: `/api/users/${id}/insights` })
     return NextResponse.json({ success: false, error: "Failed to fetch insights" }, { status: 500 })

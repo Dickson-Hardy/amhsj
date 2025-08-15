@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { RouteGuard } from "@/components/route-guard"
 import AuthorLayout from "@/components/layouts/author-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import CommunicationCenter from "@/components/communication-center"
 import { SectionLoading } from "@/components/modern-loading"
 import { handleError, handleApiError } from "@/lib/modern-error-handler"
@@ -96,10 +97,16 @@ const getStatusConfig = (status: string) => {
       icon: <Clock className="h-3 w-3" />,
       description: "Under initial review by editorial team"
     },
+    technical_check: {
+      label: "Technical Check",
+      color: "bg-purple-100 text-purple-800 border-purple-300",
+      icon: <Eye className="h-3 w-3" />,
+      description: "Under technical and editorial assessment"
+    },
     under_review: {
       label: "Under Review",
       color: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      icon: <Eye className="h-3 w-3" />,
+      icon: <Users className="h-3 w-3" />,
       description: "Being evaluated by peer reviewers"
     },
     revision_requested: {
@@ -136,6 +143,7 @@ const getPriorityColor = (priority: string) => {
 export default function DashboardPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [stats, setStats] = useState<DashboardStats>({
     totalSubmissions: 0,
     medicalSubmissions: 0,
@@ -148,6 +156,22 @@ export default function DashboardPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [fetching, setFetching] = useState(false)
+  
+  // Get the active tab from URL parameters, default to "overview"
+  const activeTab = searchParams.get('tab') || 'overview'
+  const activeFilter = searchParams.get('filter') || 'all'
+  
+  // Handle tab changes by updating URL
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'overview') {
+      params.delete('tab')
+    } else {
+      params.set('tab', value)
+    }
+    const newUrl = params.toString() ? `?${params.toString()}` : '/dashboard'
+    router.push(newUrl)
+  }
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [performanceInsights, setPerformanceInsights] = useState<PerformanceInsight[]>([])
 
@@ -187,105 +211,171 @@ export default function DashboardPage() {
     }
   ]
 
+  // Editor section state
+  const [userSection, setUserSection] = useState<string>("General")
+  const [availableSections, setAvailableSections] = useState<string[]>(["General"])
+  const [isEditor, setIsEditor] = useState(false)
+
   useEffect(() => {
-    async function fetchDashboardData() {
-      if (!session?.user?.id || fetching) return
+    const allowedRoles = ["section-editor", "managing-editor", "editor-in-chief", "admin"]
+    const userIsEditor = allowedRoles.includes(session?.user?.role || "")
+    setIsEditor(userIsEditor)
 
-      try {
-        setLoading(true)
-        setFetching(true)
-        
-        const [statsRes, submissionsRes, activitiesRes, insightsRes] = await Promise.all([
-          fetch(`/api/users/${session.user.id}/stats`),
-          fetch(`/api/users/${session.user.id}/submissions`),
-          fetch(`/api/users/${session.user.id}/activities`),
-          fetch(`/api/users/${session.user.id}/insights`),
-        ])
-
-        // Handle API errors with modern error handling
-        if (!statsRes.ok) {
-          handleApiError(statsRes, { 
-            component: 'dashboard', 
-            action: 'fetch_stats' 
-          })
-          return
-        }
-
-        if (!submissionsRes.ok) {
-          handleApiError(submissionsRes, { 
-            component: 'dashboard', 
-            action: 'fetch_submissions' 
-          })
-          return
-        }
-
-        const statsData = await statsRes.json()
-        const submissionsData = await submissionsRes.json()
-        const activitiesData = activitiesRes.ok ? await activitiesRes.json() : { success: false }
-        const insightsData = insightsRes.ok ? await insightsRes.json() : { success: false }
-
-        if (statsData.success) {
-          setStats({
-            ...statsData.stats,
-            pendingActions: 2,
-            averageReviewTime: 45,
-          })
-          
-          // Show success toast for first-time users only once
-          if (statsData.stats.totalSubmissions === 0 && !localStorage.getItem('welcomeShown')) {
-            toast.info("Welcome to your dashboard! Start by submitting your first research article.")
-            localStorage.setItem('welcomeShown', 'true')
-          }
-        }
-
-        if (submissionsData.success) {
-          // Enhance submissions with UX data
-          const enhancedSubmissions = submissionsData.submissions.map((sub: any) => ({
-            ...sub,
-            progress: getSubmissionProgress(sub.status),
-            priority: getSubmissionPriority(sub.status, sub.submittedDate),
-            actionRequired: sub.status === "revision_requested" || sub.status === "awaiting_response",
-          }))
-          setSubmissions(enhancedSubmissions)
-        }
-
-        // Handle recent activities
-        if (activitiesData.success && activitiesData.activities) {
-          setRecentActivities(activitiesData.activities)
-        } else {
-          // Fallback to generating activities from submissions if API doesn't exist
-          const generatedActivities = generateActivitiesFromSubmissions(submissionsData.submissions || [])
-          setRecentActivities(generatedActivities)
-        }
-
-        // Handle performance insights
-        if (insightsData.success && insightsData.insights) {
-          setPerformanceInsights(insightsData.insights)
-        } else {
-          // Generate insights from available stats
-          const generatedInsights = generateInsightsFromStats(statsData.stats || stats)
-          setPerformanceInsights(generatedInsights)
-        }
-        
-      } catch (error) {
-        handleError(error, { 
-          component: 'dashboard', 
-          action: 'fetch_dashboard_data',
-          userId: session?.user?.id || 'unknown'
-        })
-      } finally {
-        setLoading(false)
-        setFetching(false)
-      }
-    }
+    if (!session?.user?.id || fetching) return
 
     fetchDashboardData()
-  }, [session?.user?.id])
+  }, [session])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setFetching(true)
+      
+      // First get user profile to determine section
+      if (isEditor) {
+        const profileRes = await fetch('/api/user/profile')
+        if (profileRes.ok) {
+          const profileData = await profileRes.json()
+          if (profileData.success) {
+            setUserSection(profileData.profile.primarySection)
+            setAvailableSections(profileData.profile.availableSections)
+          }
+        }
+      }
+
+      // Determine which APIs to call based on user role
+      const apiCalls = isEditor 
+        ? await fetchEditorDashboardData()
+        : await fetchAuthorDashboardData()
+
+      // Process the API responses
+      await processApiResponses(apiCalls)
+        
+    } catch (error) {
+      handleError(error, { 
+        component: 'dashboard', 
+        action: 'fetch_dashboard_data',
+        userId: session?.user?.id || 'unknown'
+      })
+    } finally {
+      setLoading(false)
+      setFetching(false)
+    }
+  }
+
+  const fetchEditorDashboardData = async (section?: string) => {
+    // For editors, fetch section-specific data
+    const sectionToUse = section || userSection
+    const encodedSection = encodeURIComponent(sectionToUse)
+    
+    return Promise.all([
+      fetch(`/api/sections/${encodedSection}/stats`),
+      fetch(`/api/sections/${encodedSection}/submissions?limit=20`),
+      fetch(`/api/user/profile`),
+      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => ({ ok: false })),
+    ])
+  }
+
+  const fetchAuthorDashboardData = async () => {
+    // For authors, fetch personal data
+    return Promise.all([
+      fetch(`/api/users/${session?.user?.id}/stats`),
+      fetch(`/api/users/${session?.user?.id}/submissions`),
+      fetch(`/api/users/${session?.user?.id}/activities`).catch(() => ({ ok: false })),
+      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => ({ ok: false })),
+    ])
+  }
+
+  const processApiResponses = async ([statsRes, submissionsRes, activitiesRes, insightsRes]: Response[]) => {
+    // Handle API errors with modern error handling
+    if (!statsRes.ok) {
+      handleApiError(statsRes, { 
+        component: 'dashboard', 
+        action: 'fetch_stats' 
+      })
+      return
+    }
+
+    if (!submissionsRes.ok) {
+      handleApiError(submissionsRes, { 
+        component: 'dashboard', 
+        action: 'fetch_submissions' 
+      })
+      return
+    }
+
+    const statsData = await statsRes.json()
+    const submissionsData = await submissionsRes.json()
+    const activitiesData = activitiesRes.ok ? await activitiesRes.json() : { success: false }
+    const insightsData = insightsRes.ok ? await insightsRes.json() : { success: false }
+
+    if (statsData.success) {
+      if (isEditor) {
+        // Map section stats to dashboard stats format
+        setStats({
+          totalSubmissions: statsData.stats.totalSubmissions,
+          medicalSubmissions: Math.floor(statsData.stats.totalSubmissions * 0.7), // Estimate
+          underReview: statsData.stats.technicalCheck + statsData.stats.underReview,
+          published: statsData.stats.published,
+          totalDownloads: 0, // Not available in section stats
+          pendingActions: statsData.stats.pendingActions,
+          averageReviewTime: statsData.stats.averageReviewTime,
+        })
+      } else {
+        // Author stats
+        setStats({
+          ...statsData.stats,
+          pendingActions: 0,
+          averageReviewTime: 0,
+        })
+      }
+    } else {
+      // Keep default empty state
+      setStats({
+        totalSubmissions: 0,
+        medicalSubmissions: 0,
+        underReview: 0,
+        published: 0,
+        totalDownloads: 0,
+        pendingActions: 0,
+        averageReviewTime: 0,
+      })
+    }
+
+    if (submissionsData.success) {
+      // Enhance submissions with UX data
+      const enhancedSubmissions = submissionsData.submissions.map((sub: any) => ({
+        ...sub,
+        progress: getSubmissionProgress(sub.status),
+        priority: getSubmissionPriority(sub.status, sub.submittedDate),
+        actionRequired: sub.status === "revision_requested" || sub.status === "technical_check",
+      }))
+      setSubmissions(enhancedSubmissions)
+    } else {
+      setSubmissions([])
+    }
+
+    // Handle recent activities
+    if (activitiesData.success && activitiesData.activities) {
+      setRecentActivities(activitiesData.activities)
+    } else {
+      // Generate activities from submissions if no activities API
+      setRecentActivities(generateActivitiesFromSubmissions(submissionsData.submissions || []))
+    }
+
+    // Handle performance insights
+    if (insightsData.success && insightsData.insights) {
+      setPerformanceInsights(insightsData.insights)
+    } else {
+      setPerformanceInsights([])
+    }
+  }
 
   const getSubmissionProgress = (status: string): number => {
     switch (status) {
       case "submitted": return 25;
-      case "under_review": return 50;
+      case "technical_check": return 40;
+      case "under_review": return 60;
       case "revision_requested": return 75;
       case "accepted": return 100;
       case "published": return 100;
@@ -297,6 +387,7 @@ export default function DashboardPage() {
     const daysSinceSubmission = Math.floor((Date.now() - new Date(submittedDate).getTime()) / (1000 * 60 * 60 * 24))
     
     if (status === "revision_requested") return "high"
+    if (status === "technical_check" && daysSinceSubmission > 30) return "high"
     if (status === "under_review" && daysSinceSubmission > 60) return "high"
     if (daysSinceSubmission > 30) return "medium"
     return "low"
@@ -323,9 +414,13 @@ export default function DashboardPage() {
           activityType = 'submission'
           description = `New submission: "${submission.title}"`
           break
+        case 'technical_check':
+          activityType = 'review'
+          description = `Technical check in progress for "${submission.title}"`
+          break
         case 'under_review':
           activityType = 'review'
-          description = `Review in progress for "${submission.title}"`
+          description = `Under peer review: "${submission.title}"`
           break
         case 'published':
           activityType = 'publication'
@@ -384,6 +479,33 @@ export default function DashboardPage() {
   }
 
   const renderSubmissionsView = () => {
+    // Filter submissions based on URL parameter
+    const filteredSubmissions = submissions.filter(submission => {
+      if (activeFilter === 'revisions') {
+        return submission.status === 'revision_requested'
+      }
+      if (activeFilter === 'published') {
+        return submission.status === 'published' || submission.status === 'accepted'
+      }
+      return true // 'all' or no filter
+    })
+
+    const handleFilterChange = (filter: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (filter === 'All') {
+        params.delete('filter')
+      } else {
+        const filterMap: { [key: string]: string } = {
+          'Technical Check': 'technical_check',
+          'Under Review': 'under_review',
+          'Published': 'published', 
+          'Revision Needed': 'revisions'
+        }
+        params.set('filter', filterMap[filter] || filter.toLowerCase())
+      }
+      router.push(`?${params.toString()}`)
+    }
+
     return (
       <div className="space-y-6">
         {/* Filter Bar */}
@@ -393,11 +515,25 @@ export default function DashboardPage() {
             <span className="text-sm font-medium text-slate-700">Filter:</span>
           </div>
           <div className="flex gap-2">
-            {["All", "Under Review", "Published", "Revision Needed"].map((filter) => (
-              <Button key={filter} variant="outline" size="sm" className="h-8">
-                {filter}
-              </Button>
-            ))}
+            {["All", "Technical Check", "Under Review", "Published", "Revision Needed"].map((filter) => {
+              const isActive = (filter === 'All' && activeFilter === 'all') ||
+                             (filter === 'Technical Check' && activeFilter === 'technical_check') ||
+                             (filter === 'Under Review' && activeFilter === 'under_review') ||
+                             (filter === 'Published' && activeFilter === 'published') ||
+                             (filter === 'Revision Needed' && activeFilter === 'revisions')
+              
+              return (
+                <Button 
+                  key={filter} 
+                  variant={isActive ? "default" : "outline"} 
+                  size="sm" 
+                  className="h-8"
+                  onClick={() => handleFilterChange(filter)}
+                >
+                  {filter}
+                </Button>
+              )
+            })}
           </div>
           <div className="ml-auto flex items-center gap-2">
             <SortDesc className="h-4 w-4 text-slate-400" />
@@ -407,7 +543,7 @@ export default function DashboardPage() {
 
         {/* Submissions List */}
         <div className="space-y-4">
-          {submissions.length === 0 ? (
+          {filteredSubmissions.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
                 <div className="text-slate-400 mb-4">
@@ -424,7 +560,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           ) : (
-            submissions.map((submission) => {
+            filteredSubmissions.map((submission) => {
               const statusConfig = getStatusConfig(submission.status)
               return (
                 <Card key={submission.id} className="hover:shadow-lg transition-all duration-200">
@@ -518,7 +654,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="space-y-4">
-          {submissions.filter(s => s.status === "under_review" || s.status === "revision_requested").map((submission) => {
+          {submissions.filter(s => s.status === "technical_check" || s.status === "under_review" || s.status === "revision_requested").map((submission) => {
             const statusConfig = getStatusConfig(submission.status)
             return (
               <Card key={submission.id} className="hover:shadow-md transition-shadow">
@@ -691,9 +827,77 @@ export default function DashboardPage() {
 
 
 
+  // Section change handler for editors
+  const handleSectionChange = async (newSection: string) => {
+    setUserSection(newSection)
+    setLoading(true)
+    setFetching(true)
+    
+    try {
+      // Fetch data for the new section
+      const [statsRes, submissionsRes] = await fetchEditorDashboardData(newSection)
+      await processApiResponses([statsRes, submissionsRes, { ok: false }, { ok: false }])
+    } catch (error) {
+      handleError(error, { 
+        component: 'dashboard', 
+        action: 'section_change',
+        section: newSection
+      })
+    } finally {
+      setLoading(false)
+      setFetching(false)
+    }
+  }
+
   return (
     <RouteGuard allowedRoles={["author", "reviewer", "editor", "admin"]}>
       <AuthorLayout>
+        {/* Section Selector for Editors */}
+        {isEditor && availableSections.length > 1 && (
+          <div className="mb-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">Editorial Dashboard</h2>
+                    <p className="text-sm text-slate-600">Manage submissions in your assigned sections</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-slate-500" />
+                      <span className="text-sm font-medium text-slate-700">Section:</span>
+                    </div>
+                    <Select value={userSection} onValueChange={handleSectionChange}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSections.map((section) => (
+                          <SelectItem key={section} value={section}>
+                            {section}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Current Section Badge for Single Section Editors */}
+        {isEditor && availableSections.length === 1 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-slate-500" />
+              <span className="text-sm font-medium text-slate-700">Managing Section:</span>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                {userSection}
+              </Badge>
+            </div>
+          </div>
+        )}
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {quickStats.map((stat, index) => {
@@ -761,7 +965,7 @@ export default function DashboardPage() {
         )}
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="submissions">My Research</TabsTrigger>

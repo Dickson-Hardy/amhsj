@@ -32,7 +32,7 @@ test.describe("Article Submission Flow", () => {
     await page.click('[data-testid="next-step"]')
 
     // Step 3: Files & Documents
-    await page.setInputFiles('[data-testid="manuscript-upload"]', "test-files/sample-manuscript.pdf")
+    await page.setInputFiles('[data-testid="manuscript-upload"]', "test-files/sample-manuscript.docx")
     await page.check('[data-testid="copyright-form"]')
     await page.check('[data-testid="cover-letter"]')
     await page.click('[data-testid="next-step"]')

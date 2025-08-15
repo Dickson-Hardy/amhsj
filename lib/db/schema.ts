@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, uuid, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, integer, boolean, uuid, jsonb, serial, varchar } from "drizzle-orm/pg-core"
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -297,6 +297,130 @@ export const emailLogs = pgTable("email_logs", {
   sentAt: timestamp("sent_at").defaultNow(),
   failureReason: text("failure_reason"),
   metadata: jsonb("metadata").$type<Record<string, any>>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// News and announcements table
+export const news = pgTable("news", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  type: text("type").notNull().default("news"), // news, announcement, special_issue, editorial
+  category: text("category"), // general, research, editorial, events
+  authorId: uuid("author_id").references(() => users.id),
+  authorName: varchar("author_name", { length: 255 }),
+  isPublished: boolean("is_published").default(false),
+  publishedAt: timestamp("published_at"),
+  featuredImage: text("featured_image"),
+  tags: text("tags").array(),
+  slug: varchar("slug", { length: 255 }).unique(),
+  metaDescription: text("meta_description"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Advertisements table
+export const advertisements = pgTable("advertisements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  imageUrl: text("image_url").notNull(),
+  targetUrl: text("target_url"),
+  position: text("position").notNull(), // sidebar-top, sidebar-bottom, header, footer, content
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"),
+  clickCount: integer("click_count").default(0),
+  impressionCount: integer("impression_count").default(0),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Editor assignments table for tracking assignment requests and responses
+export const editorAssignments = pgTable("editor_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").references(() => articles.id).notNull(),
+  editorId: uuid("editor_id").references(() => users.id).notNull(),
+  
+  // Assignment details
+  assignedBy: uuid("assigned_by").references(() => users.id),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  deadline: timestamp("deadline").notNull(),
+  
+  // Editor response
+  status: text("status").notNull().default("pending"), // pending, accepted, declined, expired
+  responseAt: timestamp("response_at"),
+  
+  // Conflict of interest declaration
+  conflictDeclared: boolean("conflict_declared").default(false),
+  conflictDetails: text("conflict_details"),
+  
+  // Assignment metadata
+  assignmentReason: text("assignment_reason"),
+  systemGenerated: boolean("system_generated").default(true),
+  
+  // Response details
+  declineReason: text("decline_reason"),
+  editorComments: text("editor_comments"),
+  
+  // Tracking
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Recommended reviewers table for author suggestions
+export const recommendedReviewers = pgTable("recommended_reviewers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").references(() => articles.id).notNull(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  affiliation: text("affiliation").notNull(),
+  expertise: text("expertise"),
+  suggestedBy: uuid("suggested_by").references(() => users.id),
+  status: text("status").notNull().default("suggested"), // suggested, contacted, accepted, declined, unavailable
+  contactAttempts: integer("contact_attempts").default(0),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Review invitations table for managing reviewer invitations and deadlines
+export const reviewInvitations = pgTable("review_invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").references(() => articles.id).notNull(),
+  reviewerId: uuid("reviewer_id").references(() => users.id),
+  reviewerEmail: text("reviewer_email").notNull(),
+  reviewerName: text("reviewer_name").notNull(),
+  
+  // Invitation details
+  invitedBy: uuid("invited_by").references(() => users.id),
+  invitedAt: timestamp("invited_at").defaultNow(),
+  
+  // Deadlines and reminders
+  responseDeadline: timestamp("response_deadline").notNull(), // 7 days to respond
+  reviewDeadline: timestamp("review_deadline"), // 21 days from acceptance
+  
+  // Status tracking
+  status: text("status").notNull().default("pending"), // pending, accepted, declined, expired, withdrawn
+  responseAt: timestamp("response_at"),
+  
+  // Reminder system
+  firstReminderSent: timestamp("first_reminder_sent"),
+  finalReminderSent: timestamp("final_reminder_sent"),
+  withdrawnAt: timestamp("withdrawn_at"),
+  
+  // Review completion
+  reviewSubmittedAt: timestamp("review_submitted_at"),
+  completedAt: timestamp("completed_at"),
+  
+  // Metadata
+  invitationToken: text("invitation_token").unique(),
+  declineReason: text("decline_reason"),
+  editorNotes: text("editor_notes"),
+  
+  // Tracking
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })

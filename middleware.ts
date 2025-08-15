@@ -23,6 +23,50 @@ export default withAuth(
         }
       }
 
+      // Dashboard route redirects for old URLs
+      if (req.nextUrl.pathname.startsWith("/dashboard/")) {
+        const oldPath = req.nextUrl.pathname
+        let redirectPath = "/dashboard"
+        
+        // Map old dashboard routes to new tab-based navigation
+        if (oldPath === "/dashboard/manuscripts") {
+          redirectPath = "/dashboard?tab=submissions"
+        } else if (oldPath === "/dashboard/revisions") {
+          redirectPath = "/dashboard?tab=submissions"
+        } else if (oldPath === "/dashboard/reviews") {
+          redirectPath = "/dashboard?tab=reviews"
+        } else if (oldPath === "/dashboard/communications") {
+          redirectPath = "/dashboard?tab=messages"
+        } else if (oldPath === "/dashboard/analytics") {
+          redirectPath = "/dashboard?tab=analytics"
+        } else if (oldPath === "/dashboard/published") {
+          redirectPath = "/dashboard?tab=submissions"
+        } else if (oldPath === "/dashboard/submit") {
+          redirectPath = "/submit"
+        } else if (oldPath === "/dashboard/reviewers") {
+          redirectPath = "/dashboard?tab=submissions"
+        } else if (oldPath === "/dashboard/decisions") {
+          redirectPath = "/dashboard?tab=submissions"
+        } else if (oldPath === "/dashboard/calendar") {
+          redirectPath = "/dashboard?tab=overview"
+        } else if (oldPath === "/dashboard/archive") {
+          redirectPath = "/archive"
+        } else if (oldPath === "/dashboard/settings" || oldPath === "/dashboard/profile" || oldPath === "/dashboard/guidelines") {
+          redirectPath = "/dashboard"
+        }
+        
+        // Only redirect if it's not the main dashboard page
+        if (oldPath !== "/dashboard" && redirectPath !== oldPath) {
+          const redirectUrl = req.nextUrl.clone()
+          const [path, query] = redirectPath.split('?')
+          redirectUrl.pathname = path
+          if (query) {
+            redirectUrl.search = query
+          }
+          return NextResponse.redirect(redirectUrl)
+        }
+      }
+
       // Apply rate limiting
       if (req.nextUrl.pathname.startsWith("/api/")) {
         const rateLimit = req.nextUrl.pathname.startsWith("/api/auth/") ? authRateLimit : apiRateLimit
@@ -68,18 +112,51 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Protect admin routes
-        if (req.nextUrl.pathname.startsWith("/admin")) {
-          return token?.role === "admin" || token?.role === "editor"
+        const pathname = req.nextUrl.pathname
+        const userRole = token?.role
+
+        // Admin routes - highest level access
+        if (pathname.startsWith("/admin")) {
+          return userRole === "admin"
         }
 
-        // Protect dashboard routes
-        if (req.nextUrl.pathname.startsWith("/dashboard")) {
-          return !!token
+        // Editor-in-Chief routes
+        if (pathname.startsWith("/editor-in-chief")) {
+          return userRole === "editor-in-chief" || userRole === "admin"
         }
 
-        // Protect submission routes
-        if (req.nextUrl.pathname.startsWith("/submit")) {
+        // Managing Editor routes
+        if (pathname.startsWith("/managing-editor")) {
+          return ["managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+        }
+
+        // Section Editor routes
+        if (pathname.startsWith("/section-editor")) {
+          return ["section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+        }
+
+        // Guest Editor routes
+        if (pathname.startsWith("/guest-editor")) {
+          return ["guest-editor", "section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+        }
+
+        // Production Editor routes
+        if (pathname.startsWith("/production-editor")) {
+          return ["production-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+        }
+
+        // Associate Editor routes
+        if (pathname.startsWith("/editor")) {
+          return ["editor", "section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+        }
+
+        // Reviewer routes
+        if (pathname.startsWith("/reviewer")) {
+          return ["reviewer", "editor", "section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+        }
+
+        // General dashboard and submission routes
+        if (pathname.startsWith("/dashboard") || pathname.startsWith("/submit")) {
           return !!token
         }
 
@@ -99,6 +176,13 @@ export const config = {
     "/admin/:path*", 
     "/dashboard/:path*", 
     "/submit/:path*", 
+    "/editor-in-chief/:path*",
+    "/managing-editor/:path*",
+    "/section-editor/:path*",
+    "/guest-editor/:path*",
+    "/production-editor/:path*",
+    "/editor/:path*",
+    "/reviewer/:path*",
     "/api/:path*"
   ],
 }

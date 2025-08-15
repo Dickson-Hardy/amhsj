@@ -126,7 +126,7 @@ export default function SectionEditorDashboard() {
           author: "Dr. Sarah Johnson",
           coAuthors: ["Dr. Mike Chen", "Dr. Lisa Wong"],
           submittedDate: "2024-01-15",
-          status: "under_review",
+          status: "technical_check",
           priority: 'high',
           reviewers: ["Dr. Robert Smith", "Dr. Anna Davis"],
           daysSinceSubmission: 8,
@@ -248,12 +248,14 @@ export default function SectionEditorDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "under_review":
-        return "bg-blue-100 text-blue-800"
-      case "reviewer_decision_received":
-        return "bg-yellow-100 text-yellow-800"
-      case "revision_submitted":
+      case "technical_check":
         return "bg-purple-100 text-purple-800"
+      case "under_review":
+        return "bg-yellow-100 text-yellow-800"
+      case "reviewer_decision_received":
+        return "bg-blue-100 text-blue-800"
+      case "revision_submitted":
+        return "bg-orange-100 text-orange-800"
       case "accepted":
         return "bg-green-100 text-green-800"
       case "rejected":

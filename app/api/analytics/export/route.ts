@@ -2,8 +2,10 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { Analytics } from "@/lib/analytics"
+import { db } from "@/lib/db"
+import { sql } from "drizzle-orm"
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,20 +20,16 @@ export async function GET(req: NextRequest) {
     const format = searchParams.get('format') || 'csv'
 
     // Get comprehensive analytics data
-    const journalStats = await Analytics.getJournalStats()
-    const userStats = await Analytics.getUserStats(range)
-    const submissionStats = await Analytics.getSubmissionStats(range)
-    const reviewStats = await Analytics.getReviewStats(range)
-    const pageViews = await Analytics.getPageViews(range)
+    const journalStatsResult = await Analytics.getJournalStats()
+    
+    // Get additional export-specific data
+    const exportData = await getExportData(range)
 
     if (format === 'csv') {
       // Generate CSV format
       const csvData = generateCSV({
-        journalStats,
-        userStats,
-        submissionStats,
-        reviewStats,
-        pageViews,
+        journalStats: journalStatsResult.stats,
+        exportData,
         range
       })
 
@@ -47,11 +45,8 @@ export async function GET(req: NextRequest) {
       const jsonData = {
         exportDate: new Date().toISOString(),
         timeRange: range,
-        journalStats,
-        userStats,
-        submissionStats,
-        reviewStats,
-        pageViews
+        journalStats: journalStatsResult.stats,
+        ...exportData
       }
 
       return new NextResponse(JSON.stringify(jsonData, null, 2), {
@@ -74,15 +69,87 @@ export async function GET(req: NextRequest) {
   }
 }
 
+async function getExportData(range: string) {
+  try {
+    // Calculate date range
+    const days = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : 365
+    
+    // Get user registration trends
+    const userTrendsResult = await db.execute(sql`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as count
+      FROM users 
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date
+    `)
+    
+    // Get submission trends
+    const submissionTrendsResult = await db.execute(sql`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as count
+      FROM articles 
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date
+    `)
+    
+    // Get page view trends
+    const pageViewsResult = await db.execute(sql`
+      SELECT 
+        article_id,
+        COUNT(*) as views,
+        COUNT(DISTINCT ip_address) as unique_visitors
+      FROM page_views 
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
+      GROUP BY article_id
+      ORDER BY views DESC
+      LIMIT 10
+    `)
+    
+    // Get review completion data
+    const reviewStatsResult = await db.execute(sql`
+      SELECT 
+        AVG(EXTRACT(EPOCH FROM (submitted_at - created_at))/86400) as avg_review_time,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) * 100.0 / COUNT(*) as completion_rate
+      FROM reviews 
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
+    `)
+
+    return {
+      userTrends: userTrendsResult.map(row => ({
+        date: (row as any).date,
+        count: parseInt((row as any).count)
+      })),
+      submissionTrends: submissionTrendsResult.map(row => ({
+        date: (row as any).date,
+        count: parseInt((row as any).count)
+      })),
+      topPageViews: pageViewsResult.map(row => ({
+        articleId: (row as any).article_id,
+        views: parseInt((row as any).views),
+        uniqueVisitors: parseInt((row as any).unique_visitors)
+      })),
+      reviewStats: {
+        averageReviewTime: parseFloat((reviewStatsResult[0] as any)?.avg_review_time || '0'),
+        completionRate: parseFloat((reviewStatsResult[0] as any)?.completion_rate || '0')
+      }
+    }
+  } catch (error) {
+    console.error("Error getting export data:", error)
+    return {
+      userTrends: [],
+      submissionTrends: [],
+      topPageViews: [],
+      reviewStats: { averageReviewTime: 0, completionRate: 0 }
+    }
+  }
+}
+
 function generateCSV(data: any): string {
-  const {
-    journalStats,
-    userStats,
-    submissionStats,
-    reviewStats,
-    pageViews,
-    range
-  } = data
+  const { journalStats, exportData, range } = data
 
   let csv = `Journal Analytics Export - ${range}\n`
   csv += `Export Date: ${new Date().toISOString()}\n\n`
@@ -92,54 +159,44 @@ function generateCSV(data: any): string {
   csv += "Metric,Value\n"
   csv += `Total Users,${journalStats.totalUsers}\n`
   csv += `Total Articles,${journalStats.totalArticles}\n`
-  csv += `Published Articles,${journalStats.publishedArticles}\n`
-  csv += `Total Page Views,${journalStats.totalViews}\n`
-  csv += `Pending Reviews,${journalStats.pendingReviews}\n`
-  csv += `Average Review Time (days),${journalStats.averageReviewTime}\n\n`
+  csv += `Total Reviews,${journalStats.totalReviews}\n`
+  csv += `Published This Month,${journalStats.publishedThisMonth}\n`
+  csv += `IoT Percentage,${journalStats.iotPercentage}%\n\n`
 
-  // User Statistics
-  csv += "USER STATISTICS\n"
+  // User Trends
+  csv += "USER REGISTRATION TRENDS\n"
   csv += "Date,New Users\n"
-  userStats.newUsers.forEach((item: any) => {
+  exportData.userTrends.forEach((item: any) => {
     csv += `${item.date},${item.count}\n`
   })
-  csv += `\nUser Growth (%),${userStats.userGrowth}\n`
-  csv += `Active Users,${userStats.activeUsers}\n\n`
+  csv += "\n"
 
-  // Submission Statistics
-  csv += "SUBMISSION STATISTICS\n"
-  csv += "Month,Submissions\n"
-  submissionStats.submissions.forEach((item: any) => {
-    csv += `${item.month},${item.count}\n`
+  // Submission Trends
+  csv += "SUBMISSION TRENDS\n"
+  csv += "Date,Submissions\n"
+  exportData.submissionTrends.forEach((item: any) => {
+    csv += `${item.date},${item.count}\n`
   })
-  csv += `\nSubmission Trend (%),${submissionStats.submissionTrend}\n\n`
+  csv += "\n"
 
-  // Category Distribution
-  csv += "CATEGORY DISTRIBUTION\n"
-  csv += "Category,Count\n"
-  submissionStats.topCategories.forEach((item: any) => {
-    csv += `"${item.category}",${item.count}\n`
+  // Top Categories
+  csv += "TOP CATEGORIES\n"
+  csv += "Category\n"
+  journalStats.topCategories.forEach((category: string) => {
+    csv += `"${category}"\n`
   })
   csv += "\n"
 
   // Review Statistics
   csv += "REVIEW STATISTICS\n"
   csv += "Average Review Time (days),Completion Rate (%)\n"
-  csv += `${reviewStats.averageReviewTime},${reviewStats.completionRate}\n\n`
+  csv += `${exportData.reviewStats.averageReviewTime.toFixed(2)},${exportData.reviewStats.completionRate.toFixed(2)}\n\n`
 
-  // Reviewer Performance
-  csv += "REVIEWER PERFORMANCE\n"
-  csv += "Reviewer,Completed Reviews,Average Time (days)\n"
-  reviewStats.reviewerPerformance.forEach((item: any) => {
-    csv += `"${item.reviewer}",${item.completed},${item.average_time}\n`
-  })
-  csv += "\n"
-
-  // Page Views
-  csv += "PAGE VIEWS\n"
-  csv += "Page,Views,Unique Visitors\n"
-  pageViews.forEach((item: any) => {
-    csv += `"${item.path}",${item.views},${item.unique_visitors}\n`
+  // Top Page Views
+  csv += "TOP PAGE VIEWS\n"
+  csv += "Article ID,Views,Unique Visitors\n"
+  exportData.topPageViews.forEach((item: any) => {
+    csv += `${item.articleId},${item.views},${item.uniqueVisitors}\n`
   })
 
   return csv

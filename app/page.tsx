@@ -71,15 +71,17 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [articlesRes, statsRes, currentIssueRes] = await Promise.all([
+        const [articlesRes, statsRes, currentIssueRes, newsRes] = await Promise.all([
           fetch("/api/articles?featured=true&limit=6"),
           fetch("/api/stats"),
           fetch("/api/articles?current=true&limit=1"),
+          fetch("/api/news?limit=5"),
         ])
 
         const articlesData = await articlesRes.json()
         const statsData = await statsRes.json()
         const currentIssueData = await currentIssueRes.json()
+        const newsData = await newsRes.json()
 
         if (articlesData.success) {
           setFeaturedArticles(articlesData.articles)
@@ -93,16 +95,21 @@ export default function HomePage() {
           setCurrentIssue(currentIssueData.articles[0])
         }
 
-        // Mock latest news - replace with actual API call
-        setLatestNews([
-          {
-            id: "1",
-            title: "CALL FOR SUBMISSION MANUSCRIPT",
-            date: "August 3, 2025",
-            excerpt: "Authors are invited to send manuscripts in form of original articles, review papers, case reports, brief communications, letter to editor...",
-            link: "/call-for-submission"
-          }
-        ])
+        // Handle news data
+        if (newsData.success) {
+          setLatestNews(newsData.news)
+        } else {
+          // Fallback to default announcement if API fails
+          setLatestNews([
+            {
+              id: "1",
+              title: "CALL FOR SUBMISSION MANUSCRIPT",
+              date: "August 3, 2025",
+              excerpt: "Authors are invited to send manuscripts in form of original articles, review papers, case reports, brief communications, letter to editor...",
+              link: "/call-for-submission"
+            }
+          ])
+        }
       } catch (error) {
         console.error("Error fetching homepage data:", error)
       } finally {
@@ -187,25 +194,53 @@ export default function HomePage() {
                 Announcements
               </h2>
               <div className="space-y-4">
-                <div className="border-l-4 border-orange-500 pl-4">
-                  <h3 className="text-lg font-semibold text-blue-600 mb-1">
-                    <Link href="/announcement/author-warning" className="hover:text-blue-800">
-                      Author warning
+                {latestNews.length > 0 ? (
+                  latestNews.map((item) => (
+                    <div key={item.id} className="border-l-4 border-orange-500 pl-4">
+                      <h3 className="text-lg font-semibold text-blue-600 mb-1">
+                        {item.link ? (
+                          <Link href={item.link} className="hover:text-blue-800">
+                            {item.title}
+                          </Link>
+                        ) : (
+                          item.title
+                        )}
+                      </h3>
+                      <div className="text-sm text-gray-600 mb-2">{item.date}</div>
+                      <p className="text-sm text-gray-700">
+                        {item.excerpt}
+                      </p>
+                      {item.link && (
+                        <Link 
+                          href={item.link} 
+                          className="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center gap-1 mt-2"
+                        >
+                          Read more
+                          <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="border-l-4 border-orange-500 pl-4">
+                    <h3 className="text-lg font-semibold text-blue-600 mb-1">
+                      <Link href="/call-for-submission" className="hover:text-blue-800">
+                        CALL FOR SUBMISSION MANUSCRIPT
+                      </Link>
+                    </h3>
+                    <div className="text-sm text-gray-600 mb-2">August 3, 2025</div>
+                    <p className="text-sm text-gray-700">
+                      Authors are invited to send manuscripts in form of original articles, review papers, case reports, brief communications, letter to editor...
+                    </p>
+                    <Link 
+                      href="/call-for-submission" 
+                      className="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center gap-1 mt-2"
+                    >
+                      Read more
+                      <ArrowRight className="h-3 w-3" />
                     </Link>
-                  </h3>
-                  <div className="text-sm text-gray-600 mb-2">2024-08-07</div>
-                  <p className="text-sm text-gray-700">
-                    Authors are advised to be aware of and cautious with regards to submitting articles 
-                    and paying publication fee payments to scammers and predatory journals.
-                  </p>
-                  <Link 
-                    href="/announcement/author-warning" 
-                    className="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center gap-1 mt-2"
-                  >
-                    Read more about Author warning
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
+                  </div>
+                )}
               </div>
             </section>
 

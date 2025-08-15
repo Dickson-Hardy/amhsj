@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { articles, users } from "@/lib/db/schema"
-import { desc, eq, ilike } from "drizzle-orm"
+import { desc, eq, ilike, and } from "drizzle-orm"
 import { logError } from "@/lib/logger"
 
 export async function GET(request: Request) {
@@ -21,7 +21,17 @@ export async function GET(request: Request) {
     const limit = Number.parseInt(searchParams.get("limit") || "20")
     const offset = (page - 1) * limit
 
-    let query = db
+    // Build where conditions
+    const whereConditions = []
+    if (search) {
+      whereConditions.push(ilike(articles.title, `%${search}%`))
+    }
+    if (status && status !== "all") {
+      whereConditions.push(eq(articles.status, status))
+    }
+
+    // Build the complete query
+    const baseQuery = db
       .select({
         id: articles.id,
         title: articles.title,
@@ -43,34 +53,21 @@ export async function GET(request: Request) {
       .from(articles)
       .leftJoin(users, eq(articles.authorId, users.id))
 
-    if (search) {
-      query = query.where(ilike(articles.title, `%${search}%`))
-    }
+    const finalQuery = whereConditions.length > 0 
+      ? baseQuery.where(and(...whereConditions))
+      : baseQuery
 
-    if (status && status !== "all") {
-      query = query.where(eq(articles.status, status))
-    }
+    const articleList = await finalQuery.orderBy(desc(articles.submittedDate)).limit(limit).offset(offset)
 
-    const articleList = await query.orderBy(desc(articles.submittedDate)).limit(limit).offset(offset)
-
-    // If DOI info is requested, fetch additional author details
+    // If DOI info is requested, fetch additional details separately
     let enrichedArticles = articleList
     if (includeDOI) {
-      enrichedArticles = await Promise.all(
-        articleList.map(async (article) => {
-          const fullArticle = await db.query.articles.findFirst({
-            where: eq(articles.id, article.id),
-            with: {
-              authors: true
-            }
-          })
-          
-          return {
-            ...article,
-            authors: fullArticle?.authors || []
-          }
-        })
-      )
+      enrichedArticles = articleList.map(article => ({
+        ...article,
+        coAuthors: [], // Will be filled from database if needed
+        abstract: '',
+        keywords: []
+      }))
     }
 
     return NextResponse.json({

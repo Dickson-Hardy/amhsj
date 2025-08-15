@@ -14,49 +14,49 @@ function extractClientIp(headers: Headers): string | null {
   return null;
 }
 import { headers } from "next/headers"
-import { db } from "./db"
+import { db, sql as rawSql } from "./db"
 import { pageViews } from "./db/schema"
 import { calculateArticleMetrics } from "./metrics"
 import { CacheManager } from "./cache"
-import { sql } from "@vercel/postgres"
+import { sql } from "drizzle-orm"
 
-// Real analytics implementation using @vercel/postgres
+// Real analytics implementation using Drizzle ORM
 async function getJournalStats() {
   try {
     // Get total users
-    const usersResult = await sql`SELECT COUNT(*) as count FROM users`
-    const totalUsers = parseInt(usersResult.rows[0]?.count as string || '0')
+    const usersResult = await db.execute(sql`SELECT COUNT(*) as count FROM users`)
+    const totalUsers = parseInt((usersResult[0] as any)?.count || '0')
 
     // Get total articles
-    const articlesResult = await sql`SELECT COUNT(*) as count FROM articles`
-    const totalArticles = parseInt(articlesResult.rows[0]?.count as string || '0')
+    const articlesResult = await db.execute(sql`SELECT COUNT(*) as count FROM articles`)
+    const totalArticles = parseInt((articlesResult[0] as any)?.count || '0')
 
     // Get total reviews
-    const reviewsResult = await sql`SELECT COUNT(*) as count FROM reviews`
-    const totalReviews = parseInt(reviewsResult.rows[0]?.count as string || '0')
+    const reviewsResult = await db.execute(sql`SELECT COUNT(*) as count FROM reviews`)
+    const totalReviews = parseInt((reviewsResult[0] as any)?.count || '0')
 
     // Get articles published this month
-    const thisMonthResult = await sql`
+    const thisMonthResult = await db.execute(sql`
       SELECT COUNT(*) as count 
       FROM articles 
       WHERE status = 'published' 
       AND published_date >= date_trunc('month', CURRENT_DATE)
-    `
-    const publishedThisMonth = parseInt(thisMonthResult.rows[0]?.count as string || '0')
+    `)
+    const publishedThisMonth = parseInt((thisMonthResult[0] as any)?.count || '0')
 
     // Get top categories
-    const categoriesResult = await sql`
+    const categoriesResult = await db.execute(sql`
       SELECT category, COUNT(*) as count 
       FROM articles 
       WHERE status = 'published'
       GROUP BY category 
       ORDER BY count DESC 
       LIMIT 5
-    `
-    const topCategories = categoriesResult.rows.map(row => row.category as string)
+    `)
+    const topCategories = categoriesResult.map(row => (row as any).category)
 
     // Get monthly submissions for the last 6 months
-    const monthlyResult = await sql`
+    const monthlyResult = await db.execute(sql`
       SELECT 
         EXTRACT(MONTH FROM created_at) as month,
         COUNT(*) as count
@@ -64,17 +64,17 @@ async function getJournalStats() {
       WHERE created_at >= CURRENT_DATE - INTERVAL '6 months'
       GROUP BY EXTRACT(MONTH FROM created_at)
       ORDER BY month
-    `
-    const monthlySubmissions = monthlyResult.rows.map(row => parseInt(row.count as string))
+    `)
+    const monthlySubmissions = monthlyResult.map(row => parseInt((row as any).count))
 
     // Calculate IoT/Smart Systems percentage
-    const iotResult = await sql`
+    const iotResult = await db.execute(sql`
       SELECT COUNT(*) as count 
       FROM articles 
       WHERE category IN ('Healthcare Technology & Innovation', 'Biomedical Sciences & Research')
       AND status = 'published'
-    `
-    const iotCount = parseInt(iotResult.rows[0]?.count as string || '0')
+    `)
+    const iotCount = parseInt((iotResult[0] as any)?.count || '0')
     const iotPercentage = totalArticles > 0 ? Math.round((iotCount / totalArticles) * 100) : 0
 
     return {
@@ -93,6 +93,7 @@ async function getJournalStats() {
     console.error("Error getting journal stats:", error)
     return {
       success: false,
+      error: "Failed to fetch journal statistics",
       stats: {
         totalUsers: 0,
         totalArticles: 0,
@@ -110,39 +111,39 @@ async function getJournalStats() {
 async function getUserAnalytics(userId: string) {
   try {
     // Get user's articles stats
-    const articlesResult = await sql`
+    const articlesResult = await db.execute(sql`
       SELECT 
         COUNT(*) as total,
-        COUNT(CASE WHEN status IN ('under_review', 'peer_review', 'revision_requested') THEN 1 END) as under_review,
+        COUNT(CASE WHEN status IN ('technical_check', 'under_review', 'revision_requested') THEN 1 END) as under_review,
         COUNT(CASE WHEN status = 'published' THEN 1 END) as published
       FROM articles 
       WHERE author_id = ${userId}
-    `
+    `)
     
-    const articleStats = articlesResult.rows[0] || { total: 0, under_review: 0, published: 0 }
+    const articleStats = articlesResult[0] || { total: 0, under_review: 0, published: 0 }
 
     // Get total downloads from page views (assuming downloads are tracked as special page views)
-    const downloadsResult = await sql`
+    const downloadsResult = await db.execute(sql`
       SELECT COUNT(*) as downloads
       FROM page_views 
       WHERE article_id IN (
         SELECT id FROM articles WHERE author_id = ${userId}
       ) AND user_agent LIKE '%download%'
-    `
-    const totalDownloads = parseInt(downloadsResult.rows[0]?.downloads as string || '0')
+    `)
+    const totalDownloads = parseInt((downloadsResult[0] as any)?.downloads || '0')
 
     // Get total views
-    const viewsResult = await sql`
+    const viewsResult = await db.execute(sql`
       SELECT COUNT(*) as views
       FROM page_views 
       WHERE article_id IN (
         SELECT id FROM articles WHERE author_id = ${userId}
       )
-    `
-    const totalViews = parseInt(viewsResult.rows[0]?.views as string || '0')
+    `)
+    const totalViews = parseInt((viewsResult[0] as any)?.views || '0')
 
     // Get monthly view trends for last 6 months
-    const trendsResult = await sql`
+    const trendsResult = await db.execute(sql`
       SELECT 
         DATE_TRUNC('month', created_at) as month,
         COUNT(*) as views
@@ -153,19 +154,19 @@ async function getUserAnalytics(userId: string) {
       AND created_at >= CURRENT_DATE - INTERVAL '6 months'
       GROUP BY DATE_TRUNC('month', created_at)
       ORDER BY month
-    `
-    const monthlyViews = trendsResult.rows.map(row => parseInt(row.views as string))
+    `)
+    const monthlyViews = trendsResult.map(row => parseInt((row as any).views))
 
     // Get review metrics
-    const reviewMetricsResult = await sql`
+    const reviewMetricsResult = await db.execute(sql`
       SELECT 
         COUNT(*) as reviews_completed,
         AVG(rating) as avg_rating,
         AVG(EXTRACT(EPOCH FROM (submitted_at - created_at))/86400) as avg_review_time_days
       FROM reviews 
       WHERE reviewer_id = ${userId} AND status = 'completed'
-    `
-    const reviewMetrics = reviewMetricsResult.rows[0] || { 
+    `)
+    const reviewMetrics = reviewMetricsResult[0] || { 
       reviews_completed: 0, 
       avg_rating: 0, 
       avg_review_time_days: 0 
@@ -175,17 +176,17 @@ async function getUserAnalytics(userId: string) {
       success: true,
       analytics: {
         articles: {
-          total: parseInt(articleStats.total as string),
-          underReview: parseInt(articleStats.under_review as string),
-          published: parseInt(articleStats.published as string),
+          total: parseInt((articleStats as any).total),
+          underReview: parseInt((articleStats as any).under_review),
+          published: parseInt((articleStats as any).published),
         },
         totalDownloads,
         totalViews,
         monthlyViews,
         reviewMetrics: {
-          completed: parseInt(reviewMetrics.reviews_completed as string),
-          averageRating: parseFloat(reviewMetrics.avg_rating as string || '0'),
-          averageTimedays: parseFloat(reviewMetrics.avg_review_time_days as string || '0'),
+          completed: parseInt((reviewMetrics as any).reviews_completed),
+          averageRating: parseFloat((reviewMetrics as any).avg_rating || '0'),
+          averageTimedays: parseFloat((reviewMetrics as any).avg_review_time_days || '0'),
         }
       },
     }

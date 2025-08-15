@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { SystemHealthService, CustomAnalyticsService } from "@/lib/monitoring-production"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { db } from "@/lib/db"
+import { sql } from "drizzle-orm"
 import { logError } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    // Only admins can access system health
+    // Only admins can access detailed system health
     if (!session || session.user.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: "Admin access required" },
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const health = await SystemHealthService.checkSystemHealth()
+    const health = await checkSystemHealth()
     
     return NextResponse.json({
       success: true,
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const health = await SystemHealthService.checkSystemHealth()
+    const health = await checkSystemHealth()
     
     return NextResponse.json({
       success: true,
@@ -64,5 +65,66 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       error: 'Health check failed'
     }, { status: 500 })
+  }
+}
+
+async function checkSystemHealth() {
+  const start = Date.now()
+  
+  try {
+    // Check database connectivity
+    const dbStart = Date.now()
+    await db.execute(sql`SELECT 1 as health_check`)
+    const dbLatency = Date.now() - dbStart
+
+    // Check basic system metrics
+    const systemMetrics = await getSystemMetrics()
+    
+    const responseTime = Date.now() - start
+    
+    return {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      metrics: {
+        responseTime,
+        database: {
+          status: 'connected',
+          latency: dbLatency
+        },
+        system: systemMetrics
+      }
+    }
+  } catch (error) {
+    return {
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      metrics: {
+        responseTime: Date.now() - start
+      }
+    }
+  }
+}
+
+async function getSystemMetrics() {
+  try {
+    // Get database counts
+    const userCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`)
+    const articleCount = await db.execute(sql`SELECT COUNT(*) as count FROM articles`)
+    const reviewCount = await db.execute(sql`SELECT COUNT(*) as count FROM reviews`)
+    
+    return {
+      users: parseInt((userCount[0] as any)?.count || '0'),
+      articles: parseInt((articleCount[0] as any)?.count || '0'),
+      reviews: parseInt((reviewCount[0] as any)?.count || '0'),
+      memory: process.memoryUsage(),
+      uptime: process.uptime()
+    }
+  } catch (error) {
+    return {
+      error: 'Failed to get system metrics',
+      memory: process.memoryUsage(),
+      uptime: process.uptime()
+    }
   }
 }

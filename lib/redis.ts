@@ -11,30 +11,49 @@ async function testRedisConnection(redis: Redis): Promise<boolean> {
   }
 }
 
-// Create Redis client instance for edge runtime
-export const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
-  : null
-
-// Test connection and log status
+// Lazy Redis client initialization to avoid static generation issues
+let redis: Redis | null = null
 let redisConnected = false
-if (redis) {
-  testRedisConnection(redis).then(connected => {
-    redisConnected = connected
-    if (connected) {
-      console.log('✅ Redis client initialized and connected successfully')
-    } else {
-      console.log('❌ Redis client initialized but connection failed - using memory fallback')
+let redisInitialized = false
+
+// Initialize Redis client only when needed
+async function initRedis(): Promise<Redis | null> {
+  if (redisInitialized) {
+    return redis
+  }
+
+  redisInitialized = true
+
+  // Only initialize Redis in runtime environment
+  if (typeof window === 'undefined' && process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+
+      // Test connection only in runtime
+      redisConnected = await testRedisConnection(redis)
+      
+      if (redisConnected) {
+        console.log('✅ Redis client initialized and connected successfully')
+      } else {
+        console.log('❌ Redis client initialized but connection failed - using memory fallback')
+        redis = null
+      }
+    } catch (error) {
+      console.log('❌ Redis initialization failed - using memory fallback:', error)
+      redis = null
     }
-  }).catch(() => {
-    console.log('❌ Redis connection test failed - using memory fallback')
-  })
-} else {
-  console.log('⚠️  Redis client not initialized - missing environment variables, using memory fallback')
+  } else {
+    console.log('⚠️  Redis not available - using memory fallback')
+  }
+
+  return redis
 }
+
+// Export lazy getter for Redis client
+export { redis }
 
 // In-memory cache fallback for development
 const memoryCache = new Map<string, { value: any; expires?: number }>()
@@ -56,18 +75,19 @@ setInterval(cleanMemoryCache, 5 * 60 * 1000)
 export const cache = {
   // Set a value with optional expiration (in seconds)
   async set(key: string, value: any, expiration?: number): Promise<void> {
-    // Always try memory cache first, then Redis as a backup
+    // Always try memory cache first
     const expires = expiration ? Date.now() + (expiration * 1000) : undefined
     memoryCache.set(key, { value, expires })
     
     // Try Redis as secondary storage (best effort)
-    if (redis) {
+    const redisClient = await initRedis()
+    if (redisClient) {
       try {
         const serialized = JSON.stringify(value)
         if (expiration) {
-          await redis.setex(key, expiration, serialized)
+          await redisClient.setex(key, expiration, serialized)
         } else {
-          await redis.set(key, serialized)
+          await redisClient.set(key, serialized)
         }
       } catch (error) {
         // Silent fail for Redis - we already have memory cache
@@ -89,9 +109,10 @@ export const cache = {
     }
     
     // If not in memory cache, try Redis
-    if (redis) {
+    const redisClient = await initRedis()
+    if (redisClient) {
       try {
-        const value = await redis.get(key)
+        const value = await redisClient.get(key)
         if (value) {
           const parsed = JSON.parse(value as string)
           // Store in memory cache for next time
@@ -105,219 +126,237 @@ export const cache = {
     
     return null
   },
+  
   // Delete a key from cache
   async del(key: string): Promise<void> {
-    try {
-      if (redis) {
-        await redis.del(key)
-      } else {
-        memoryCache.delete(key)
+    memoryCache.delete(key)
+    
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        await redisClient.del(key)
+      } catch (error) {
+        console.debug('Redis delete failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Cache delete error:', error)
-      memoryCache.delete(key)
     }
   },
+
   // Check if key exists
   async exists(key: string): Promise<boolean> {
-    try {
-      if (redis) {
-        const result = await redis.exists(key)
-        return result === 1
-      } else {
-        const item = memoryCache.get(key)
-        if (!item) return false
-        if (item.expires && item.expires < Date.now()) {
-          memoryCache.delete(key)
-          return false
-        }
-        return true
-      }
-    } catch (error) {
-      console.error('Cache exists error:', error)
-      const item = memoryCache.get(key)
-      if (!item) return false
+    // Check memory cache first
+    const item = memoryCache.get(key)
+    if (item) {
       if (item.expires && item.expires < Date.now()) {
         memoryCache.delete(key)
         return false
       }
       return true
     }
+
+    // Check Redis if not in memory
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        const result = await redisClient.exists(key)
+        return result === 1
+      } catch (error) {
+        console.debug('Redis exists failed:', error instanceof Error ? error.message : 'Unknown error')
+      }
+    }
+    
+    return false
   },
+
   // Set expiration for existing key
   async expire(key: string, seconds: number): Promise<void> {
-    try {
-      if (redis) {
-        await redis.expire(key, seconds)
-      } else {
-        const item = memoryCache.get(key)
-        if (item) {
-          item.expires = Date.now() + (seconds * 1000)
-          memoryCache.set(key, item)
-        }
-      }
-    } catch (error) {
-      console.error('Cache expire error:', error)
-      const item = memoryCache.get(key)
-      if (item) {
-        item.expires = Date.now() + (seconds * 1000)
-        memoryCache.set(key, item)
+    // Update memory cache expiration
+    const item = memoryCache.get(key)
+    if (item) {
+      item.expires = Date.now() + (seconds * 1000)
+      memoryCache.set(key, item)
+    }
+
+    // Update Redis expiration
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        await redisClient.expire(key, seconds)
+      } catch (error) {
+        console.debug('Redis expire failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
   },
 
   // Get multiple keys
   async mget<T>(keys: string[]): Promise<(T | null)[]> {
-    try {
-      if (redis) {
-        const values = await redis.mget(...keys)
-        return values.map(value => value ? JSON.parse(value as string) : null)
+    const results: (T | null)[] = []
+    const missingKeys: string[] = []
+    const missingIndexes: number[] = []
+
+    // Check memory cache first
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      const item = memoryCache.get(key)
+      if (item && (!item.expires || item.expires >= Date.now())) {
+        results[i] = item.value
       } else {
-        return keys.map(key => {
-          const item = memoryCache.get(key)
-          if (!item) return null
-          if (item.expires && item.expires < Date.now()) {
-            memoryCache.delete(key)
-            return null
-          }
-          return item.value
-        })
+        results[i] = null
+        missingKeys.push(key)
+        missingIndexes.push(i)
       }
-    } catch (error) {
-      console.error('Cache mget error:', error)
-      return keys.map(key => {
-        const item = memoryCache.get(key)
-        if (!item) return null
-        if (item.expires && item.expires < Date.now()) {
-          memoryCache.delete(key)
-          return null
-        }
-        return item.value
-      })
     }
+
+    // Try Redis for missing keys
+    if (missingKeys.length > 0) {
+      const redisClient = await initRedis()
+      if (redisClient) {
+        try {
+          const values = await redisClient.mget(...missingKeys)
+          for (let i = 0; i < values.length; i++) {
+            const value = values[i]
+            const resultIndex = missingIndexes[i]
+            if (value) {
+              const parsed = JSON.parse(value as string)
+              results[resultIndex] = parsed
+              // Cache in memory for next time
+              memoryCache.set(missingKeys[i], { value: parsed })
+            }
+          }
+        } catch (error) {
+          console.debug('Redis mget failed:', error instanceof Error ? error.message : 'Unknown error')
+        }
+      }
+    }
+
+    return results
   },
 
   // Set multiple key-value pairs
   async mset(keyValues: Record<string, any>): Promise<void> {
-    try {
-      if (redis) {
+    // Set in memory cache
+    for (const [key, value] of Object.entries(keyValues)) {
+      memoryCache.set(key, { value })
+    }
+
+    // Set in Redis
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
         const serializedPairs: Record<string, string> = {}
         for (const [key, value] of Object.entries(keyValues)) {
           serializedPairs[key] = JSON.stringify(value)
         }
-        await redis.mset(serializedPairs)
-      } else {
-        for (const [key, value] of Object.entries(keyValues)) {
-          memoryCache.set(key, { value })
-        }
-      }
-    } catch (error) {
-      console.error('Cache mset error:', error)
-      for (const [key, value] of Object.entries(keyValues)) {
-        memoryCache.set(key, { value })
+        await redisClient.mset(serializedPairs)
+      } catch (error) {
+        console.debug('Redis mset failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
   },
+
   // Increment a numeric value
   async incr(key: string): Promise<number> {
-    try {
-      if (redis) {
-        return await redis.incr(key)
-      } else {
-        const item = memoryCache.get(key)
-        const currentValue = item ? (typeof item.value === 'number' ? item.value : 0) : 0
-        const newValue = currentValue + 1
-        memoryCache.set(key, { value: newValue, expires: item?.expires })
-        return newValue
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        const result = await redisClient.incr(key)
+        // Update memory cache too
+        memoryCache.set(key, { value: result })
+        return result
+      } catch (error) {
+        console.debug('Redis incr failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Cache incr error:', error)
-      const item = memoryCache.get(key)
-      const currentValue = item ? (typeof item.value === 'number' ? item.value : 0) : 0
-      const newValue = currentValue + 1
-      memoryCache.set(key, { value: newValue, expires: item?.expires })
-      return newValue
     }
+
+    // Fallback to memory cache
+    const item = memoryCache.get(key)
+    const currentValue = item ? (typeof item.value === 'number' ? item.value : 0) : 0
+    const newValue = currentValue + 1
+    memoryCache.set(key, { value: newValue, expires: item?.expires })
+    return newValue
   },
 
   // Add to a set (simplified for memory fallback)
   async sadd(key: string, ...members: string[]): Promise<number> {
-    try {
-      if (redis) {
-        return await redis.sadd(key, members)
-      } else {
-        const item = memoryCache.get(key)
-        const currentSet = new Set(item?.value || [])
-        let added = 0
-        for (const member of members) {
-          if (!currentSet.has(member)) {
-            currentSet.add(member)
-            added++
-          }
-        }
-        memoryCache.set(key, { value: Array.from(currentSet), expires: item?.expires })
-        return added
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        return await redisClient.sadd(key, members)
+      } catch (error) {
+        console.debug('Redis sadd failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Cache sadd error:', error)
-      return 0
     }
+
+    // Fallback to memory cache
+    const item = memoryCache.get(key)
+    const currentSet = new Set(item?.value || [])
+    let added = 0
+    for (const member of members) {
+      if (!currentSet.has(member)) {
+        currentSet.add(member)
+        added++
+      }
+    }
+    memoryCache.set(key, { value: Array.from(currentSet), expires: item?.expires })
+    return added
   },
 
   // Get all members of a set
   async smembers(key: string): Promise<string[]> {
-    try {
-      if (redis) {
-        return await redis.smembers(key)
-      } else {
-        const item = memoryCache.get(key)
-        return item?.value || []
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        return await redisClient.smembers(key)
+      } catch (error) {
+        console.debug('Redis smembers failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Cache smembers error:', error)
-      return []
     }
+
+    // Fallback to memory cache
+    const item = memoryCache.get(key)
+    return item?.value || []
   },
 
   // Remove from a set
   async srem(key: string, ...members: string[]): Promise<number> {
-    try {
-      if (redis) {
-        return await redis.srem(key, ...members)
-      } else {
-        const item = memoryCache.get(key)
-        const currentSet = new Set(item?.value || [])
-        let removed = 0
-        for (const member of members) {
-          if (currentSet.has(member)) {
-            currentSet.delete(member)
-            removed++
-          }
-        }
-        memoryCache.set(key, { value: Array.from(currentSet), expires: item?.expires })
-        return removed
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        return await redisClient.srem(key, ...members)
+      } catch (error) {
+        console.debug('Redis srem failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Cache srem error:', error)
-      return 0
     }
+
+    // Fallback to memory cache
+    const item = memoryCache.get(key)
+    const currentSet = new Set(item?.value || [])
+    let removed = 0
+    for (const member of members) {
+      if (currentSet.has(member)) {
+        currentSet.delete(member)
+        removed++
+      }
+    }
+    memoryCache.set(key, { value: Array.from(currentSet), expires: item?.expires })
+    return removed
   },
 
   // Check if member exists in set
   async sismember(key: string, member: string): Promise<boolean> {
-    try {
-      if (redis) {
-        const result = await redis.sismember(key, member)
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        const result = await redisClient.sismember(key, member)
         return result === 1
-      } else {
-        const item = memoryCache.get(key)
-        const currentSet = new Set(item?.value || [])
-        return currentSet.has(member)
+      } catch (error) {
+        console.debug('Redis sismember failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Cache sismember error:', error)
-      return false
     }
+
+    // Fallback to memory cache
+    const item = memoryCache.get(key)
+    const currentSet = new Set(item?.value || [])
+    return currentSet.has(member)
   }
 }
 
@@ -354,15 +393,16 @@ export const session = {
 export const rateLimit = {
   // Check and increment rate limit counter
   async check(key: string, limit: number, window: number): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    try {
-      if (redis) {
-        const current = await redis.incr(key)
+    const redisClient = await initRedis()
+    if (redisClient) {
+      try {
+        const current = await redisClient.incr(key)
         
         if (current === 1) {
-          await redis.expire(key, window)
+          await redisClient.expire(key, window)
         }
         
-        const ttl = await redis.ttl(key)
+        const ttl = await redisClient.ttl(key)
         const resetTime = Date.now() + (ttl * 1000)
         
         return {
@@ -370,34 +410,33 @@ export const rateLimit = {
           remaining: Math.max(0, limit - current),
           resetTime
         }
-      } else {
-        // Fallback to memory-based rate limiting
-        const item = memoryCache.get(key)
-        const now = Date.now()
-        
-        if (!item || (item.expires && item.expires < now)) {
-          // First request or expired window
-          const resetTime = now + (window * 1000)
-          memoryCache.set(key, { value: 1, expires: resetTime })
-          return {
-            allowed: true,
-            remaining: limit - 1,
-            resetTime
-          }
-        } else {
-          // Increment counter
-          const current = item.value + 1
-          memoryCache.set(key, { value: current, expires: item.expires })
-          return {
-            allowed: current <= limit,
-            remaining: Math.max(0, limit - current),
-            resetTime: item.expires || now + (window * 1000)
-          }
-        }
+      } catch (error) {
+        console.debug('Redis rate limit failed:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } catch (error) {
-      console.error('Rate limit check error:', error)
-      return { allowed: true, remaining: limit, resetTime: Date.now() + (window * 1000) }
+    }
+
+    // Fallback to memory-based rate limiting
+    const item = memoryCache.get(key)
+    const now = Date.now()
+    
+    if (!item || (item.expires && item.expires < now)) {
+      // First request or expired window
+      const resetTime = now + (window * 1000)
+      memoryCache.set(key, { value: 1, expires: resetTime })
+      return {
+        allowed: true,
+        remaining: limit - 1,
+        resetTime
+      }
+    } else {
+      // Increment counter
+      const current = item.value + 1
+      memoryCache.set(key, { value: current, expires: item.expires })
+      return {
+        allowed: current <= limit,
+        remaining: Math.max(0, limit - current),
+        resetTime: item.expires || now + (window * 1000)
+      }
     }
   },
 
@@ -407,4 +446,10 @@ export const rateLimit = {
   }
 }
 
-export default redis
+// Export the lazy initialization function for external use
+export { initRedis }
+
+// Export a getter function for Redis client
+export const getRedis = () => redis
+
+export default initRedis

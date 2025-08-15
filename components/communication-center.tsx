@@ -20,6 +20,7 @@ import {
   CheckCircle,
   Eye,
   Reply,
+  Loader2,
 } from "lucide-react"
 
 interface Message {
@@ -66,29 +67,29 @@ export default function CommunicationCenter() {
   const [newSubject, setNewSubject] = useState("")
   const [newRecipient, setNewRecipient] = useState("")
   const [loading, setLoading] = useState(true)
+  const [sendingMessage, setSendingMessage] = useState(false)
 
   useEffect(() => {
     async function fetchMessages() {
       if (!session?.user?.id) return
 
-      try {
-        const [conversationsRes, messagesRes] = await Promise.all([
-          fetch(`/api/messages/conversations`),
-          fetch(`/api/messages`),
-        ])
+      console.log("Fetching conversations for user:", session.user.id)
 
+      try {
+        const conversationsRes = await fetch(`/api/messages/conversations`)
+        console.log("Conversations response status:", conversationsRes.status)
+        
         const conversationsData = await conversationsRes.json()
-        const messagesData = await messagesRes.json()
+        console.log("Conversations data:", conversationsData)
 
         if (conversationsData.success) {
           setConversations(conversationsData.conversations)
-        }
-
-        if (messagesData.success) {
-          setMessages(messagesData.messages)
+          console.log("Set conversations:", conversationsData.conversations.length)
+        } else {
+          console.error("Failed to fetch conversations:", conversationsData.error)
         }
       } catch (error) {
-        console.error("Error fetching messages:", error)
+        console.error("Error fetching conversations:", error)
       } finally {
         setLoading(false)
       }
@@ -97,26 +98,94 @@ export default function CommunicationCenter() {
     fetchMessages()
   }, [session])
 
+  // Fetch messages for selected conversation
+  useEffect(() => {
+    async function fetchConversationMessages() {
+      if (!selectedConversation) {
+        setMessages([])
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/messages?conversationId=${selectedConversation}`)
+        const data = await response.json()
+
+        if (data.success) {
+          setMessages(data.messages)
+        }
+      } catch (error) {
+        console.error("Error fetching conversation messages:", error)
+      }
+    }
+
+    fetchConversationMessages()
+  }, [selectedConversation])
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return
+    if (!newMessage.trim() || !selectedConversation || sendingMessage) {
+      console.log("Cannot send message: missing content, conversation, or already sending")
+      return
+    }
+
+    console.log("Sending message:", { conversationId: selectedConversation, content: newMessage.trim() })
+    
+    setSendingMessage(true)
 
     try {
       const response = await fetch(`/api/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           conversationId: selectedConversation,
-          content: newMessage,
+          content: newMessage.trim(),
         }),
       })
 
-      if (response.ok) {
+      console.log("Response status:", response.status)
+      
+      const data = await response.json()
+      console.log("Response data:", data)
+
+      if (response.ok && data.success) {
+        console.log("Message sent successfully!")
         setNewMessage("")
+        
         // Refresh messages
-        window.location.reload()
+        try {
+          const updatedResponse = await fetch(`/api/messages?conversationId=${selectedConversation}`)
+          const updatedData = await updatedResponse.json()
+          
+          if (updatedData.success) {
+            setMessages(updatedData.messages)
+            console.log("Messages refreshed")
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing messages:", refreshError)
+        }
+        
+        // Refresh conversations list
+        try {
+          const conversationsRes = await fetch(`/api/messages/conversations`)
+          const conversationsData = await conversationsRes.json()
+          
+          if (conversationsData.success) {
+            setConversations(conversationsData.conversations)
+            console.log("Conversations refreshed")
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing conversations:", refreshError)
+        }
+      } else {
+        console.error("Failed to send message:", data.error || "Unknown error")
+        alert(`Failed to send message: ${data.error || "Unknown error"}`)
       }
     } catch (error) {
       console.error("Error sending message:", error)
+      alert("Error sending message. Please check your connection and try again.")
+    } finally {
+      setSendingMessage(false)
     }
   }
 
@@ -148,9 +217,8 @@ export default function CommunicationCenter() {
     }
   }
 
-  const conversationMessages = messages.filter(
-    (message) => selectedConversation && message.relatedId === selectedConversation
-  )
+  // No need to filter messages as they're already fetched for the selected conversation
+  const conversationMessages = messages
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[800px]">
@@ -296,20 +364,51 @@ export default function CommunicationCenter() {
                 <div className="border-t pt-4">
                   <Textarea
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={(e) => {
+                      console.log("Message input changed:", e.target.value);
+                      setNewMessage(e.target.value);
+                    }}
                     placeholder="Type your message..."
                     rows={3}
                     className="mb-3"
                   />
+                  <div className="mb-2 text-xs text-gray-500">
+                    Debug: Selected Conversation: {selectedConversation || "None"} | 
+                    Message Length: {newMessage.trim().length} | 
+                    Button Enabled: {!(!newMessage.trim() || !selectedConversation) ? "Yes" : "No"}
+                  </div>
                   <div className="flex justify-between items-center">
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
                         📎 Attach
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => console.log("Test button clicked!")}
+                      >
+                        Test Click
+                      </Button>
                     </div>
-                    <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                      <Send className="h-4 w-4 mr-1" />
-                      Send Reply
+                    <Button 
+                      onClick={() => {
+                        console.log("Button clicked!"); // Debug
+                        handleSendMessage();
+                      }} 
+                      disabled={!newMessage.trim() || !selectedConversation || sendingMessage}
+                      type="button"
+                    >
+                      {sendingMessage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-1" />
+                          Send Reply
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import { redis } from "./redis"
+import { initRedis } from "./redis"
 
 // Enhanced in-memory cache with cleanup and size limits
 const memoryCache = new Map<string, { value: any; expires: number; size: number }>()
@@ -61,6 +61,7 @@ export class CacheManager {
     }
     
     // Try Redis if available and we think it's working
+    const redis = await initRedis()
     if (redis && this.redisAvailable) {
       try {
         const cached = await redis.get(key)
@@ -96,6 +97,7 @@ export class CacheManager {
     })
     
     // Try Redis if available and we think it's working
+    const redis = await initRedis()
     if (redis && this.redisAvailable) {
       try {
         await redis.setex(key, ttl, JSON.stringify(value))
@@ -113,6 +115,7 @@ export class CacheManager {
     memoryCache.delete(key)
     
     // Try Redis if available and we think it's working
+    const redis = await initRedis()
     if (redis && this.redisAvailable) {
       try {
         await redis.del(key)

@@ -11,6 +11,9 @@ import AdvancedFeaturesDashboard from '@/components/advanced-features-dashboard'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
+// Force dynamic rendering to prevent static generation issues with Redis
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Advanced Features - AI, Integrations & Collaboration',
   description: 'Access AI-powered manuscript assessment, external academic integrations, and real-time collaboration tools.',

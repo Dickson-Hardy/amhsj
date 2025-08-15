@@ -5,6 +5,9 @@ import { authOptions } from "@/lib/auth"
 import { externalIntegrationsService } from "@/lib/external-integrations"
 import { apiRateLimit } from "@/lib/rate-limit"
 import { logger } from "@/lib/logger"
+import { db } from "@/lib/db"
+import { users, articles } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 // Request validation schemas
 const ORCIDConnectSchema = z.object({
@@ -473,17 +476,31 @@ async function handleGetORCIDProfile(orcidId: string, userId: string) {
 
 async function handleGetUserIntegrations(userId: string) {
   try {
-    // Implementation would fetch user's connected integrations from database
-    // For now, return mock data
+    // Get user's connected integrations from database
+    const [user] = await db.select({
+      orcid: users.orcid,
+      orcidVerified: users.orcidVerified,
+      orcidLastSync: users.orcidLastSync,
+      orcidAccessToken: users.orcidAccessToken
+    }).from(users).where(eq(users.id, userId))
+
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        error: "User not found"
+      }, { status: 404 })
+    }
+
     const integrations = {
       orcid: {
-        connected: false,
-        orcidId: null,
-        lastSync: null
+        connected: !!user.orcid,
+        orcidId: user.orcid,
+        lastSync: user.orcidLastSync,
+        verified: user.orcidVerified
       },
       crossref: {
         enabled: true,
-        apiKey: "configured"
+        apiKey: process.env.CROSSREF_API_KEY ? "configured" : null
       },
       pubmed: {
         enabled: true
@@ -522,14 +539,28 @@ async function handleGetDOIStatus(manuscriptId: string, userId: string) {
       }, { status: 403 })
     }
 
-    // Implementation would check DOI status from database
-    // For now, return mock data
+    // Get DOI status from database
+    const [article] = await db.select({
+      id: articles.id,
+      doi: articles.doi,
+      doiRegistered: articles.doiRegistered,
+      doiRegisteredAt: articles.doiRegisteredAt,
+      crossrefMetadata: articles.crossrefMetadata
+    }).from(articles).where(eq(articles.id, manuscriptId))
+
+    if (!article) {
+      return NextResponse.json({
+        success: false,
+        error: "Manuscript not found"
+      }, { status: 404 })
+    }
+
     const doiStatus = {
       manuscriptId,
-      doi: null,
-      status: "not_registered",
-      registeredAt: null,
-      metadata: null
+      doi: article.doi,
+      status: article.doiRegistered ? "registered" : "not_registered",
+      registeredAt: article.doiRegisteredAt,
+      metadata: article.crossrefMetadata
     }
 
     return NextResponse.json({
@@ -551,15 +582,50 @@ async function checkManuscriptPermission(
   requiredRoles?: string[]
 ): Promise<boolean> {
   try {
-    // Implementation would check if user has permission to access the manuscript
-    // This could be based on:
-    // - User is the author
-    // - User is assigned as reviewer/editor
-    // - User has required role (admin, editor, etc.)
-    
-    // For now, return true for demo purposes
-    // In production, implement proper permission checking
-    return true
+    // Check if manuscript exists and user has permission
+    const [article] = await db.select({
+      id: articles.id,
+      authorId: articles.authorId,
+      editorId: articles.editorId
+    }).from(articles).where(eq(articles.id, manuscriptId))
+
+    if (!article) {
+      return false
+    }
+
+    // Get user role
+    const [user] = await db.select({
+      id: users.id,
+      role: users.role
+    }).from(users).where(eq(users.id, userId))
+
+    if (!user) {
+      return false
+    }
+
+    // Check permissions
+    if (user.role === 'admin') {
+      return true
+    }
+
+    if (requiredRoles?.includes(user.role)) {
+      // Author can access their own manuscripts
+      if (user.role === 'author' && article.authorId === userId) {
+        return true
+      }
+      
+      // Editor can access manuscripts they're assigned to
+      if (user.role === 'editor' && article.editorId === userId) {
+        return true
+      }
+      
+      // Other role-based permissions
+      if (user.role === 'editor' || user.role === 'reviewer') {
+        return true
+      }
+    }
+
+    return false
   } catch (error) {
     logger.error("Permission check failed", { error, manuscriptId, userId })
     return false

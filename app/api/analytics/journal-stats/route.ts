@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Analytics } from "@/lib/analytics"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,9 +12,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
-    const stats = await Analytics.getJournalStats()
+    const result = await Analytics.getJournalStats()
     
-    return NextResponse.json(stats)
+    if (!result.success) {
+      return NextResponse.json({ 
+        success: false, 
+        error: result.error || "Failed to fetch journal statistics" 
+      }, { status: 500 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      stats: result.stats
+    })
   } catch (error) {
     console.error("Analytics API error:", error)
     return NextResponse.json(

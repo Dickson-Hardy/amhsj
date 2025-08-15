@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { db } from "@/lib/db"
 import { articles } from "@/lib/db/schema"
 import { eq, desc, ilike, and } from "drizzle-orm"
 import { z } from "zod"
+import { logError } from "@/lib/logger"
 
 const createArticleSchema = z.object({
   title: z.string().min(10),
@@ -60,15 +63,32 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, articles: result })
   } catch (error) {
-    console.error("Articles fetch error:", error)
+    logError(error as Error, { context: "articles-fetch" })
     return NextResponse.json({ success: false, error: "Failed to fetch articles" }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const validatedData = createArticleSchema.parse(body)
+
+    // Ensure users can only submit articles for themselves (unless admin/editor)
+    if (validatedData.authorId !== session.user.id && 
+        !['admin', 'editor'].includes(session.user.role)) {
+      return NextResponse.json(
+        { success: false, error: "Can only submit articles for yourself" },
+        { status: 403 }
+      )
+    }
 
     const [newArticle] = await db
       .insert(articles)
@@ -81,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, article: newArticle })
   } catch (error) {
-    console.error("Article creation error:", error)
+    logError(error as Error, { context: "article-creation" })
     return NextResponse.json({ success: false, error: "Failed to create article" }, { status: 400 })
   }
 }

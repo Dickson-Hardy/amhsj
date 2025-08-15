@@ -1,30 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "../../auth/[...nextauth]/route"
-
-// Mock data - replace with database implementation
-let advertisements = [
-  {
-    id: "1",
-    title: "Medical Equipment Advertisement",
-    imageUrl: "/api/placeholder/300/250",
-    targetUrl: "https://example.com",
-    position: "sidebar-top",
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-  },
-  {
-    id: "2",
-    title: "Sponsor Banner",
-    imageUrl: "/api/placeholder/300/200",
-    targetUrl: "https://sponsor.com",
-    position: "sidebar-bottom",
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
-  },
-]
+import { db } from "@/lib/db"
+import { advertisements } from "@/lib/db/schema"
+import { eq, and, gt } from "drizzle-orm"
 
 // GET /api/admin/advertisements - Get all advertisements
 export async function GET(request: NextRequest) {
@@ -39,21 +18,24 @@ export async function GET(request: NextRequest) {
     const position = searchParams.get("position")
     const activeOnly = searchParams.get("active") === "true"
 
-    let filteredAds = [...advertisements]
+    let whereConditions: any[] = []
 
     if (position) {
-      filteredAds = filteredAds.filter(ad => ad.position === position)
+      whereConditions.push(eq(advertisements.position, position))
     }
 
     if (activeOnly) {
-      filteredAds = filteredAds.filter(ad => 
-        ad.isActive && new Date(ad.expiresAt) > new Date()
-      )
+      whereConditions.push(eq(advertisements.isActive, true))
+      whereConditions.push(gt(advertisements.expiresAt, new Date()))
     }
+
+    const ads = whereConditions.length > 0 
+      ? await db.select().from(advertisements).where(and(...whereConditions))
+      : await db.select().from(advertisements)
 
     return NextResponse.json({
       success: true,
-      advertisements: filteredAds,
+      advertisements: ads,
     })
   } catch (error) {
     console.error("Error fetching advertisements:", error)
@@ -69,7 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || (session.user as any).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -83,18 +65,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const newAd = {
-      id: Date.now().toString(),
+    const [newAd] = await db.insert(advertisements).values({
       title,
       imageUrl,
       targetUrl,
       position,
       isActive: true,
-      createdAt: new Date().toISOString(),
-      expiresAt: expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    }
-
-    advertisements.push(newAd)
+      expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdBy: (session.user as any).id,
+    }).returning()
 
     return NextResponse.json({
       success: true,
@@ -114,7 +93,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || (session.user as any).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -128,27 +107,30 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const adIndex = advertisements.findIndex(ad => ad.id === id)
-    if (adIndex === -1) {
+    const updateData: any = { updatedAt: new Date() }
+    
+    if (title !== undefined) updateData.title = title
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl
+    if (targetUrl !== undefined) updateData.targetUrl = targetUrl
+    if (position !== undefined) updateData.position = position
+    if (isActive !== undefined) updateData.isActive = isActive
+    if (expiresAt !== undefined) updateData.expiresAt = new Date(expiresAt)
+
+    const [updatedAd] = await db.update(advertisements)
+      .set(updateData)
+      .where(eq(advertisements.id, id))
+      .returning()
+
+    if (!updatedAd) {
       return NextResponse.json(
         { error: "Advertisement not found" },
         { status: 404 }
       )
     }
 
-    advertisements[adIndex] = {
-      ...advertisements[adIndex],
-      title: title || advertisements[adIndex].title,
-      imageUrl: imageUrl || advertisements[adIndex].imageUrl,
-      targetUrl: targetUrl || advertisements[adIndex].targetUrl,
-      position: position || advertisements[adIndex].position,
-      isActive: isActive !== undefined ? isActive : advertisements[adIndex].isActive,
-      expiresAt: expiresAt || advertisements[adIndex].expiresAt,
-    }
-
     return NextResponse.json({
       success: true,
-      advertisement: advertisements[adIndex],
+      advertisement: updatedAd,
     })
   } catch (error) {
     console.error("Error updating advertisement:", error)
@@ -164,7 +146,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || (session.user as any).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -178,15 +160,16 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const adIndex = advertisements.findIndex(ad => ad.id === id)
-    if (adIndex === -1) {
+    const [deletedAd] = await db.delete(advertisements)
+      .where(eq(advertisements.id, id))
+      .returning()
+
+    if (!deletedAd) {
       return NextResponse.json(
         { error: "Advertisement not found" },
         { status: 404 }
       )
     }
-
-    advertisements.splice(adIndex, 1)
 
     return NextResponse.json({
       success: true,

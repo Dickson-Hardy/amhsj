@@ -106,6 +106,50 @@ export default function SubmissionGuidelinesPage() {
           </p>
         </div>
 
+        {/* Rejection Warning */}
+        <Alert className="mb-8 border-red-300 bg-red-50">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <AlertDescription>
+            <div className="text-red-800">
+              <h3 className="text-xl font-bold mb-3 flex items-center">
+                <AlertCircle className="h-6 w-6 mr-2" />
+                ⚠️ CRITICAL: Compliance Required for Review
+              </h3>
+              <div className="bg-red-100 p-4 rounded-lg border border-red-200 mb-4">
+                <p className="font-semibold text-lg mb-2">
+                  Manuscripts that do not follow these submission guidelines and formatting requirements will be REJECTED without review.
+                </p>
+                <p className="mb-3">
+                  To avoid rejection, ensure your manuscript meets ALL requirements listed in these guidelines before submission.
+                </p>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <h4 className="font-semibold mb-1">Common Rejection Reasons:</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Incorrect formatting or template use</li>
+                      <li>Incomplete author information</li>
+                      <li>Missing ethics approvals</li>
+                      <li>Improper reference formatting</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Before Submission:</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Use the official manuscript template</li>
+                      <li>Complete the author checklist</li>
+                      <li>Verify all required sections</li>
+                      <li>Check figure and table quality</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <p className="text-center">
+                <strong>Take time to review these guidelines thoroughly - it will save time and ensure faster review.</strong>
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+
         {/* Quick Start */}
         <Alert className="mb-8 border-indigo-200 bg-indigo-50">
           <AlertCircle className="h-4 w-4 text-indigo-600" />
@@ -233,7 +277,7 @@ export default function SubmissionGuidelinesPage() {
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Main manuscript: DOC, DOCX, or PDF
+                    Main manuscript: DOC or DOCX only
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
