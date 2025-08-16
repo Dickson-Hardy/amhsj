@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import Image from "next/image"
 import AdvertisementDisplay from "@/components/advertisement-display"
 
 interface Article {
@@ -42,14 +43,10 @@ export default function HomePage() {
   const [currentIssueArticles, setCurrentIssueArticles] = useState<Article[]>([])
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([])
-  const [stats, setStats] = useState<Stats>({
-    totalPapers: 0,
-    connectedResearchers: 0,
-    impactFactor: "0.0",
-    smartSolutions: 0
-  })
-  const [currentIssue, setCurrentIssue] = useState<Article | null>(null)
-  const [latestNews, setLatestNews] = useState<NewsItem[]>([])
+  const [stats, setStats] = useState({ totalArticles: 0, totalIssues: 0, totalVolumes: 0 })
+  const [currentIssue, setCurrentIssue] = useState<any>(null)
+  const [announcements, setAnnouncements] = useState<any[]>([])
+  const [latestNews, setLatestNews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const handleSubmitManuscript = () => {
@@ -74,7 +71,7 @@ export default function HomePage() {
         const [articlesRes, statsRes, currentIssueRes, newsRes] = await Promise.all([
           fetch("/api/articles?featured=true&limit=6"),
           fetch("/api/stats"),
-          fetch("/api/articles?current=true&limit=1"),
+          fetch("/api/current-issue-data"),
           fetch("/api/news?limit=5"),
         ])
 
@@ -91,8 +88,9 @@ export default function HomePage() {
           setStats(statsData.stats)
         }
 
-        if (currentIssueData.success && currentIssueData.articles.length > 0) {
-          setCurrentIssue(currentIssueData.articles[0])
+        if (currentIssueData.success && currentIssueData.issue) {
+          setCurrentIssue(currentIssueData.issue)
+          setCurrentIssueArticles(currentIssueData.articles || [])
         }
 
         // Handle news data
@@ -126,6 +124,17 @@ export default function HomePage() {
       <section className="bg-white border-b-2 border-blue-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo-amhsj.png"
+                alt="AMHSJ Logo"
+                width={120}
+                height={120}
+                className="object-contain"
+                priority
+              />
+            </div>
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-blue-900 mb-6 leading-tight">
               African Medical and Health Sciences Journal
             </h1>
@@ -166,6 +175,15 @@ export default function HomePage() {
           <div className="lg:col-span-3">
             {/* Journal Header */}
             <div className="text-center mb-8">
+              <div className="flex justify-center mb-4">
+                <Image
+                  src="/logo-amhsj.png"
+                  alt="AMHSJ Logo"
+                  width={80}
+                  height={80}
+                  className="object-contain"
+                />
+              </div>
               <h1 className="text-4xl font-serif font-bold text-blue-900 mb-2">
                 Advances in Medicine & Health Sciences Journal
               </h1>
@@ -253,66 +271,71 @@ export default function HomePage() {
               </div>
               
               <div className="bg-gray-50 p-6 rounded border">
-                <div className="flex gap-6 mb-6">
-                  <div className="flex-shrink-0">
-                    <img 
-                      src="/api/placeholder/120/160" 
-                      alt="Current Issue Cover" 
-                      className="w-24 h-32 border shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-serif font-bold text-blue-900 mb-2">
-                      Vol. 5 No. 2 (2025)
-                    </h3>
-                    <div className="text-sm text-gray-600 mb-4">Published: 2025-08-01</div>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-semibold text-blue-900 text-sm uppercase tracking-wide mb-2">RESEARCH</h4>
-                        <ul className="space-y-2 text-sm">
-                          <li>
-                            <Link href="/article/advanced-telemedicine" className="text-blue-600 hover:text-blue-800">
-                              Advanced telemedicine applications in rural healthcare delivery: A systematic review
-                            </Link>
-                          </li>
-                          <li>
-                            <Link href="/article/ai-diagnostics" className="text-blue-600 hover:text-blue-800">
-                              AI-powered diagnostic tools in low-resource settings: Implementation and outcomes
-                            </Link>
-                          </li>
-                          <li>
-                            <Link href="/article/maternal-health" className="text-blue-600 hover:text-blue-800">
-                              Maternal health outcomes in the Niger Delta: A five-year retrospective study
-                            </Link>
-                          </li>
-                        </ul>
-                      </div>
+                {currentIssue ? (
+                  <div className="flex gap-6 mb-6">
+                    <div className="flex-shrink-0">
+                      <img 
+                        src={currentIssue.coverImageUrl || "/api/placeholder/120/160"}
+                        alt={`Cover of ${currentIssue.title}`}
+                        className="w-24 h-32 border shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-serif font-bold text-blue-900 mb-2">
+                        {currentIssue.volumeInfo ? `${currentIssue.volumeInfo} • Issue ${currentIssue.number}` : currentIssue.title}
+                      </h3>
+                      {currentIssue.publishedAt && (
+                        <div className="text-sm text-gray-600 mb-4">
+                          Published: {new Date(currentIssue.publishedAt).toLocaleDateString()}
+                        </div>
+                      )}
                       
-                      <div>
-                        <h4 className="font-semibold text-blue-900 text-sm uppercase tracking-wide mb-2">REVIEW</h4>
-                        <ul className="space-y-2 text-sm">
-                          <li>
-                            <Link href="/article/tropical-medicine" className="text-blue-600 hover:text-blue-800">
-                              Emerging trends in tropical medicine: A comprehensive review
-                            </Link>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold text-blue-900 text-sm uppercase tracking-wide mb-2">FROM THE EDITOR</h4>
-                        <ul className="space-y-2 text-sm">
-                          <li>
-                            <Link href="/article/healthcare-innovation" className="text-blue-600 hover:text-blue-800">
-                              Healthcare innovation in developing nations: Challenges and opportunities
-                            </Link>
-                          </li>
-                        </ul>
-                      </div>
+                      {currentIssue.description && (
+                        <div className="text-sm text-gray-600 mb-4">
+                          {currentIssue.description}
+                        </div>
+                      )}
+                      
+                      {currentIssueArticles.length > 0 && (
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-semibold text-blue-900 text-sm uppercase tracking-wide mb-2">
+                              ARTICLES IN THIS ISSUE
+                            </h4>
+                            <ul className="space-y-2 text-sm">
+                              {currentIssueArticles.slice(0, 6).map((article) => (
+                                <li key={article.id}>
+                                  <Link 
+                                    href={`/article/${article.id}`} 
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    {article.title}
+                                  </Link>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {article.authors}
+                                  </div>
+                                </li>
+                              ))}
+                              {currentIssueArticles.length > 6 && (
+                                <li className="text-xs text-blue-600 font-medium">
+                                  + {currentIssueArticles.length - 6} more articles
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 mb-4">
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <h3 className="font-medium text-gray-900 mb-2">No Current Issue Set</h3>
+                      <p className="text-sm">The latest issue is being prepared. Check back soon!</p>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="text-center pt-4 border-t">
                   <Link 

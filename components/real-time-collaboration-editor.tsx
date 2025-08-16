@@ -259,11 +259,11 @@ export function RealTimeCollaborationEditor({
 
   const loadComments = async (sessionId: string) => {
     try {
-      const response = await fetch(`/api/collaboration?action=comments&sessionId=${sessionId}`)
+      const response = await fetch(`/api/manuscripts/${collaborationSession?.manuscriptId}/comments`)
       const data = await response.json()
 
       if (data.success) {
-        setComments(data.data.comments || [])
+        setComments(data.comments || [])
       }
     } catch (error) {
       logger.error('Failed to load comments:', error)
@@ -389,29 +389,53 @@ export function RealTimeCollaborationEditor({
     if (!newComment.trim() || !selectedText || !collaborationSession) return
 
     try {
-      const response = await fetch('/api/collaboration', {
+      const response = await fetch(`/api/manuscripts/${collaborationSession.manuscriptId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'add-comment',
-          sessionId: collaborationSession.id,
           content: newComment,
-          position: selectedText,
-          mentions: []
+          position: {
+            start: selectedText.start,
+            end: selectedText.end,
+            text: content.substring(selectedText.start, selectedText.end)
+          },
+          userRole: session?.user?.role || 'reviewer',
+          mentions: extractMentions(newComment)
         })
       })
 
       const data = await response.json()
       if (data.success) {
-        setComments(prev => [...prev, data.data])
+        setComments(prev => [...prev, data.comment])
         setNewComment('')
         setSelectedText(null)
+        
+        // Broadcast to other users via WebSocket
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'comment_added',
+            sessionId: collaborationSession.id,
+            comment: data.comment
+          }))
+        }
       }
     } catch (error) {
       logger.error('Failed to add comment:', error)
     }
+  }
+
+  const extractMentions = (text: string): string[] => {
+    const mentionRegex = /@(\w+)/g
+    const mentions: string[] = []
+    let match
+
+    while ((match = mentionRegex.exec(text)) !== null) {
+      mentions.push(match[1])
+    }
+
+    return mentions
   }
 
   const createVersion = async () => {

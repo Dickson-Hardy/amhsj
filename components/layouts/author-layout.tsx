@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import Image from 'next/image'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,13 +59,21 @@ export default function AuthorLayout({ children }: AuthorLayoutProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="fixed top-0 inset-x-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center px-6">
+    <div className="min-h-screen bg-amhsj-background">
+      <header className="fixed top-0 inset-x-0 h-16 bg-white border-b border-amhsj-secondary-200 z-50 flex items-center px-6">
         <div className="flex items-center space-x-2">
-          <FileText className="h-7 w-7 text-indigo-600" />
-          <div className="leading-tight">
-            <h1 className="text-sm font-semibold text-gray-900">AMJHS Author Portal</h1>
-            <p className="text-[10px] text-gray-500">Submission System</p>
+          <div className="flex items-center space-x-2">
+            <Image
+              src="/logo-amhsj.png"
+              alt="AMHSJ Logo"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
+            <div className="leading-tight">
+              <h1 className="text-sm font-semibold text-amhsj-primary">AMHSJ Author Portal</h1>
+              <p className="text-[10px] text-amhsj-text-muted">Submission System</p>
+            </div>
           </div>
         </div>
         <div className="flex-1 max-w-xl mx-6 hidden md:block">
@@ -77,7 +86,7 @@ export default function AuthorLayout({ children }: AuthorLayoutProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-10 px-2 flex items-center gap-2">
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                <div className="w-8 h-8 bg-amhsj-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
                   {session?.user?.name?.charAt(0) || 'A'}
                 </div>
                 <div className="hidden sm:block text-left">
@@ -100,26 +109,26 @@ export default function AuthorLayout({ children }: AuthorLayoutProps) {
         </div>
       </header>
       <div className="pt-16 flex">
-        <aside className="fixed top-16 bottom-0 left-0 w-72 bg-white border-r border-gray-200 overflow-y-auto">
+        <aside className="fixed top-16 bottom-0 left-0 w-72 bg-amhsj-secondary-50 border-r border-amhsj-secondary-200 overflow-y-auto">
           <nav className="p-4 space-y-1">
             {authorSidebarItems.map(item => {
               const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
               return (
-                <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 p-3 rounded-md text-sm transition-colors', isActive ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')}>
-                  <item.icon className={cn('h-5 w-5', isActive ? 'text-indigo-600' : 'text-gray-400')} />
+                <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 p-3 rounded-md text-sm transition-colors', isActive ? 'bg-amhsj-background text-amhsj-primary border border-amhsj-primary/20' : 'text-amhsj-text-light hover:bg-amhsj-background hover:text-amhsj-primary')}>
+                  <item.icon className={cn('h-5 w-5', isActive ? 'text-amhsj-primary' : 'text-amhsj-text-muted')} />
                   <span className="flex-1">
                     <span className="block font-medium leading-tight">{item.label}</span>
-                    <span className="block text-[11px] text-gray-500 leading-tight">{item.description}</span>
+                    <span className="block text-[11px] text-amhsj-text-muted leading-tight">{item.description}</span>
                   </span>
                 </Link>
               )
             })}
           </nav>
-          <div className="p-4 border-t border-gray-200 text-[11px] text-gray-500">
+          <div className="p-4 border-t border-amhsj-secondary-200 text-[11px] text-amhsj-text-muted">
             <p className="italic">Submission tips & stats will appear here.</p>
           </div>
         </aside>
-        <main className="flex-1 ml-72 h-[calc(100vh-4rem)] overflow-y-auto p-6">
+        <main className="flex-1 ml-72 h-[calc(100vh-4rem)] overflow-y-auto p-6 bg-amhsj-background">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

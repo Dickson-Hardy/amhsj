@@ -4,86 +4,255 @@ export interface EmailTemplate {
   text: string
 }
 
+// Helper function to get logo for emails
+function getEmailLogo(size: 'small' | 'medium' | 'large' = 'medium') {
+  const sizes = {
+    small: { width: 60, height: 60 },
+    medium: { width: 120, height: 120 },
+    large: { width: 200, height: 200 }
+  }
+  
+  const { width, height } = sizes[size]
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  
+  return {
+    url: `${baseUrl}/logo-amhsj.png`,
+    width,
+    height,
+    alt: "AMHSJ - Advances in Medicine & Health Sciences"
+  }
+}
+
+// AMHSJ Brand Colors for Email Templates
+const AMHSJ_COLORS = {
+  primary: '#1e3a8a', // blue-900
+  secondary: '#3b82f6', // blue-500
+  accent: '#0ea5e9', // sky-500
+  medical: '#dc2626', // red-600
+  success: '#059669', // emerald-600
+  warning: '#d97706', // amber-600
+  text: '#1f2937', // gray-800
+  textLight: '#6b7280', // gray-500
+  background: '#f8fafc', // slate-50
+  backgroundAlt: '#f1f5f9' // slate-100
+}
+
+// Email template base styles
+function getEmailStyles() {
+  return `
+    <style>
+      body { 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        line-height: 1.6; 
+        color: ${AMHSJ_COLORS.text}; 
+        margin: 0; 
+        padding: 0; 
+        background-color: ${AMHSJ_COLORS.backgroundAlt}; 
+      }
+      .container { 
+        max-width: 600px; 
+        margin: 0 auto; 
+        background: white; 
+        border-radius: 10px; 
+        overflow: hidden; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+      }
+      .header { 
+        background: linear-gradient(135deg, ${AMHSJ_COLORS.primary} 0%, ${AMHSJ_COLORS.secondary} 100%); 
+        color: white; 
+        padding: 30px; 
+        text-align: center; 
+      }
+      .header h1 { 
+        margin: 0; 
+        font-size: 24px; 
+        font-weight: bold; 
+      }
+      .header p { 
+        margin: 5px 0 0 0; 
+        font-size: 16px; 
+        opacity: 0.9; 
+      }
+      .logo img { 
+        border-radius: 8px; 
+        background: white; 
+        padding: 10px; 
+        margin-bottom: 15px; 
+      }
+      .content { 
+        padding: 40px 30px; 
+      }
+      .button { 
+        display: inline-block; 
+        background: ${AMHSJ_COLORS.primary}; 
+        color: white; 
+        padding: 15px 30px; 
+        text-decoration: none; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        margin: 20px 0; 
+        transition: background-color 0.3s ease;
+      }
+      .button:hover { 
+        background: ${AMHSJ_COLORS.secondary}; 
+      }
+      .button-secondary { 
+        background: ${AMHSJ_COLORS.secondary}; 
+      }
+      .button-medical { 
+        background: ${AMHSJ_COLORS.medical}; 
+      }
+      .button-success { 
+        background: ${AMHSJ_COLORS.success}; 
+      }
+      .footer { 
+        background: ${AMHSJ_COLORS.background}; 
+        padding: 20px; 
+        text-align: center; 
+        font-size: 14px; 
+        color: ${AMHSJ_COLORS.textLight}; 
+        border-top: 1px solid #e2e8f0;
+      }
+      .warning { 
+        background: #fef3cd; 
+        border: 1px solid ${AMHSJ_COLORS.warning}; 
+        padding: 15px; 
+        border-radius: 5px; 
+        margin: 20px 0; 
+      }
+      .success { 
+        background: #d1fae5; 
+        border: 1px solid ${AMHSJ_COLORS.success}; 
+        padding: 15px; 
+        border-radius: 5px; 
+        margin: 20px 0; 
+      }
+      .medical-notice { 
+        background: #fee2e2; 
+        border: 1px solid ${AMHSJ_COLORS.medical}; 
+        padding: 15px; 
+        border-radius: 5px; 
+        margin: 20px 0; 
+      }
+      .info { 
+        background: #dbeafe; 
+        border: 1px solid ${AMHSJ_COLORS.accent}; 
+        padding: 15px; 
+        border-radius: 5px; 
+        margin: 20px 0; 
+      }
+      .divider { 
+        height: 1px; 
+        background: linear-gradient(to right, transparent, ${AMHSJ_COLORS.primary}, transparent); 
+        margin: 30px 0; 
+      }
+      .highlight { 
+        background: ${AMHSJ_COLORS.background}; 
+        padding: 15px; 
+        border-radius: 5px; 
+        border-left: 4px solid ${AMHSJ_COLORS.primary}; 
+        margin: 15px 0; 
+      }
+    </style>
+  `
+}
+
 export const emailTemplates = {
   // Authentication Templates
-  emailVerification: (name: string, verificationUrl: string): EmailTemplate => ({
-    subject: "AMHSJ - Verify Your Email Address",
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Verification - AMHSJ</title>
-        <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-          .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-          .header { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 30px; text-align: center; }
-          .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-          .content { padding: 40px 30px; }
-          .button { display: inline-block; background: #4f46e5; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-          .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #666; }
-          .warning { background: #fef3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <div class="logo">AMHSJ</div>
-            <p>Advancing Modern Hardware & Software Journal</p>
-          </div>
-          <div class="content">
-            <h2>Welcome to AMHSJ, ${name}!</h2>
-            <p>Thank you for registering with the Advancing Modern Hardware & Software Journal. To complete your registration and access all platform features, please verify your email address.</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationUrl}" class="button">Verify Email Address</a>
+  emailVerification: (name: string, verificationUrl: string): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: "AMHSJ - Verify Your Email Address",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Email Verification - AMHSJ</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 30px; text-align: center; }
+            .logo-container { margin-bottom: 10px; }
+            .logo { max-width: ${logo.width}px; height: auto; }
+            .header-text { font-size: 24px; font-weight: bold; margin: 10px 0 5px 0; }
+            .header-subtitle { font-size: 14px; opacity: 0.9; margin: 0; }
+            .content { padding: 40px 30px; }
+            .button { display: inline-block; background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+            .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #666; }
+            .warning { background: #fef3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo-container">
+                <img src="${logo.url}" alt="${logo.alt}" class="logo" width="${logo.width}" height="${logo.height}" />
+              </div>
+              <div class="header-text">ADVANCES IN MEDICINE & HEALTH SCIENCES</div>
+              <p class="header-subtitle">Journal of Bayelsa Medical University</p>
             </div>
-            
-            <div class="warning">
-              <strong>Security Notice:</strong> This verification link will expire in 24 hours. If you didn't create an account with AMHSJ, please ignore this email.
+            <div class="content">
+              <h2>Welcome to AMHSJ, ${name}!</h2>
+              <p>Thank you for registering with the Advances in Medicine & Health Sciences Journal. To complete your registration and access all platform features, please verify your email address.</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verificationUrl}" class="button">Verify Email Address</a>
+              </div>
+              
+              <div class="warning">
+                <strong>Security Notice:</strong> This verification link will expire in 24 hours. If you didn't create an account with AMHSJ, please ignore this email.
+              </div>
+              
+              <p>If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #1e3a8a;">${verificationUrl}</p>
+              
+              <p>Best regards,<br>The AMHSJ Editorial Team</p>
             </div>
-            
-            <p>If the button doesn't work, copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #4f46e5;">${verificationUrl}</p>
-            
-            <p>Best regards,<br>The AMHSJ Team</p>
+            <div class="footer">
+              <p>&copy; ${new Date().getFullYear()} Advances in Medicine & Health Sciences Journal</p>
+              <p>Bayelsa Medical University</p>
+            </div>
           </div>
-          <div class="footer">
-            <p>&copy; 2024 Advancing Modern Hardware & Software Journal. All rights reserved.</p>
-            <p>This is an automated message. Please do not reply to this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-    text: `Welcome to AMHSJ, ${name}!\n\nPlease verify your email address by visiting: ${verificationUrl}\n\nThis link expires in 24 hours.\n\nBest regards,\nThe AMHSJ Team`,
-  }),
+        </body>
+        </html>
+      `,
+      text: `Welcome to AMHSJ, ${name}!\n\nThank you for registering with the Advances in Medicine & Health Sciences Journal. To complete your registration, please verify your email address by visiting: ${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nThe AMHSJ Editorial Team`
+    }
+  },
 
-  passwordReset: (name: string, resetUrl: string): EmailTemplate => ({
-    subject: "AMHSJ - Password Reset Request",
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Reset - AMHSJ</title>
-        <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-          .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-          .header { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; padding: 30px; text-align: center; }
-          .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-          .content { padding: 40px 30px; }
-          .button { display: inline-block; background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-          .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #666; }
-          .warning { background: #fee2e2; border: 1px solid #fca5a5; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        </style>
-      </head>
+  passwordReset: (name: string, resetUrl: string): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: "AMHSJ - Password Reset Request",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Password Reset - AMHSJ</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; padding: 30px; text-align: center; }
+            .logo-container { margin-bottom: 10px; }
+            .logo { max-width: ${logo.width}px; height: auto; }
+            .header-text { font-size: 24px; font-weight: bold; margin: 10px 0 5px 0; }
+            .header-subtitle { font-size: 14px; opacity: 0.9; margin: 0; }
+            .content { padding: 40px 30px; }
+            .button { display: inline-block; background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+            .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #666; }
+            .warning { background: #fee2e2; border: 1px solid #fca5a5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          </style>
+        </head>
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">🔐 AMHSJ</div>
+            <div class="logo">
+              <img src="${logo.url}" alt="${logo.alt}" width="${logo.width}" height="${logo.height}" style="max-width: 100%; height: auto;" />
+            </div>
             <p>Password Reset Request</p>
           </div>
           <div class="content">
@@ -120,7 +289,8 @@ export const emailTemplates = {
       </html>
     `,
     text: `Password Reset Request\n\nHello ${name},\n\nReset your password by visiting: ${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nThe AMHSJ Security Team`,
-  }),
+    }
+  },
 
   // Submission Templates
   submissionReceived: (authorName: string, articleTitle: string, submissionId: string): EmailTemplate => ({
@@ -202,8 +372,10 @@ export const emailTemplates = {
     authorName: string,
     deadline: string,
     reviewUrl: string,
-  ): EmailTemplate => ({
-    subject: `AMHSJ - Review Assignment: ${articleTitle}`,
+  ): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: `AMHSJ - Review Assignment: ${articleTitle}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -226,7 +398,9 @@ export const emailTemplates = {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">📝 AMHSJ</div>
+            <div class="logo">
+              <img src="${logo.url}" alt="${logo.alt}" width="${logo.width}" height="${logo.height}" style="max-width: 100%; height: auto;" />
+            </div>
             <p>Peer Review Assignment</p>
           </div>
           <div class="content">
@@ -278,7 +452,8 @@ export const emailTemplates = {
       </html>
     `,
     text: `Review Assignment - AMHSJ\n\nDear Dr. ${reviewerName},\n\nYou have been assigned to review: "${articleTitle}" by ${authorName}\n\nDeadline: ${deadline}\n\nAccess the manuscript: ${reviewUrl}\n\nThank you for your contribution.\n\nBest regards,\nAMHSJ Editorial Team`,
-  }),
+    }
+  },
 
   reviewSubmitted: (authorName: string, articleTitle: string, submissionId: string): EmailTemplate => ({
     subject: `AMHSJ - Review Completed: ${articleTitle}`,
@@ -447,8 +622,10 @@ export const emailTemplates = {
     amount: string,
     transactionId: string,
     description: string,
-  ): EmailTemplate => ({
-    subject: "AMHSJ - Payment Confirmation",
+  ): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: "AMHSJ - Payment Confirmation",
     html: `
       <!DOCTYPE html>
       <html>
@@ -469,7 +646,9 @@ export const emailTemplates = {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">💳 AMHSJ</div>
+            <div class="logo">
+              <img src="${logo.url}" alt="${logo.alt}" width="${logo.width}" height="${logo.height}" style="max-width: 100%; height: auto;" />
+            </div>
             <p>Payment Confirmation</p>
           </div>
           <div class="content">
@@ -501,11 +680,14 @@ export const emailTemplates = {
       </html>
     `,
     text: `Payment Confirmation - AMHSJ\n\nDear ${userName},\n\nPayment successful!\nAmount: $${amount}\nTransaction ID: ${transactionId}\nDescription: ${description}\n\nKeep this receipt for your records.\n\nBest regards,\nAMHSJ Finance Team`,
-  }),
+    }
+  },
 
   // System Notification Templates
-  systemMaintenance: (userName: string, maintenanceDate: string, duration: string): EmailTemplate => ({
-    subject: "AMHSJ - Scheduled System Maintenance",
+  systemMaintenance: (userName: string, maintenanceDate: string, duration: string): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: "AMHSJ - Scheduled System Maintenance",
     html: `
       <!DOCTYPE html>
       <html>
@@ -526,7 +708,9 @@ export const emailTemplates = {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">🔧 AMHSJ</div>
+            <div class="logo">
+              <img src="${logo.url}" alt="${logo.alt}" width="${logo.width}" height="${logo.height}" style="max-width: 100%; height: auto;" />
+            </div>
             <p>System Maintenance Notice</p>
           </div>
           <div class="content">
@@ -568,11 +752,14 @@ export const emailTemplates = {
       </html>
     `,
     text: `System Maintenance - AMHSJ\n\nDear ${userName},\n\nScheduled maintenance:\nDate: ${maintenanceDate}\nDuration: ${duration}\n\nPlatform will be temporarily unavailable.\n\nBest regards,\nAMHSJ Technical Team`,
-  }),
+    }
+  },
 
   // Welcome email for new users
-  welcomeEmail: (userName: string, userRole: string): EmailTemplate => ({
-    subject: "Welcome to AMHSJ - Your Account is Ready!",
+  welcomeEmail: (userName: string, userRole: string): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: "Welcome to AMHSJ - Your Account is Ready!",
     html: `
       <!DOCTYPE html>
       <html>
@@ -594,7 +781,9 @@ export const emailTemplates = {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">🎉 AMHSJ</div>
+            <div class="logo">
+              <img src="${logo.url}" alt="${logo.alt}" width="${logo.width}" height="${logo.height}" style="max-width: 100%; height: auto;" />
+            </div>
             <p>Welcome to the Community!</p>
           </div>
           <div class="content">
@@ -675,7 +864,8 @@ export const emailTemplates = {
       </html>
     `,
     text: `Welcome to AMHSJ!\n\nDear ${userName},\n\nYour account is ready! Role: ${userRole}\n\nAccess your dashboard: ${process.env.NEXTAUTH_URL}/dashboard\n\nNeed help? Contact support@amhsj.org\n\nBest regards,\nThe AMHSJ Team`,
-  }),
+    }
+  },
 
   // Editorial Board Application Templates
   editorialBoardApplicationReceived: (

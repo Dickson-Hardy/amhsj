@@ -26,6 +26,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import Image from 'next/image'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,13 +67,21 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="fixed top-0 inset-x-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center px-6">
+    <div className="min-h-screen bg-amhsj-background">
+      <header className="fixed top-0 inset-x-0 h-16 bg-white border-b border-amhsj-border z-50 flex items-center px-6">
         <div className="flex items-center space-x-2">
-          <Edit3 className="h-7 w-7 text-blue-600" />
-          <div className="leading-tight">
-            <h1 className="text-sm font-semibold text-gray-900">AMJHS Editorial</h1>
-            <p className="text-[10px] text-gray-500">Management Console</p>
+          <div className="flex items-center space-x-2">
+            <Image
+              src="/logo-amhsj.png"
+              alt="AMHSJ Logo"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
+            <div className="leading-tight">
+              <h1 className="text-sm font-semibold text-amhsj-primary">AMHSJ Editorial</h1>
+              <p className="text-[10px] text-amhsj-text-muted">Management Console</p>
+            </div>
           </div>
         </div>
         <div className="flex-1 max-w-xl mx-6 hidden md:block">
@@ -107,26 +116,26 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
         </div>
       </header>
       <div className="pt-16 flex">
-        <aside className="fixed top-16 bottom-0 left-0 w-72 bg-white border-r border-gray-200 overflow-y-auto">
+        <aside className="fixed top-16 bottom-0 left-0 w-72 bg-amhsj-background-alt border-r border-amhsj-border overflow-y-auto">
           <nav className="p-4 space-y-1">
             {editorSidebarItems.map(item => {
               const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
               return (
-                <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 p-3 rounded-md text-sm transition-colors', isActive ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')}>
-                  <item.icon className={cn('h-5 w-5', isActive ? 'text-blue-600' : 'text-gray-400')} />
+                <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 p-3 rounded-md text-sm transition-colors', isActive ? 'bg-amhsj-primary-50 text-amhsj-primary border border-amhsj-primary-200' : 'text-amhsj-text-light hover:bg-amhsj-primary-50 hover:text-amhsj-primary')}>
+                  <item.icon className={cn('h-5 w-5', isActive ? 'text-amhsj-primary' : 'text-amhsj-text-muted')} />
                   <span className="flex-1">
                     <span className="block font-medium leading-tight">{item.label}</span>
-                    <span className="block text-[11px] text-gray-500 leading-tight">{item.description}</span>
+                    <span className="block text-[11px] text-amhsj-text-muted leading-tight">{item.description}</span>
                   </span>
                 </Link>
               )
             })}
           </nav>
-          <div className="p-4 border-t border-gray-200 text-[11px] text-gray-500">
+          <div className="p-4 border-t border-amhsj-border text-[11px] text-amhsj-text-muted">
             <p className="italic">Editorial metrics will appear here.</p>
           </div>
         </aside>
-        <main className="flex-1 ml-72 h-[calc(100vh-4rem)] overflow-y-auto p-6">
+        <main className="flex-1 ml-72 h-[calc(100vh-4rem)] overflow-y-auto p-6 bg-amhsj-background">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

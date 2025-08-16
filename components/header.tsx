@@ -13,7 +13,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Cpu, User, Search, Wifi, LogOut, Settings } from "lucide-react"
+import { Menu, User, Search, Wifi, LogOut, Settings } from "lucide-react"
 import { NotificationCenter } from "@/components/notifications"
 import ModernNotificationSystem from "@/components/modern-notification-system"
 import { getRoleBasedDashboard, getRoleDisplayName } from "@/lib/role-utils"
@@ -96,8 +96,15 @@ export function Header() {
         <div className="flex h-20 items-center justify-between border-b border-gray-200">
           {/* Logo and Journal Title */}
           <Link href="/" className="flex items-center space-x-4">
-            <div className="bg-blue-900 p-2 rounded-lg">
-              <Cpu className="h-8 w-8 text-white" />
+            <div className="bg-white p-2 rounded-lg border shadow-sm">
+              <img
+                src="/logo-amhsj.png"
+                alt="AMHSJ Logo"
+                width={40}
+                height={40}
+                className="object-contain block"
+                style={{ maxWidth: '40px', maxHeight: '40px' }}
+              />
             </div>
             <div>
               <div className="font-serif font-bold text-2xl text-blue-900">
@@ -160,7 +167,7 @@ export function Header() {
                   )}
                   <DropdownMenuItem asChild>
                     <Link href="/submit">
-                      <Cpu className="mr-2 h-4 w-4" />
+                      <Search className="mr-2 h-4 w-4" />
                       Submit Research
                     </Link>
                   </DropdownMenuItem>
@@ -183,7 +190,17 @@ export function Header() {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <div className="flex flex-col space-y-4 mt-8">
                   <div className="text-center pb-4 border-b">
-                    <div className="font-bold text-lg">AMHSJ</div>
+                    <div className="flex items-center justify-center space-x-2 mb-2">
+                      <img
+                        src="/logo-amhsj.png"
+                        alt="AMHSJ Logo"
+                        width={32}
+                        height={32}
+                        className="object-contain block"
+                        style={{ maxWidth: '32px', maxHeight: '32px' }}
+                      />
+                      <div className="font-bold text-lg">AMHSJ</div>
+                    </div>
                     <div className="text-sm text-gray-600">Medical Research Journal</div>
                   </div>
                   {navigationItems.map((item) => (
@@ -236,7 +253,7 @@ export function Header() {
                         )}
                         <Button className="w-full" variant="outline" asChild>
                           <Link href="/submit">
-                            <Cpu className="h-4 w-4 mr-2" />
+                            <Search className="h-4 w-4 mr-2" />
                             Submit Research
                           </Link>
                         </Button>

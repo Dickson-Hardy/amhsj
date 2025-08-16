@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BookOpen, Mail, Phone, MapPin } from "lucide-react"
+import Image from "next/image"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -11,9 +12,18 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
           {/* Journal Information */}
           <div className="md:col-span-2">
-            <h3 className="font-serif font-bold text-blue-900 text-lg mb-4">
-              Advances in Medicine & Health Sciences Journal
-            </h3>
+            <div className="flex items-center space-x-3 mb-4">
+              <Image
+                src="/logo-amhsj.png"
+                alt="AMHSJ Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+              <h3 className="font-serif font-bold text-blue-900 text-lg">
+                Advances in Medicine & Health Sciences Journal
+              </h3>
+            </div>
             <div className="space-y-2 text-gray-700">
               <p>Online ISSN: 2672-4596 | Print ISSN: 2672-4588</p>
               <p>

@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Image from "next/image"
 import {
   FileText,
   Clock,
@@ -89,7 +90,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 relative">
+    <div className="flex h-screen bg-amhsj-background relative">
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div 
@@ -103,19 +104,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         ${sidebarOpen ? (isMobile ? 'w-64' : 'w-64') : 'w-16'} 
         ${isMobile ? 'fixed left-0 top-0 h-full z-50' : 'relative'} 
         ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
-        transition-all duration-300 bg-white border-r border-slate-200 flex flex-col
+        transition-all duration-300 bg-white border-r border-amhsj-secondary-200 flex flex-col
       `}>
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-amhsj-secondary-200">
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="font-bold text-slate-900">AMHSJ</h1>
-                  <p className="text-xs text-slate-500">Research Portal</p>
+                <div className="flex items-center space-x-2">
+                  <Image
+                    src="/logo-amhsj.png"
+                    alt="AMHSJ Logo"
+                    width={32}
+                    height={32}
+                    className="object-contain"
+                  />
+                  <div>
+                    <h1 className="font-bold text-amhsj-primary">AMHSJ</h1>
+                    <p className="text-xs text-amhsj-text-muted">Research Portal</p>
+                  </div>
                 </div>
               </div>
             )}

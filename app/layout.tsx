@@ -32,6 +32,19 @@ export const metadata: Metadata = {
   authors: [{ name: "AMHSJ Editorial Team" }],
   creator: "AMHSJ",
   publisher: "Advances in Medicine & Health Sciences Journal",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
+      { url: "/logo-amhsj.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
   robots: {
     index: true,
     follow: true,
@@ -53,10 +66,10 @@ export const metadata: Metadata = {
       "The official journal of Bayelsa Medical University - Open access medical research from the Niger Delta region",
     images: [
       {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "AMHSJ - Medical Research Journal",
+        url: "/logo-amhsj.png",
+        width: 512,
+        height: 512,
+        alt: "AMHSJ - Advances in Medicine & Health Sciences Journal",
       },
     ],
   },
@@ -64,13 +77,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "AMHSJ - Advances in Medicine & Health Sciences Journal",
     description: "Open access medical research from Bayelsa Medical University",
-    images: ["/og-image.jpg"],
+    images: ["/logo-amhsj.png"],
     creator: "@amhsj_journal",
   },
   verification: {
     google: "your-google-verification-code",
   },
-    generator: 'v0.dev'
+  manifest: "/manifest.json",
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
