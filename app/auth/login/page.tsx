@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Cpu, Wifi, Eye, EyeOff } from "lucide-react"
+import { Wifi, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/components/toast-provider"
 import { getPostAuthRedirect } from "@/lib/role-utils"
+import Image from "next/image"
 
 export default function LoginPage() {
   const { success, error: showErrorToast } = useToast()
@@ -40,15 +41,22 @@ export default function LoginPage() {
         setError(errorMessage)
         showErrorToast("Sign In Failed", errorMessage);
       } else {
-        // Get user session to determine role-based redirect
+        // Force session refresh and get user session to determine role-based redirect
         const session = await getSession()
+        
+        // Debug logging
+        console.log("Login session:", session)
+        console.log("User role:", session?.user?.role)
         
         success("Welcome back!", "You have been successfully signed in.")
         
         // Use return URL if provided, otherwise use role-based routing
         const redirectUrl = returnUrl || getPostAuthRedirect(session)
-        router.push(redirectUrl)
-        router.refresh()
+        
+        console.log("Redirecting to:", redirectUrl)
+        
+        // Force a hard refresh to ensure session is properly loaded
+        window.location.href = redirectUrl
       }
     } catch (error) {
       const errorMessage = "An error occurred. Please try again."
@@ -65,8 +73,14 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-3">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-2 rounded-lg">
-              <Cpu className="h-8 w-8 text-white" />
+            <div className="bg-white p-2 rounded-lg border shadow-sm">
+              <Image
+                src="/logo-amhsj.png"
+                alt="AMHSJ Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
             </div>
             <div>
               <div className="font-bold text-2xl text-gray-800">AMHSJ</div>

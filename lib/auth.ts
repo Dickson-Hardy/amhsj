@@ -58,16 +58,36 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // Handle token updates and user role changes
       if (user) {
         token.role = user.role
+        token.lastUpdated = Date.now()
       }
+      
+      // Force refresh user data from database if triggered
+      if (trigger === "update" && token.sub) {
+        try {
+          const dbUser = await UserService.getUserById(token.sub)
+          if (dbUser) {
+            token.role = dbUser.role
+            token.lastUpdated = Date.now()
+            console.log(`Token refreshed for user ${token.sub}, role: ${dbUser.role}`)
+          }
+        } catch (error) {
+          console.error("Error refreshing token:", error)
+        }
+      }
+      
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!
         session.user.role = token.role as string
+        
+        // Debug logging
+        console.log(`Session created/updated for ${session.user.email}, role: ${session.user.role}`)
       }
       return session
     },

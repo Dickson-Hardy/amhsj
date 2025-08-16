@@ -33,7 +33,7 @@ export function getRoleBasedDashboard(role: string | undefined): string {
  */
 export function getPostAuthRedirect(session: Session | null, callbackUrl?: string): string {
   // If there's a specific callback URL, use it (but validate it's safe)
-  if (callbackUrl && (callbackUrl.startsWith("/") || callbackUrl.includes(window?.location?.hostname))) {
+  if (callbackUrl && callbackUrl.startsWith("/")) {
     return callbackUrl
   }
 

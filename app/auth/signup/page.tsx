@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Cpu, Wifi, Eye, EyeOff } from "lucide-react"
+import { Wifi, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/components/toast-provider"
+import Image from "next/image"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -102,8 +103,14 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-3">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-2 rounded-lg">
-              <Cpu className="h-8 w-8 text-white" />
+            <div className="bg-white p-2 rounded-lg border shadow-sm">
+              <Image
+                src="/logo-amhsj.png"
+                alt="AMHSJ Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
             </div>
             <div>
               <div className="font-bold text-2xl text-gray-800">AMHSJ</div>

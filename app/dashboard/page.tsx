@@ -141,9 +141,22 @@ const getPriorityColor = (priority: string) => {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
+  
+  // Debug logging for session changes
+  useEffect(() => {
+    if (session) {
+      console.log("Dashboard session updated:", {
+        name: session.user?.name,
+        email: session.user?.email,
+        role: session.user?.role,
+        timestamp: new Date().toISOString()
+      })
+    }
+  }, [session])
+
   const [stats, setStats] = useState<DashboardStats>({
     totalSubmissions: 0,
     medicalSubmissions: 0,
@@ -271,8 +284,8 @@ export default function DashboardPage() {
     return Promise.all([
       fetch(`/api/sections/${encodedSection}/stats`),
       fetch(`/api/sections/${encodedSection}/submissions?limit=20`),
-      fetch(`/api/user/profile`),
-      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => ({ ok: false })),
+      fetch(`/api/user/profile`).catch(() => null),
+      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => null),
     ])
   }
 
@@ -281,33 +294,37 @@ export default function DashboardPage() {
     return Promise.all([
       fetch(`/api/users/${session?.user?.id}/stats`),
       fetch(`/api/users/${session?.user?.id}/submissions`),
-      fetch(`/api/users/${session?.user?.id}/activities`).catch(() => ({ ok: false })),
-      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => ({ ok: false })),
+      fetch(`/api/users/${session?.user?.id}/activities`).catch(() => null),
+      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => null),
     ])
   }
 
-  const processApiResponses = async ([statsRes, submissionsRes, activitiesRes, insightsRes]: Response[]) => {
+  const processApiResponses = async ([statsRes, submissionsRes, activitiesRes, insightsRes]: (Response | null)[]) => {
     // Handle API errors with modern error handling
-    if (!statsRes.ok) {
-      handleApiError(statsRes, { 
-        component: 'dashboard', 
-        action: 'fetch_stats' 
-      })
+    if (!statsRes || !statsRes.ok) {
+      if (statsRes) {
+        handleApiError(statsRes, { 
+          component: 'dashboard', 
+          action: 'fetch_stats' 
+        })
+      }
       return
     }
 
-    if (!submissionsRes.ok) {
-      handleApiError(submissionsRes, { 
-        component: 'dashboard', 
-        action: 'fetch_submissions' 
-      })
+    if (!submissionsRes || !submissionsRes.ok) {
+      if (submissionsRes) {
+        handleApiError(submissionsRes, { 
+          component: 'dashboard', 
+          action: 'fetch_submissions' 
+        })
+      }
       return
     }
 
     const statsData = await statsRes.json()
     const submissionsData = await submissionsRes.json()
-    const activitiesData = activitiesRes.ok ? await activitiesRes.json() : { success: false }
-    const insightsData = insightsRes.ok ? await insightsRes.json() : { success: false }
+    const activitiesData = activitiesRes && activitiesRes.ok ? await activitiesRes.json() : { success: false }
+    const insightsData = insightsRes && insightsRes.ok ? await insightsRes.json() : { success: false }
 
     if (statsData.success) {
       if (isEditor) {
@@ -836,12 +853,12 @@ export default function DashboardPage() {
     try {
       // Fetch data for the new section
       const [statsRes, submissionsRes] = await fetchEditorDashboardData(newSection)
-      await processApiResponses([statsRes, submissionsRes, { ok: false }, { ok: false }])
+      await processApiResponses([statsRes, submissionsRes, null, null])
     } catch (error) {
       handleError(error, { 
         component: 'dashboard', 
         action: 'section_change',
-        section: newSection
+        metadata: { section: newSection }
       })
     } finally {
       setLoading(false)
