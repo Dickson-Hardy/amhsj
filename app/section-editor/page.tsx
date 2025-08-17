@@ -109,116 +109,33 @@ export default function SectionEditorDashboard() {
     try {
       setLoading(true)
       
-      // Mock data - replace with actual API calls
-      setMetrics({
-        totalSubmissions: 45,
-        myAssignments: 12,
-        pendingDecisions: 5,
-        acceptanceRate: 28.5,
-        averageReviewTime: 32,
-        sectionRanking: 3,
-      })
-
-      setSubmissions([
-        {
-          id: "1",
-          title: "Novel Minimally Invasive Cardiac Surgery Techniques",
-          author: "Dr. Sarah Johnson",
-          coAuthors: ["Dr. Mike Chen", "Dr. Lisa Wong"],
-          submittedDate: "2024-01-15",
-          status: "technical_check",
-          priority: 'high',
-          reviewers: ["Dr. Robert Smith", "Dr. Anna Davis"],
-          daysSinceSubmission: 8,
-          qualityScore: 8.5,
-          needsDecision: false,
-          abstract: "This study presents novel minimally invasive techniques for cardiac surgery...",
-        },
-        {
-          id: "2",
-          title: "Cardiac Biomarkers in Early Detection",
-          author: "Prof. David Wilson",
-          coAuthors: ["Dr. Emma Brown"],
-          submittedDate: "2024-01-10",
-          status: "reviewer_decision_received",
-          priority: 'high',
-          reviewers: ["Dr. James Taylor", "Dr. Maria Garcia"],
-          daysSinceSubmission: 13,
-          qualityScore: 7.2,
-          needsDecision: true,
-          abstract: "Investigation of novel biomarkers for early cardiac disease detection...",
-        },
-        {
-          id: "3",
-          title: "Pediatric Cardiac Surgery Outcomes",
-          author: "Dr. Rachel Green",
-          coAuthors: [],
-          submittedDate: "2024-01-05",
-          status: "revision_submitted",
-          priority: 'medium',
-          reviewers: ["Dr. Steven Miller"],
-          daysSinceSubmission: 18,
-          qualityScore: 6.8,
-          needsDecision: true,
-          abstract: "Comprehensive analysis of pediatric cardiac surgery outcomes over 5 years...",
-        }
+      // Fetch real data from API endpoints
+      const [metricsResponse, submissionsResponse, reviewersResponse, scopeResponse] = await Promise.all([
+        fetch('/api/section-editor/metrics'),
+        fetch('/api/section-editor/submissions'),
+        fetch('/api/section-editor/reviewers'),
+        fetch('/api/section-editor/scope')
       ])
 
-      setReviewers([
-        {
-          id: "1",
-          name: "Dr. Robert Smith",
-          email: "robert.smith@hospital.com",
-          expertise: ["Cardiac Surgery", "Interventional Cardiology"],
-          availability: 'available',
-          currentLoad: 2,
-          maxLoad: 4,
-          averageReviewTime: 14,
-          qualityRating: 9.2,
-          completedReviews: 45,
-          lastActive: "2024-01-20",
-        },
-        {
-          id: "2",
-          name: "Dr. Anna Davis",
-          email: "anna.davis@medical.edu",
-          expertise: ["Cardiac Imaging", "Preventive Cardiology"],
-          availability: 'limited',
-          currentLoad: 3,
-          maxLoad: 3,
-          averageReviewTime: 21,
-          qualityRating: 8.7,
-          completedReviews: 32,
-          lastActive: "2024-01-18",
-        },
-        {
-          id: "3",
-          name: "Dr. James Taylor",
-          email: "james.taylor@clinic.org",
-          expertise: ["Cardiac Electrophysiology", "Heart Failure"],
-          availability: 'available',
-          currentLoad: 1,
-          maxLoad: 5,
-          averageReviewTime: 18,
-          qualityRating: 8.9,
-          completedReviews: 67,
-          lastActive: "2024-01-22",
-        }
-      ])
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json()
+        setMetrics(metricsData)
+      }
 
-      setSectionScope({
-        name: "Cardiology",
-        description: "Cardiovascular medicine including surgical and non-surgical interventions",
-        keywords: ["cardiology", "cardiac surgery", "heart disease", "cardiovascular", "interventional"],
-        guidelines: "Submissions should focus on clinical or research aspects of cardiovascular medicine...",
-        acceptance_criteria: [
-          "Novel findings or approaches",
-          "Strong methodological design",
-          "Clinical relevance",
-          "Appropriate statistical analysis",
-          "Clear presentation of results"
-        ]
-      })
+      if (submissionsResponse.ok) {
+        const submissionsData = await submissionsResponse.json()
+        setSubmissions(submissionsData)
+      }
+
+      if (reviewersResponse.ok) {
+        const reviewersData = await reviewersResponse.json()
+        setReviewers(reviewersData)
+      }
+
+      if (scopeResponse.ok) {
+        const scopeData = await scopeResponse.json()
+        setSectionScope(scopeData)
+      }
 
     } catch (error) {
       console.error('Error fetching section editor dashboard data:', error)
@@ -229,9 +146,25 @@ export default function SectionEditorDashboard() {
 
   const handleEditorialDecision = async (submissionId: string, decision: string, comments: string) => {
     try {
-      console.log(`Editorial decision: ${decision} for submission ${submissionId}`)
-      console.log(`Comments: ${comments}`)
-      fetchDashboardData()
+      const response = await fetch('/api/section-editor/decision', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionId,
+          decision,
+          comments,
+          editorId: session?.user?.id
+        })
+      })
+
+      if (response.ok) {
+        // Refresh dashboard data after successful decision
+        fetchDashboardData()
+      } else {
+        console.error('Failed to make editorial decision')
+      }
     } catch (error) {
       console.error('Error making editorial decision:', error)
     }
@@ -239,8 +172,24 @@ export default function SectionEditorDashboard() {
 
   const handleReviewerAssignment = async (submissionId: string, reviewerId: string) => {
     try {
-      console.log(`Assigning reviewer ${reviewerId} to submission ${submissionId}`)
-      fetchDashboardData()
+      const response = await fetch('/api/section-editor/assign-reviewer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionId,
+          reviewerId,
+          assignedBy: session?.user?.id
+        })
+      })
+
+      if (response.ok) {
+        // Refresh dashboard data after successful assignment
+        fetchDashboardData()
+      } else {
+        console.error('Failed to assign reviewer')
+      }
     } catch (error) {
       console.error('Error assigning reviewer:', error)
     }

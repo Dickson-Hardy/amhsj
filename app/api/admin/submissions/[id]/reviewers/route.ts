@@ -2,9 +2,10 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { reviews, users, notifications } from "@/lib/db/schema"
+import { reviews, users, notifications, articles } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { logError } from "@/lib/logger"
+import { sendReviewInvitation } from "@/lib/email-improved"
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const submissionId = params.id;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -55,15 +56,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const newReview = await db.insert(reviews).values({
       articleId: submissionId,
       reviewerId: reviewerId,
-      status: 'assigned',
-      assignedDate: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      status: 'pending', // Use valid status from schema
+      createdAt: new Date()
     }).returning({
       id: reviews.id,
       status: reviews.status,
-      assignedDate: reviews.assignedDate
+      createdAt: reviews.createdAt
     })
 
     // Create notification for reviewer
@@ -75,14 +73,34 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         message: `You have been assigned to review a new submission. Please log in to your reviewer dashboard to access the manuscript.`,
         relatedId: submissionId,
         isRead: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date()
       })
     } catch (notificationError) {
       console.error("Failed to create reviewer notification:", notificationError)
     }
 
-    // TODO: Send email notification to reviewer
-    // You can integrate with your email service here
+    // Send email notification to reviewer using hybrid email service
+    try {
+      const { sendTemplateEmail } = await import('@/lib/email-hybrid')
+      
+      await sendTemplateEmail({
+        to: reviewer[0].email,
+        templateId: 'reviewerAssignment',
+        variables: {
+          reviewerName: reviewer[0].name || 'Dear Reviewer',
+          articleTitle: 'Submission ' + submissionId, // Simplified since we don't have submission data loaded
+          authorName: 'Author', // Simplified since we don't have author data loaded
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
+          reviewUrl: `${process.env.NEXT_PUBLIC_APP_URL}/review/${newReview[0].id}`
+        },
+        priority: true
+      })
+      
+      console.log(`Review assignment email sent to ${reviewer[0].email}`)
+    } catch (emailError) {
+      console.error("Failed to send reviewer assignment email:", emailError)
+      // Don't fail the API call if email fails - reviewer is still assigned
+    }
 
     return NextResponse.json({
       success: true,
@@ -93,11 +111,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         reviewerName: reviewer[0].name,
         reviewerEmail: reviewer[0].email,
         status: newReview[0].status,
-        assignedDate: newReview[0].assignedDate
+        assignedDate: newReview[0].createdAt
       }
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const submissionId = params.id;
     logError(error as Error, { endpoint: `/api/admin/submissions/${submissionId}/reviewers` })
     return NextResponse.json({ success: false, error: "Failed to assign reviewer" }, { status: 500 })
@@ -123,10 +141,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         affiliation: users.affiliation,
         reviewId: reviews.id,
         status: reviews.status,
-        assignedDate: reviews.assignedDate,
-        dueDate: reviews.dueDate,
-        completedDate: reviews.reviewDate,
-        recommendation: reviews.recommendation
+        assignedDate: reviews.createdAt, // Use createdAt as assignedDate
+        recommendation: reviews.recommendation,
+        comments: reviews.comments,
+        submittedAt: reviews.submittedAt
       })
       .from(reviews)
       .innerJoin(users, eq(reviews.reviewerId, users.id))
@@ -137,7 +155,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       reviewers: assignedReviewers
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const submissionId = params.id;
     logError(error as Error, { endpoint: `/api/admin/submissions/${submissionId}/reviewers` })
     return NextResponse.json({ success: false, error: "Failed to fetch reviewers" }, { status: 500 })

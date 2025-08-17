@@ -118,140 +118,33 @@ export default function ProductionEditorDashboard() {
     try {
       setLoading(true)
       
-      // Mock data - replace with actual API calls
-      setMetrics({
-        acceptedArticles: 23,
-        inCopyediting: 8,
-        inTypesetting: 6,
-        awaitingProofs: 4,
-        readyForPublication: 5,
-        publishedThisMonth: 12,
-        averageProductionTime: 28,
-      })
-
-      setArticles([
-        {
-          id: "1",
-          title: "Novel Cardiac Surgery Techniques: A Comprehensive Review",
-          authors: ["Dr. Sarah Johnson", "Dr. Mike Chen", "Dr. Lisa Wong"],
-          acceptedDate: "2024-01-15",
-          status: 'copyediting',
-          priority: 'high',
-          targetIssue: "Vol 5, Issue 2",
-          doi: "10.1234/amhsj.2024.001",
-          productionNotes: ["Author corrections received", "Figures need high-res versions"],
-          filesUploaded: {
-            manuscript: true,
-            figures: false,
-            supplementary: true
-          },
-          proofStatus: {
-            authorProof: 'pending',
-            finalProof: 'pending'
-          },
-          scheduledPublication: "2024-03-15"
-        },
-        {
-          id: "2",
-          title: "AI Applications in Medical Diagnosis",
-          authors: ["Prof. Robert Smith", "Dr. Anna Davis"],
-          acceptedDate: "2024-01-10",
-          status: 'typesetting',
-          priority: 'medium',
-          targetIssue: "Vol 5, Issue 2",
-          doi: "10.1234/amhsj.2024.002",
-          productionNotes: ["Copyediting complete", "Complex tables need formatting"],
-          filesUploaded: {
-            manuscript: true,
-            figures: true,
-            supplementary: false
-          },
-          proofStatus: {
-            authorProof: 'approved',
-            finalProof: 'pending'
-          },
-          scheduledPublication: "2024-03-15"
-        },
-        {
-          id: "3",
-          title: "Pediatric Surgery Outcomes Analysis",
-          authors: ["Dr. Rachel Green"],
-          acceptedDate: "2024-01-05",
-          status: 'proofing',
-          priority: 'high',
-          targetIssue: "Vol 5, Issue 1",
-          doi: "10.1234/amhsj.2024.003",
-          productionNotes: ["Typesetting complete", "Awaiting author proof approval"],
-          filesUploaded: {
-            manuscript: true,
-            figures: true,
-            supplementary: true
-          },
-          proofStatus: {
-            authorProof: 'changes_requested',
-            finalProof: 'pending'
-          },
-          scheduledPublication: "2024-02-28"
-        }
+      // Fetch real data from API endpoints
+      const [metricsResponse, articlesResponse, issuesResponse, tasksResponse] = await Promise.all([
+        fetch('/api/production-editor/metrics'),
+        fetch('/api/production-editor/articles'),
+        fetch('/api/production-editor/issues'),
+        fetch('/api/production-editor/tasks')
       ])
 
-      setIssues([
-        {
-          id: "1",
-          volume: "5",
-          number: "1",
-          title: "Current Advances in Medical Research",
-          status: 'ready',
-          targetDate: "2024-02-28",
-          articlesCount: 8,
-          coverImage: null,
-          guestEditor: null
-        },
-        {
-          id: "2",
-          volume: "5",
-          number: "2",
-          title: "Innovation in Surgical Techniques",
-          status: 'in_production',
-          targetDate: "2024-03-15",
-          articlesCount: 6,
-          coverImage: null,
-          guestEditor: "Dr. Michael Torres"
-        }
-      ])
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json()
+        setMetrics(metricsData)
+      }
 
-      setTasks([
-        {
-          id: "1",
-          articleId: "1",
-          articleTitle: "Novel Cardiac Surgery Techniques",
-          type: 'copyedit',
-          assignedTo: "Jane Smith",
-          dueDate: "2024-01-28",
-          status: 'in_progress',
-          priority: 'high'
-        },
-        {
-          id: "2",
-          articleId: "2",
-          articleTitle: "AI Applications in Medical Diagnosis",
-          type: 'typeset',
-          assignedTo: "Mark Johnson",
-          dueDate: "2024-01-30",
-          status: 'in_progress',
-          priority: 'medium'
-        },
-        {
-          id: "3",
-          articleId: "3",
-          articleTitle: "Pediatric Surgery Outcomes",
-          type: 'proof_review',
-          assignedTo: "Sarah Davis",
-          dueDate: "2024-01-26",
-          status: 'pending',
-          priority: 'high'
-        }
-      ])
+      if (articlesResponse.ok) {
+        const articlesData = await articlesResponse.json()
+        setArticles(articlesData)
+      }
+
+      if (issuesResponse.ok) {
+        const issuesData = await issuesResponse.json()
+        setIssues(issuesData)
+      }
+
+      if (tasksResponse.ok) {
+        const tasksData = await tasksResponse.json()
+        setTasks(tasksData)
+      }
 
     } catch (error) {
       console.error('Error fetching production editor dashboard data:', error)

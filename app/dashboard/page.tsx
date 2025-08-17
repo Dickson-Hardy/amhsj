@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { RouteGuard } from "@/components/route-guard"
@@ -23,6 +23,7 @@ import {
   XCircle,
   Eye,
   Users,
+  User,
   TrendingUp,
   Calendar,
   MessageSquare,
@@ -169,13 +170,21 @@ export default function DashboardPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [fetching, setFetching] = useState(false)
+  const [profileData, setProfileData] = useState<any>(null)
+  const [profileCompleteness, setProfileCompleteness] = useState(0)
   
   // Get the active tab from URL parameters, default to "overview"
   const activeTab = searchParams.get('tab') || 'overview'
   const activeFilter = searchParams.get('filter') || 'all'
   
+  // Debug logging for tabs
+  useEffect(() => {
+    console.log('Active tab changed to:', activeTab)
+  }, [activeTab])
+  
   // Handle tab changes by updating URL
   const handleTabChange = (value: string) => {
+    console.log('Tab changed to:', value)
     const params = new URLSearchParams(searchParams.toString())
     if (value === 'overview') {
       params.delete('tab')
@@ -183,6 +192,7 @@ export default function DashboardPage() {
       params.set('tab', value)
     }
     const newUrl = params.toString() ? `?${params.toString()}` : '/dashboard'
+    console.log('Navigating to:', newUrl)
     router.push(newUrl)
   }
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
@@ -229,23 +239,24 @@ export default function DashboardPage() {
   const [availableSections, setAvailableSections] = useState<string[]>(["General"])
   const [isEditor, setIsEditor] = useState(false)
 
+  // Determine if user is an editor based on their role
   useEffect(() => {
     const allowedRoles = ["section-editor", "managing-editor", "editor-in-chief", "admin"]
     const userIsEditor = allowedRoles.includes(session?.user?.role || "")
     setIsEditor(userIsEditor)
+  }, [session?.user?.role])
 
-    if (!session?.user?.id || fetching) return
-
-    fetchDashboardData()
-  }, [session])
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true)
       setFetching(true)
       
+      // Determine if user is editor directly to avoid state dependency loops
+      const allowedRoles = ["section-editor", "managing-editor", "editor-in-chief", "admin"]
+      const userIsEditor = allowedRoles.includes(session?.user?.role || "")
+      
       // First get user profile to determine section
-      if (isEditor) {
+      if (userIsEditor) {
         const profileRes = await fetch('/api/user/profile')
         if (profileRes.ok) {
           const profileData = await profileRes.json()
@@ -257,7 +268,7 @@ export default function DashboardPage() {
       }
 
       // Determine which APIs to call based on user role
-      const apiCalls = isEditor 
+      const apiCalls = userIsEditor 
         ? await fetchEditorDashboardData()
         : await fetchAuthorDashboardData()
 
@@ -274,32 +285,45 @@ export default function DashboardPage() {
       setLoading(false)
       setFetching(false)
     }
-  }
+  }, [session?.user?.id, session?.user?.role, userSection]) // Only depend on stable user properties
+
+  // Fetch dashboard data when session changes and we have a user ID
+  useEffect(() => {
+    if (!session?.user?.id || fetching || loading) return
+    fetchDashboardData()
+  }, [session?.user?.id, fetchDashboardData]) // Include the memoized function
 
   const fetchEditorDashboardData = async (section?: string) => {
     // For editors, fetch section-specific data
     const sectionToUse = section || userSection
     const encodedSection = encodeURIComponent(sectionToUse)
+    const userId = session?.user?.id
+    
+    if (!userId) return [null, null, null, null]
     
     return Promise.all([
       fetch(`/api/sections/${encodedSection}/stats`),
       fetch(`/api/sections/${encodedSection}/submissions?limit=20`),
       fetch(`/api/user/profile`).catch(() => null),
-      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => null),
+      fetch(`/api/users/${userId}/insights`).catch(() => null),
     ])
   }
 
   const fetchAuthorDashboardData = async () => {
     // For authors, fetch personal data
+    const userId = session?.user?.id
+    
+    if (!userId) return [null, null, null, null]
+    
     return Promise.all([
-      fetch(`/api/users/${session?.user?.id}/stats`),
-      fetch(`/api/users/${session?.user?.id}/submissions`),
-      fetch(`/api/users/${session?.user?.id}/activities`).catch(() => null),
-      fetch(`/api/users/${session?.user?.id}/insights`).catch(() => null),
+      fetch(`/api/users/${userId}/stats`),
+      fetch(`/api/users/${userId}/submissions`),
+      fetch(`/api/user/profile`).catch(() => null),
+      fetch(`/api/users/${userId}/insights`).catch(() => null),
     ])
   }
 
-  const processApiResponses = async ([statsRes, submissionsRes, activitiesRes, insightsRes]: (Response | null)[]) => {
+  const processApiResponses = async ([statsRes, submissionsRes, profileRes, insightsRes]: (Response | null)[]) => {
     // Handle API errors with modern error handling
     if (!statsRes || !statsRes.ok) {
       if (statsRes) {
@@ -323,8 +347,14 @@ export default function DashboardPage() {
 
     const statsData = await statsRes.json()
     const submissionsData = await submissionsRes.json()
-    const activitiesData = activitiesRes && activitiesRes.ok ? await activitiesRes.json() : { success: false }
+    const profileData = profileRes && profileRes.ok ? await profileRes.json() : { success: false }
     const insightsData = insightsRes && insightsRes.ok ? await insightsRes.json() : { success: false }
+
+    // Handle profile data
+    if (profileData.success) {
+      setProfileData(profileData.profile)
+      setProfileCompleteness(profileData.profile.profileCompleteness || 0)
+    }
 
     if (statsData.success) {
       if (isEditor) {
@@ -373,12 +403,8 @@ export default function DashboardPage() {
     }
 
     // Handle recent activities
-    if (activitiesData.success && activitiesData.activities) {
-      setRecentActivities(activitiesData.activities)
-    } else {
-      // Generate activities from submissions if no activities API
-      setRecentActivities(generateActivitiesFromSubmissions(submissionsData.submissions || []))
-    }
+    // Generate activities from submissions since we don't have separate activities API
+    setRecentActivities(generateActivitiesFromSubmissions(submissionsData.submissions || []))
 
     // Handle performance insights
     if (insightsData.success && insightsData.insights) {
@@ -636,11 +662,21 @@ export default function DashboardPage() {
                         Last updated: {new Date(submission.lastUpdate).toLocaleDateString()}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="hover:bg-indigo-50">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="hover:bg-indigo-50"
+                          onClick={() => router.push(`/submissions/${submission.id}`)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View Details
                         </Button>
-                        <Button size="sm" variant="outline" className="hover:bg-blue-50">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="hover:bg-blue-50"
+                          onClick={() => router.push(`/submissions/${submission.id}/messages`)}
+                        >
                           <MessageSquare className="h-4 w-4 mr-1" />
                           Messages
                           {submission.comments > 0 && (
@@ -650,7 +686,11 @@ export default function DashboardPage() {
                           )}
                         </Button>
                         {submission.status === "revision_requested" && (
-                          <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
+                          <Button 
+                            size="sm" 
+                            className="bg-orange-500 hover:bg-orange-600 text-white"
+                            onClick={() => router.push(`/submissions/${submission.id}/revise`)}
+                          >
                             <Edit className="h-4 w-4 mr-1" />
                             Submit Revision
                           </Button>
@@ -719,7 +759,11 @@ export default function DashboardPage() {
                   </div>
                   
                   <div className="flex justify-end">
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => router.push(`/submissions/${submission.id}/reviews`)}
+                    >
                       View Detailed Reviews
                     </Button>
                   </div>
@@ -737,7 +781,10 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-slate-900">Communication Center</h2>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => router.push('/messages/compose')}
+          >
             <MessageSquare className="h-4 w-4 mr-2" />
             Compose Message
           </Button>
@@ -838,6 +885,145 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+    )
+  }
+
+  const renderProfileView = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-slate-900">Author Profile</h2>
+          <Button 
+            variant="outline"
+            onClick={() => router.push('/dashboard/profile')}
+          >
+            <User className="h-4 w-4 mr-2" />
+            Edit Profile
+          </Button>
+        </div>
+        
+        {/* Profile completion status */}
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center text-blue-700">
+              <User className="h-5 w-5 mr-2" />
+              Profile Completion: {profileCompleteness}%
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="w-full bg-blue-200 rounded-full h-3">
+              <div 
+                className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+                style={{ width: `${profileCompleteness}%` }}
+              ></div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium text-slate-900 mb-2">Basic Information</h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Name:</span> {session?.user?.name || 'Not set'}</div>
+                    <div><span className="font-medium">Email:</span> {session?.user?.email || 'Not set'}</div>
+                    <div><span className="font-medium">Affiliation:</span> {profileData?.affiliation || 'Not set'}</div>
+                    <div><span className="font-medium">Primary Section:</span> {profileData?.primarySection || 'Not set'}</div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-slate-900 mb-2">Contact Information</h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Phone:</span> {profileData?.phone || 'Not set'}</div>
+                    <div><span className="font-medium">ORCID:</span> {profileData?.orcidId || 'Not set'}</div>
+                    <div><span className="font-medium">Website:</span> {profileData?.website || 'Not set'}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium text-slate-900 mb-2">Research Areas</h3>
+                  <div className="space-y-2">
+                    {profileData?.expertise && profileData.expertise.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {profileData.expertise.map((item: string, index: number) => (
+                          <Badge key={index} variant="secondary">{item}</Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">No expertise areas set</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-slate-900 mb-2">Specializations</h3>
+                  <div className="space-y-2">
+                    {profileData?.specializations && profileData.specializations.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {profileData.specializations.map((item: string, index: number) => (
+                          <Badge key={index} variant="outline">{item}</Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">No specializations set</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {profileData?.bio && (
+              <div className="mt-6">
+                <h3 className="font-medium text-slate-900 mb-2">Biography</h3>
+                <p className="text-sm text-slate-700 leading-relaxed">{profileData.bio}</p>
+              </div>
+            )}
+
+            {/* Debug info */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+                <h4 className="font-medium text-slate-900 mb-2">Debug Info</h4>
+                <pre className="text-xs text-slate-600">
+                  {JSON.stringify({ 
+                    hasProfileData: !!profileData,
+                    profileCompleteness,
+                    activeTab,
+                    sessionUser: session?.user?.name
+                  }, null, 2)}
+                </pre>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Quick actions */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/profile')}>
+            <CardContent className="p-4 text-center">
+              <Edit className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+              <h3 className="font-medium text-slate-900">Edit Profile</h3>
+              <p className="text-sm text-slate-600">Update your information</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/submit')}>
+            <CardContent className="p-4 text-center">
+              <FileText className="h-8 w-8 mx-auto mb-2 text-green-600" />
+              <h3 className="font-medium text-slate-900">Submit Article</h3>
+              <p className="text-sm text-slate-600">Start a new submission</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/messages')}>
+            <CardContent className="p-4 text-center">
+              <MessageSquare className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+              <h3 className="font-medium text-slate-900">Messages</h3>
+              <p className="text-sm text-slate-600">Check communications</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -970,7 +1156,17 @@ export default function DashboardPage() {
                         <span>{statusConfig.description}</span>
                       </div>
                     </div>
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                    <Button 
+                      size="sm" 
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={() => {
+                        if (submission.status === 'revision_requested') {
+                          router.push(`/submissions/${submission.id}/revise`)
+                        } else {
+                          router.push(`/submissions/${submission.id}`)
+                        }
+                      }}
+                    >
                       Take Action
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
@@ -983,15 +1179,97 @@ export default function DashboardPage() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="submissions">My Research</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+            {/* Profile Completion Alert */}
+            {profileCompleteness > 0 && profileCompleteness < 80 && (
+              <Card className="border-l-4 border-l-orange-500 bg-orange-50/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-orange-700">
+                    <User className="h-5 w-5 mr-2" />
+                    Complete Your Author Profile ({profileCompleteness}%)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-orange-800 mb-3">
+                        Your profile is {profileCompleteness}% complete. Complete your profile to improve visibility and enable article submissions.
+                      </p>
+                      <div className="w-full bg-orange-200 rounded-full h-2 mb-4">
+                        <div 
+                          className="bg-orange-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${profileCompleteness}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {!profileData?.affiliation && (
+                          <Badge variant="outline" className="border-orange-300 text-orange-700">
+                            Missing: Affiliation
+                          </Badge>
+                        )}
+                        {(!profileData?.bio || profileData.bio.length < 50) && (
+                          <Badge variant="outline" className="border-orange-300 text-orange-700">
+                            Missing: Biography
+                          </Badge>
+                        )}
+                        {(!profileData?.expertise || profileData.expertise.length === 0) && (
+                          <Badge variant="outline" className="border-orange-300 text-orange-700">
+                            Missing: Expertise
+                          </Badge>
+                        )}
+                        {(!profileData?.specializations || profileData.specializations.length === 0) && (
+                          <Badge variant="outline" className="border-orange-300 text-orange-700">
+                            Missing: Specializations
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => router.push('/dashboard/profile')}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Complete Profile Now
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Profile Complete Success */}
+            {profileCompleteness >= 80 && (
+              <Card className="border-l-4 border-l-green-500 bg-green-50/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-green-800">Profile Complete!</p>
+                      <p className="text-sm text-green-700">
+                        Your profile is {profileCompleteness}% complete. You can now submit articles.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push('/submit')}
+                      className="ml-auto border-green-300 text-green-700 hover:bg-green-100"
+                    >
+                      Submit Article
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Main Content Grid */}
             <div className="grid md:grid-cols-2 gap-6">
               {/* Recent Activity */}
@@ -1102,6 +1380,10 @@ export default function DashboardPage() {
 
           <TabsContent value="analytics" className="space-y-6">
             {renderAnalyticsView()}
+          </TabsContent>
+
+          <TabsContent value="profile" className="space-y-6">
+            {renderProfileView()}
           </TabsContent>
         </Tabs>
       </AuthorLayout>

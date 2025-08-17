@@ -41,7 +41,7 @@ export const recommendedReviewerSchema = z.object({
 
 export const articleSubmissionSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters"),
-  abstract: z.string().min(100, "Abstract must be at least 100 characters"),
+  abstract: z.string().min(1250, "Abstract must be at least 250 words (approximately 1250 characters)"),
   keywords: z.array(z.string()).min(4, "At least 4 keywords required"),
   category: z.string().min(1, "Category is required"),
   authors: z

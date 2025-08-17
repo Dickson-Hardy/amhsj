@@ -127,121 +127,20 @@ export default function GuestEditorDashboard() {
     try {
       setLoading(true)
       
-      // Mock data - replace with actual API calls
-      setMetrics({
-        totalSubmissions: 18,
-        acceptedSubmissions: 6,
-        pendingReviews: 8,
-        completedReviews: 10,
-        targetSubmissions: 25,
-        deadlineStatus: 'on_track',
-        daysRemaining: 45,
-      })
-
-      setSpecialIssue({
-        id: "1",
-        title: "AI and Machine Learning in Healthcare",
-        description: "Exploring the latest advances in artificial intelligence and machine learning applications in medical diagnosis, treatment planning, and patient care.",
-        theme: "Technology in Medicine",
-        callForPapers: "We invite original research articles, review papers, and case studies on AI/ML applications in healthcare...",
-        submissionDeadline: "2024-03-15",
-        publicationTarget: "2024-06-01",
-        status: 'call_open',
-        targetArticles: 25,
-        currentSubmissions: 18,
-        acceptedArticles: 6,
-        guestEditors: ["Dr. Sarah Johnson", "Prof. Michael Chen"],
-        keywords: ["artificial intelligence", "machine learning", "healthcare", "medical diagnosis", "patient care"],
-        specialRequirements: ["Original research", "Peer review", "Ethical approval for human studies", "Code availability"]
-      })
-
-      setSubmissions([
-        {
-          id: "1",
-          title: "Deep Learning Approaches for Early Cancer Detection",
-          author: "Dr. Emily Watson",
-          coAuthors: ["Dr. James Park", "Prof. Lisa Chen"],
-          submittedDate: "2024-01-15",
-          status: "technical_check",
-          priority: 'high',
-          reviewers: ["Dr. Robert Kim", "Dr. Anna Smith"],
-          specialIssueRelevance: 9.2,
-          keywords: ["deep learning", "cancer detection", "medical imaging", "AI diagnosis"],
-          abstract: "This study presents novel deep learning algorithms for early-stage cancer detection using medical imaging data...",
-          needsGuestDecision: false,
-        },
-        {
-          id: "2",
-          title: "Machine Learning in Personalized Treatment Plans",
-          author: "Prof. David Wilson",
-          coAuthors: ["Dr. Maria Garcia"],
-          submittedDate: "2024-01-10",
-          status: "reviewer_decision_received",
-          priority: 'high',
-          reviewers: ["Dr. Steven Miller", "Dr. Rachel Green"],
-          specialIssueRelevance: 8.7,
-          keywords: ["machine learning", "personalized medicine", "treatment planning", "patient outcomes"],
-          abstract: "Investigation of ML algorithms for creating personalized treatment recommendations based on patient data...",
-          needsGuestDecision: true,
-        },
-        {
-          id: "3",
-          title: "Natural Language Processing for Medical Records",
-          author: "Dr. Jennifer Lee",
-          coAuthors: [],
-          submittedDate: "2024-01-05",
-          status: "revision_requested",
-          priority: 'medium',
-          reviewers: ["Dr. Alex Johnson"],
-          specialIssueRelevance: 7.8,
-          keywords: ["NLP", "medical records", "text mining", "healthcare informatics"],
-          abstract: "Development of NLP techniques for automated extraction of clinical insights from electronic health records...",
-          needsGuestDecision: false,
-        }
+      // Fetch real data from API endpoints
+      const [metricsData, specialIssueData, submissionsData, reviewersData, callForPapersData] = await Promise.all([
+        fetch('/api/guest-editor/metrics').then(res => res.json()),
+        fetch('/api/guest-editor/special-issue').then(res => res.json()),
+        fetch('/api/guest-editor/submissions').then(res => res.json()),
+        fetch('/api/guest-editor/reviewers').then(res => res.json()),
+        fetch('/api/guest-editor/call-for-papers').then(res => res.json())
       ])
 
-      setReviewers([
-        {
-          id: "1",
-          name: "Dr. Robert Kim",
-          email: "robert.kim@ai-medical.org",
-          expertise: ["AI in Medicine", "Deep Learning", "Medical Imaging"],
-          invitationStatus: 'accepted',
-          assignedSubmissions: ["1"],
-          specialIssueRelevance: 9.5,
-          responseTime: 12,
-        },
-        {
-          id: "2",
-          name: "Dr. Anna Smith",
-          email: "anna.smith@healthcare-ai.edu",
-          expertise: ["Machine Learning", "Healthcare Analytics", "Predictive Modeling"],
-          invitationStatus: 'accepted',
-          assignedSubmissions: ["1", "2"],
-          specialIssueRelevance: 9.0,
-          responseTime: 8,
-        },
-        {
-          id: "3",
-          name: "Prof. Michael Torres",
-          email: "michael.torres@tech-med.com",
-          expertise: ["AI Ethics", "Healthcare Technology", "Clinical Decision Support"],
-          invitationStatus: 'invited',
-          assignedSubmissions: [],
-          specialIssueRelevance: 8.8,
-          responseTime: 0,
-        }
-      ])
-
-      setCallForPapers({
-        id: "1",
-        title: "Call for Papers: AI and ML in Healthcare",
-        description: "Special issue on artificial intelligence and machine learning applications in modern healthcare",
-        deadline: "2024-03-15",
-        status: 'published',
-        distributionChannels: ["Journal Website", "Social Media", "Academic Networks", "Conference Announcements"],
-        responsesReceived: 18
-      })
+      setMetrics(metricsData)
+      setSpecialIssue(specialIssueData)
+      setSubmissions(submissionsData)
+      setReviewers(reviewersData)
+      setCallForPapers(callForPapersData)
 
     } catch (error) {
       console.error('Error fetching guest editor dashboard data:', error)

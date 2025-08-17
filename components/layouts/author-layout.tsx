@@ -43,6 +43,7 @@ interface AuthorLayoutProps {
 
 const authorSidebarItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard', description: 'Submission overview' },
+  { href: '/dashboard/profile', icon: User, label: 'My Profile', description: 'Complete your profile' },
   { href: '/submit', icon: Plus, label: 'New Submission', description: 'Submit manuscript' },
   { href: '/dashboard?tab=submissions', icon: FileText, label: 'My Manuscripts', description: 'Track submissions' },
   { href: '/dashboard?tab=submissions&filter=revisions', icon: Upload, label: 'Revisions Required', description: 'Respond to reviews' },
@@ -50,7 +51,6 @@ const authorSidebarItems = [
   { href: '/dashboard?tab=submissions&filter=published', icon: CheckCircle, label: 'Published Works', description: 'Published articles' },
   { href: '/dashboard?tab=messages', icon: MessageSquare, label: 'Editorial Messages', description: 'Editor communications' },
   { href: '/dashboard?tab=analytics', icon: BarChart3, label: 'Publication Metrics', description: 'Impact & citations' },
-  { href: '/dashboard?tab=profile', icon: User, label: 'Author Profile', description: 'Manage profile' },
   { href: '/author-guidelines', icon: BookOpen, label: 'Submission Guidelines', description: 'Author guidelines' },
   { href: '/dashboard?tab=preferences', icon: Settings, label: 'Preferences', description: 'Account settings' }
 ]
@@ -99,11 +99,29 @@ export default function AuthorLayout({ children }: AuthorLayoutProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem><User className="mr-2 h-4 w-4" />Author Profile</DropdownMenuItem>
-              <DropdownMenuItem><BookOpen className="mr-2 h-4 w-4" />Submission Guidelines</DropdownMenuItem>
-              <DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Account Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  Author Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/author-guidelines">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Submission Guidelines
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard?tab=preferences">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Account Settings
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut()} className="text-red-600 focus:text-red-600"><LogOut className="mr-2 h-4 w-4" />Sign Out</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => signOut()} className="text-red-600 focus:text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

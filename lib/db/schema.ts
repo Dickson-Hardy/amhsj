@@ -424,3 +424,32 @@ export const reviewInvitations = pgTable("review_invitations", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
+
+// Admin audit logs
+export const adminLogs = pgTable("admin_logs", {
+  id: text("id").primaryKey(),
+  adminId: uuid("admin_id").references(() => users.id).notNull(),
+  adminEmail: text("admin_email").notNull(),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id").notNull(),
+  details: text("details").default(""),
+  ipAddress: text("ip_address").default("unknown"),
+  userAgent: text("user_agent").default("unknown"),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+// User documents table for CV, licenses, certifications, etc.
+export const userDocuments = pgTable("user_documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  documentType: text("document_type").notNull(), // cv, license, certification, publication, etc.
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  isActive: boolean("is_active").default(true),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import RouteGuard from "@/components/route-guard"
+import BackupManagement from "@/components/admin/BackupManagement"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -183,12 +184,13 @@ export default function ModernAdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">System Overview</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="content">Content Analytics</TabsTrigger>
             <TabsTrigger value="reviews">Review Process</TabsTrigger>
             <TabsTrigger value="system">System Health</TabsTrigger>
+            <TabsTrigger value="backup">Backup Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -576,6 +578,10 @@ export default function ModernAdminDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="backup" className="space-y-6">
+            <BackupManagement />
           </TabsContent>
         </Tabs>
       </div>

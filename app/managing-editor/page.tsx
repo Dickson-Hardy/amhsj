@@ -100,106 +100,33 @@ export default function ManagingEditorDashboard() {
     try {
       setLoading(true)
       
-      // Mock data - replace with actual API calls
-      setMetrics({
-        submissionsToday: 7,
-        pendingInitialReview: 23,
-        overdueTasks: 5,
-        averageProcessingTime: 3.2,
-        editorWorkloadAvg: 78,
-        systemEfficiency: 92,
-      })
-
-      setTasks([
-        {
-          id: "1",
-          type: 'initial_review',
-          title: "Initial Review - Novel Cardiac Techniques",
-          submissionId: "SUB-001",
-          submissionTitle: "Novel Cardiac Techniques",
-          assignedTo: "System",
-          dueDate: "2024-01-25",
-          priority: 'high',
-          status: 'pending',
-          daysPending: 3,
-        },
-        {
-          id: "2",
-          type: 'editor_assignment',
-          title: "Editor Assignment Needed",
-          submissionId: "SUB-002",
-          submissionTitle: "AI in Medical Diagnosis",
-          assignedTo: "Managing Editor",
-          dueDate: "2024-01-24",
-          priority: 'high',
-          status: 'pending',
-          daysPending: 2,
-        },
-        {
-          id: "3",
-          type: 'reviewer_reminder',
-          title: "Reviewer Reminder - Dr. Smith",
-          submissionId: "SUB-003",
-          submissionTitle: "Cancer Treatment Innovation",
-          assignedTo: "Dr. Sarah Chen",
-          dueDate: "2024-01-23",
-          priority: 'medium',
-          status: 'in_progress',
-          daysPending: 7,
-        }
+      // Fetch real data from API endpoints
+      const [metricsResponse, tasksResponse, editorsResponse, alertsResponse] = await Promise.all([
+        fetch('/api/managing-editor/metrics'),
+        fetch('/api/managing-editor/tasks'),
+        fetch('/api/managing-editor/editors'),
+        fetch('/api/managing-editor/alerts')
       ])
 
-      setEditorWorkloads([
-        {
-          id: "1",
-          name: "Dr. Mike Chen",
-          role: "Section Editor",
-          currentAssignments: 8,
-          capacity: 10,
-          averageResponseTime: 2.5,
-          performanceScore: 95,
-          specialties: ["Cardiology", "Surgery"],
-        },
-        {
-          id: "2",
-          name: "Dr. Lisa Wong",
-          role: "Associate Editor",
-          currentAssignments: 12,
-          capacity: 10,
-          averageResponseTime: 4.1,
-          performanceScore: 88,
-          specialties: ["Technology", "AI"],
-        },
-        {
-          id: "3",
-          name: "Dr. Robert Johnson",
-          role: "Associate Editor",
-          currentAssignments: 6,
-          capacity: 10,
-          averageResponseTime: 1.8,
-          performanceScore: 97,
-          specialties: ["Neurology", "Research"],
-        }
-      ])
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json()
+        setMetrics(metricsData)
+      }
 
-      setSystemAlerts([
-        {
-          id: "1",
-          type: 'overdue',
-          title: "Overdue Initial Reviews",
-          description: "5 submissions awaiting initial editorial review for >3 days",
-          severity: 'high',
-          timestamp: "2024-01-22T10:30:00Z",
-        },
-        {
-          id: "2",
-          type: 'capacity',
-          title: "Editor Over Capacity",
-          description: "Dr. Lisa Wong has exceeded recommended workload (12/10)",
-          severity: 'medium',
-          timestamp: "2024-01-22T09:15:00Z",
-        }
-      ])
+      if (tasksResponse.ok) {
+        const tasksData = await tasksResponse.json()
+        setTasks(tasksData)
+      }
+
+      if (editorsResponse.ok) {
+        const editorsData = await editorsResponse.json()
+        setEditorWorkloads(editorsData)
+      }
+
+      if (alertsResponse.ok) {
+        const alertsData = await alertsResponse.json()
+        setSystemAlerts(alertsData)
+      }
 
     } catch (error) {
       console.error('Error fetching managing editor dashboard data:', error)
@@ -210,8 +137,19 @@ export default function ManagingEditorDashboard() {
 
   const handleTaskAction = async (taskId: string, action: string) => {
     try {
-      console.log(`Task action: ${action} for task ${taskId}`)
-      fetchDashboardData()
+      const response = await fetch('/api/managing-editor/task-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ taskId, action })
+      })
+
+      if (response.ok) {
+        fetchDashboardData()
+      } else {
+        console.error('Failed to perform task action')
+      }
     } catch (error) {
       console.error('Error handling task action:', error)
     }
@@ -219,8 +157,19 @@ export default function ManagingEditorDashboard() {
 
   const handleWorkloadAdjustment = async (editorId: string, newCapacity: number) => {
     try {
-      console.log(`Adjusting workload for editor ${editorId}: ${newCapacity}`)
-      fetchDashboardData()
+      const response = await fetch('/api/managing-editor/adjust-workload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ editorId, newCapacity })
+      })
+
+      if (response.ok) {
+        fetchDashboardData()
+      } else {
+        console.error('Failed to adjust workload')
+      }
     } catch (error) {
       console.error('Error adjusting workload:', error)
     }

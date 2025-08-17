@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import {
   Users,
   UserPlus,
@@ -48,6 +49,7 @@ interface UserStats {
 
 export default function AdminUsersPage() {
   const { data: session } = useSession()
+  const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
@@ -65,7 +67,7 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    if (session?.user?.role !== "admin") return
+    if (!["admin", "editor-in-chief"].includes(session?.user?.role || "")) return
     fetchUsersData()
   }, [session])
 
@@ -73,81 +75,39 @@ export default function AdminUsersPage() {
     try {
       setLoading(true)
       
-      // Mock data - replace with actual API calls
-      setStats({
-        totalUsers: 1247,
-        activeUsers: 1089,
-        pendingUsers: 23,
-        adminUsers: 5,
-        editorUsers: 45,
-        reviewerUsers: 289,
-        authorUsers: 908,
-      })
-
-      setUsers([
-        {
-          id: "1",
-          name: "Dr. Sarah Johnson",
-          email: "sarah.johnson@university.edu",
-          role: "editor",
-          status: 'active',
-          joinDate: "2022-03-15",
-          lastLogin: "2024-01-22",
-          submissionsCount: 12,
-          reviewsCount: 45,
-          emailVerified: true
-        },
-        {
-          id: "2",
-          name: "Prof. Michael Chen",
-          email: "m.chen@medical.edu",
-          role: "reviewer",
-          status: 'active',
-          joinDate: "2021-08-20",
-          lastLogin: "2024-01-20",
-          submissionsCount: 8,
-          reviewsCount: 67,
-          emailVerified: true
-        },
-        {
-          id: "3",
-          name: "Dr. Emily Watson",
-          email: "e.watson@research.org",
-          role: "author",
-          status: 'pending',
-          joinDate: "2024-01-15",
-          lastLogin: "Never",
-          submissionsCount: 3,
-          reviewsCount: 0,
-          emailVerified: false
-        },
-        {
-          id: "4",
-          name: "John Smith",
-          email: "john.smith@email.com",
-          role: "author",
-          status: 'suspended',
-          joinDate: "2023-06-10",
-          lastLogin: "2023-12-15",
-          submissionsCount: 1,
-          reviewsCount: 0,
-          emailVerified: true
-        },
-        {
-          id: "5",
-          name: "Dr. Robert Kim",
-          email: "r.kim@hospital.com",
-          role: "editor-in-chief",
-          status: 'active',
-          joinDate: "2020-01-01",
-          lastLogin: "2024-01-23",
-          submissionsCount: 5,
-          reviewsCount: 123,
-          emailVerified: true
-        }
-      ])
+      const response = await fetch('/api/admin/users')
+      const data = await response.json()
+      
+      if (data.success) {
+        setUsers(data.users)
+        setStats(data.stats)
+      } else {
+        console.error('Failed to fetch users:', data.error)
+        // Fallback to empty state
+        setUsers([])
+        setStats({
+          totalUsers: 0,
+          activeUsers: 0,
+          pendingUsers: 0,
+          adminUsers: 0,
+          editorUsers: 0,
+          reviewerUsers: 0,
+          authorUsers: 0,
+        })
+      }
     } catch (error) {
       console.error('Error fetching users data:', error)
+      // Fallback to empty state
+      setUsers([])
+      setStats({
+        totalUsers: 0,
+        activeUsers: 0,
+        pendingUsers: 0,
+        adminUsers: 0,
+        editorUsers: 0,
+        reviewerUsers: 0,
+        authorUsers: 0,
+      })
     } finally {
       setLoading(false)
     }
@@ -155,31 +115,102 @@ export default function AdminUsersPage() {
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
-      console.log(`Updating user ${userId} role to: ${newRole}`)
-      // API call to update user role
-      fetchUsersData()
+      const response = await fetch(`/api/admin/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        toast({
+          title: "Role Updated",
+          description: data.message,
+        })
+        fetchUsersData()
+      } else {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        })
+      }
     } catch (error) {
       console.error('Error updating user role:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update user role",
+        variant: "destructive"
+      })
     }
   }
 
   const handleUpdateUserStatus = async (userId: string, newStatus: string) => {
     try {
-      console.log(`Updating user ${userId} status to: ${newStatus}`)
-      // API call to update user status
-      fetchUsersData()
+      const response = await fetch(`/api/admin/users/${userId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        toast({
+          title: "Status Updated",
+          description: data.message,
+        })
+        fetchUsersData()
+      } else {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        })
+      }
     } catch (error) {
       console.error('Error updating user status:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive"
+      })
     }
   }
 
   const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return
+    }
+    
     try {
-      console.log(`Deleting user ${userId}`)
-      // API call to delete user
-      fetchUsersData()
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE'
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        toast({
+          title: "User Deleted",
+          description: data.message,
+        })
+        fetchUsersData()
+      } else {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        })
+      }
     } catch (error) {
       console.error('Error deleting user:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive"
+      })
     }
   }
 

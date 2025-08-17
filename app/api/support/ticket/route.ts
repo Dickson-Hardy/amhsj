@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     // Generate ticket ID
-    const ticketId = `AMHSJ-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
+    const ticketId = `AMHSJ-${Date.now()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
     // Prepare email content
     const supportEmail = supportEmails[ticketData.type]

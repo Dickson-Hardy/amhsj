@@ -426,9 +426,16 @@ export default function HomePage() {
                     placeholder="Title" 
                     className="w-full p-2 border rounded text-sm"
                   />
-                  <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => {
+                  <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700" onClick={(e) => {
                     // Get search values and perform search
-                    console.log('Search functionality to be implemented');
+                    // Implement search functionality
+                    const form = e.currentTarget.closest('form') || e.currentTarget.parentElement
+                    const titleInput = form?.querySelector('input[placeholder="Title"]') as HTMLInputElement
+                    const searchQuery = titleInput?.value || ''
+                    if (searchQuery.trim()) {
+                      // In a real application, this would trigger actual search
+                      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+                    }
                   }}>
                     SEARCH
                   </Button>

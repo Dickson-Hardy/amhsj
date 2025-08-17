@@ -85,12 +85,61 @@ export default function ReviewerApplicationPage() {
   }, [session, status, router])
 
   const specialties = [
-    "Cardiology", "Oncology", "Neurology", "Pediatrics", "Surgery",
-    "Internal Medicine", "Emergency Medicine", "Psychiatry", "Radiology",
-    "Pathology", "Anesthesiology", "Dermatology", "Orthopedics",
-    "Obstetrics & Gynecology", "Ophthalmology", "ENT", "Urology",
-    "Public Health", "Epidemiology", "Health Policy", "Medical Education",
-    "Global Health", "Infectious Diseases", "Tropical Medicine"
+    // Applied Sciences
+    "Chemical Engineering", "Materials Science", "Bioengineering", "Food Science", "Applied Physics",
+    "Industrial Engineering", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering",
+    
+    // Life Sciences
+    "Biology", "Molecular Biology", "Cell Biology", "Genetics", "Biochemistry", "Microbiology",
+    "Ecology", "Botany", "Zoology", "Marine Biology", "Evolutionary Biology", "Neuroscience",
+    
+    // Medicine & Health Sciences
+    "Cardiology", "Oncology", "Neurology", "Pediatrics", "Surgery", "Internal Medicine",
+    "Emergency Medicine", "Psychiatry", "Radiology", "Pathology", "Anesthesiology",
+    "Dermatology", "Orthopedics", "Obstetrics & Gynecology", "Ophthalmology",
+    "Otolaryngology (ENT)", "Urology", "Public Health", "Epidemiology", "Health Policy",
+    "Medical Education", "Global Health", "Infectious Diseases", "Tropical Medicine",
+    "Family Medicine", "Preventive Medicine", "Rehabilitation Medicine", "Geriatrics",
+    
+    // Physical Sciences
+    "Physics", "Chemistry", "Astronomy", "Geology", "Meteorology", "Oceanography",
+    "Materials Physics", "Theoretical Physics", "Quantum Physics", "Nuclear Physics",
+    
+    // Engineering & Technology
+    "Software Engineering", "Computer Engineering", "Aerospace Engineering", "Environmental Engineering",
+    "Petroleum Engineering", "Mining Engineering", "Nuclear Engineering", "Robotics",
+    
+    // Social Sciences
+    "Psychology", "Sociology", "Anthropology", "Political Science", "Economics", "Geography",
+    "Linguistics", "Archaeology", "Criminology", "International Relations",
+    
+    // Humanities
+    "History", "Philosophy", "Literature", "Art History", "Cultural Studies", "Religious Studies",
+    "Ethics", "Comparative Literature", "Classical Studies", "Modern Languages",
+    
+    // Business & Economics
+    "Finance", "Marketing", "Management", "Accounting", "Operations Research", "Entrepreneurship",
+    "Business Strategy", "Human Resources", "Supply Chain Management", "International Business",
+    
+    // Environmental Sciences
+    "Environmental Chemistry", "Conservation Biology", "Climate Science", "Environmental Policy",
+    "Sustainable Development", "Environmental Engineering", "Renewable Energy", "Waste Management",
+    
+    // Computer Science
+    "Artificial Intelligence", "Machine Learning", "Data Science", "Cybersecurity", "Software Development",
+    "Human-Computer Interaction", "Computer Graphics", "Database Systems", "Network Security",
+    
+    // Mathematics
+    "Pure Mathematics", "Applied Mathematics", "Statistics", "Mathematical Modeling", "Operations Research",
+    "Numerical Analysis", "Probability Theory", "Discrete Mathematics", "Computational Mathematics",
+    
+    // Education
+    "Educational Psychology", "Curriculum Development", "Educational Technology", "Special Education",
+    "Higher Education", "Early Childhood Education", "Educational Policy", "Language Education",
+    
+    // Fine Arts & Architecture
+    "Visual Arts", "Performing Arts", "Music Theory", "Art History", "Architecture", "Urban Planning",
+    "Interior Design", "Landscape Architecture", "Digital Arts", "Film Studies"
   ]
 
   const languages = ["English", "French", "Arabic", "Portuguese", "Swahili", "Hausa", "Amharic"]
@@ -535,7 +584,7 @@ export default function ReviewerApplicationPage() {
                   />
                   <Label htmlFor="agreeToTerms" className="text-sm leading-relaxed">
                     I agree to the <Link href="/reviewer/guidelines" className="text-indigo-600 hover:underline">Reviewer Guidelines</Link> and 
-                    understand my responsibilities as a peer reviewer for AMHSJ.
+                    understand my responsibilities as a peer reviewer for AJRS.
                   </Label>
                 </div>
 

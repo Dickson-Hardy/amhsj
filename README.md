@@ -1,6 +1,6 @@
-# AMHSJ - Advances in Medicine and Health Sciences Journal
+# AJRS - Academic Journal Research System
 
-A comprehensive, production-ready academic journal publishing platform specifically designed for medical and health sciences research.
+A comprehensive, production-ready academic journal publishing platform designed for multidisciplinary research across all academic fields.
 
 ## 🚀 Quick Start
 

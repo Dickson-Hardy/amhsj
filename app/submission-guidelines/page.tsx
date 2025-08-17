@@ -42,7 +42,7 @@ export default function SubmissionGuidelinesPage() {
       type: "Original Research",
       description: "Novel research findings with significant clinical or scientific impact",
       wordLimit: "4000-6000 words",
-      abstractLimit: "250 words",
+      abstractLimit: "250 words minimum",
       references: "Up to 50",
     },
     {
@@ -102,7 +102,7 @@ export default function SubmissionGuidelinesPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">Submission Guidelines</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Comprehensive guidelines for authors submitting to AMHSJ. Please read carefully before submission.
+            Comprehensive guidelines for authors submitting to AJRS. Please read carefully before submission.
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export default function SubmissionGuidelinesPage() {
         <Alert className="mb-8 border-indigo-200 bg-indigo-50">
           <AlertCircle className="h-4 w-4 text-indigo-600" />
           <AlertDescription className="text-indigo-800">
-            <strong>Quick Start:</strong> New to AMHSJ? Download our{" "}
+            <strong>Quick Start:</strong> New to AJRS? Download our{" "}
             <Button 
               variant="link" 
               className="p-0 h-auto text-indigo-600 underline"
@@ -178,7 +178,7 @@ export default function SubmissionGuidelinesPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-2xl">Article Types</CardTitle>
-            <CardDescription>AMHSJ accepts the following types of submissions</CardDescription>
+            <CardDescription>AJRS accepts the following types of submissions</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">

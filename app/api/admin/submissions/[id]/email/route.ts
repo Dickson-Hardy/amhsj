@@ -12,7 +12,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const submissionId = params.id;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -42,9 +42,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
           { id: session.user.id, name: session.user.name || 'Admin', role: 'admin' },
           ...recipients.map((email: string) => ({ id: email, name: email, role: 'author' }))
         ],
-        lastActivity: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        lastActivity: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
       }).returning({ id: conversations.id })
 
       conversationId = newConversation[0].id
@@ -55,8 +55,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       await db
         .update(conversations)
         .set({ 
-          lastActivity: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          lastActivity: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(conversations.id, conversationId))
     }
@@ -69,33 +69,33 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       attachments: [],
       isRead: false,
       readBy: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date(),
+      updatedAt: new Date()
     }).returning({ id: messages.id })
 
     // Log email for tracking
     try {
       await db.insert(emailLogs).values({
-        type: templateType || 'admin_communication',
-        recipientEmail: recipients[0], // Primary recipient
+        submissionId: submissionId,
+        toEmail: recipients[0], // Primary recipient
+        fromEmail: process.env.SMTP_FROM || process.env.SMTP_USER || process.env.EMAIL_USER || 'editorial@amhsj.org',
         subject: subject,
+        body: content,
+        emailType: templateType || 'admin_communication',
         status: 'pending',
-        relatedType: 'submission',
-        relatedId: submissionId,
-        sentAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
+        sentAt: new Date(),
+        createdAt: new Date()
       })
     } catch (logError) {
       console.error("Failed to log email:", logError)
     }
 
-    // TODO: Integrate with your email service (Resend, SendGrid, etc.)
-    // For now, we'll simulate email sending
+    // Integrate with hybrid email service
     const emailSent = await sendEmail({
       to: recipients,
       subject: subject,
       content: content,
-      from: process.env.FROM_EMAIL || 'editorial@amhsj.org',
+      from: process.env.SMTP_FROM || process.env.SMTP_USER || process.env.EMAIL_USER || 'editorial@amhsj.org',
       replyTo: process.env.REPLY_TO_EMAIL || 'editorial@amhsj.org'
     })
 
@@ -113,9 +113,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         .update(emailLogs)
         .set({ 
           status: 'sent',
-          deliveredAt: new Date().toISOString()
+          updatedAt: new Date()
         })
-        .where(eq(emailLogs.relatedId, submissionId))
+        .where(eq(emailLogs.submissionId, submissionId))
     } catch (updateError) {
       console.error("Failed to update email log:", updateError)
     }
@@ -128,14 +128,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       emailSent: true
     })
   } catch (error) {
-    const { params } = context;
+    const params = await Promise.resolve(context.params);
     const submissionId = params.id;
     logError(error as Error, { endpoint: `/api/admin/submissions/${submissionId}/email` })
     return NextResponse.json({ success: false, error: "Failed to send email" }, { status: 500 })
   }
 }
 
-// Email sending function - integrate with your preferred email service
+// Email sending function - integrated with hybrid email service
 async function sendEmail({ to, subject, content, from, replyTo }: {
   to: string[]
   subject: string
@@ -144,44 +144,52 @@ async function sendEmail({ to, subject, content, from, replyTo }: {
   replyTo: string
 }) {
   try {
-    // If using Resend (as configured in your env)
-    if (process.env.RESEND_API_KEY) {
-      // Use dynamic import instead of require
-      const resend = await import('resend').then(module => {
-        return new module.Resend(process.env.RESEND_API_KEY)
-      })
-      
-      const emailData = {
-        from: from,
-        to: to,
-        subject: subject,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #0066cc;">
-              <h1 style="color: #0066cc; margin: 0;">AMHSJ - Advances in Medicine & Health Sciences Journal</h1>
-            </div>
-            <div style="padding: 30px 20px;">
-              <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">${content}</div>
-            </div>
-            <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef; margin-top: 30px;">
-              <p style="margin: 0; color: #666; font-size: 14px;">
-                This email was sent from the AMHSJ Editorial Management System.<br>
-                Please do not reply to this email. For assistance, contact: ${replyTo}
-              </p>
-            </div>
-          </div>
-        `,
-        reply_to: replyTo
+    // Import hybrid email service
+    const { sendEmail: hybridSendEmail } = await import('@/lib/email-improved')
+    
+    // Create professional HTML template
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #0066cc;">
+          <h1 style="color: #0066cc; margin: 0;">AMHSJ - Advances in Medicine & Health Sciences Journal</h1>
+        </div>
+        <div style="padding: 30px 20px;">
+          <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">${content}</div>
+        </div>
+        <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef; margin-top: 30px;">
+          <p style="margin: 0; color: #666; font-size: 14px;">
+            This email was sent from the AMHSJ Editorial Management System.<br>
+            Please do not reply to this email. For assistance, contact: ${replyTo}
+          </p>
+        </div>
+      </div>
+    `
+    
+    // Send to all recipients using hybrid email service
+    const results = await Promise.allSettled(
+      to.map(email => 
+        hybridSendEmail({
+          to: email,
+          subject: subject,
+          html: html,
+          text: content.replace(/<[^>]*>/g, ''), // Strip HTML for text version
+        })
+      )
+    )
+    
+    // Check if any emails failed
+    const failures = results.filter(result => result.status === 'rejected')
+    
+    if (failures.length > 0) {
+      console.error(`Failed to send ${failures.length}/${to.length} emails`)
+      return { 
+        success: false, 
+        error: `Failed to send ${failures.length}/${to.length} emails`,
+        details: failures.map(f => f.status === 'rejected' ? f.reason : null)
       }
-      
-      const result = await resend.emails.send(emailData)
-      return { success: true, messageId: result.data?.id }
     }
     
-    // Fallback to SMTP if Resend is not available
-    // You can implement SMTP sending here using nodemailer
-    
-    return { success: true, messageId: 'simulated-' + Date.now() }
+    return { success: true, messageId: `hybrid-${Date.now()}` }
   } catch (error) {
     console.error("Email sending failed:", error)
     return { success: false, error: error instanceof Error ? error.message : String(error) }

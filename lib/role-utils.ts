@@ -46,9 +46,9 @@ export function getPostAuthRedirect(session: Session | null, callbackUrl?: strin
  * Check if a user has access to a specific route based on their role
  */
 export function hasRouteAccess(userRole: string | undefined, route: string): boolean {
-  // Admin routes - highest level access
+  // Admin routes - highest level access (Admin and Editor-in-Chief)
   if (route.startsWith("/admin")) {
-    return userRole === "admin"
+    return userRole === "admin" || userRole === "editor-in-chief"
   }
 
   // Editor-in-Chief routes - ultimate editorial authority
@@ -162,7 +162,7 @@ export function getRoleHierarchy(role: string | undefined): number {
     case "admin":
       return 100 // System level
     case "editor-in-chief":
-      return 90 // Highest editorial authority
+      return 100 // Equal to admin - highest editorial authority
     case "managing-editor":
       return 80 // Operational authority
     case "section-editor":
@@ -204,8 +204,16 @@ export function getAssignableRoles(userRole: string | undefined): string[] {
     { role: "production-editor", level: 60 },
     { role: "section-editor", level: 70 },
     { role: "managing-editor", level: 80 },
-    { role: "editor-in-chief", level: 90 },
+    { role: "editor-in-chief", level: 100 },
+    { role: "admin", level: 100 },
   ]
+  
+  // Admin and Editor-in-Chief can assign any role except their own level
+  if (userRole === "admin" || userRole === "editor-in-chief") {
+    return allRoles
+      .filter(({ role }) => role !== userRole) // Can't assign same role to avoid conflicts
+      .map(({ role }) => role)
+  }
   
   return allRoles
     .filter(({ level }) => level < userLevel)
@@ -237,6 +245,6 @@ export function getRolePermissions(role: string | undefined): {
     canManageProduction: hierarchy >= 60, // Production editor and above
     canManageSpecialIssues: hierarchy >= 50, // Guest editor and above
     canAccessAnalytics: hierarchy >= 40, // Editor and above
-    canManageSystem: hierarchy >= 100, // Admin only
+    canManageSystem: hierarchy >= 100, // Admin and Editor-in-Chief
   }
 }

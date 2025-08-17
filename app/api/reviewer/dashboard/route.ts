@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
         id: reviewInvitations.id,
         articleId: reviewInvitations.articleId,
         status: reviewInvitations.status,
-        createdAt: reviewInvitations.createdAt,
-        dueDate: reviewInvitations.dueDate,
+        createdAt: reviewInvitations.invitedAt,
+        dueDate: reviewInvitations.reviewDeadline,
         articleTitle: articles.title,
-        manuscriptNumber: articles.manuscriptNumber,
-        assignedDate: reviewInvitations.createdAt,
+        manuscriptNumber: articles.id, // Using article ID as manuscript identifier
+        assignedDate: reviewInvitations.invitedAt,
         reviewStatus: reviewInvitations.status,
         completedAt: reviewInvitations.completedAt,
       })
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const transformedAssignments = assignments.map(assignment => ({
       ...assignment,
       assignedDate: assignment.createdAt,
-      dueDate: assignment.dueDate || calculateDueDate(assignment.createdAt),
+      dueDate: assignment.dueDate || calculateDueDate(assignment.createdAt || new Date()),
     }))
 
     const stats = {

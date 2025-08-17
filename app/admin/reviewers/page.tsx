@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import {
   Users,
   UserPlus,
@@ -50,6 +51,7 @@ interface ReviewerStats {
 
 export default function AdminReviewersPage() {
   const { data: session } = useSession()
+  const { toast } = useToast()
   const [reviewers, setReviewers] = useState<Reviewer[]>([])
   const [stats, setStats] = useState<ReviewerStats>({
     totalReviewers: 0,
@@ -63,9 +65,15 @@ export default function AdminReviewersPage() {
   const [selectedReviewer, setSelectedReviewer] = useState<Reviewer | null>(null)
   const [filterStatus, setFilterStatus] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
+  const [inviteForm, setInviteForm] = useState({
+    email: "",
+    name: "",
+    affiliation: "",
+    expertise: ""
+  })
 
   useEffect(() => {
-    if (session?.user?.role !== "admin") return
+    if (!["admin", "editor-in-chief"].includes(session?.user?.role || "")) return
     fetchReviewersData()
   }, [session])
 
@@ -73,80 +81,37 @@ export default function AdminReviewersPage() {
     try {
       setLoading(true)
       
-      // Mock data - replace with actual API calls
-      setStats({
-        totalReviewers: 245,
-        activeReviewers: 189,
-        pendingInvitations: 12,
-        averageResponseTime: 8.5,
-        overallRating: 4.2,
-        onTimePercentage: 87,
-      })
-
-      setReviewers([
-        {
-          id: "1",
-          name: "Dr. Sarah Johnson",
-          email: "sarah.johnson@university.edu",
-          affiliation: "Harvard Medical School",
-          expertise: ["Cardiology", "Surgery", "Clinical Research"],
-          status: 'active',
-          currentLoad: 3,
-          maxLoad: 5,
-          averageRating: 4.8,
-          completedReviews: 45,
-          onTimeRate: 95,
-          lastActive: "2024-01-20",
-          joinDate: "2022-03-15"
-        },
-        {
-          id: "2",
-          name: "Prof. Michael Chen",
-          email: "m.chen@medical.edu",
-          affiliation: "Johns Hopkins University",
-          expertise: ["Neurology", "Medical Imaging", "AI in Medicine"],
-          status: 'active',
-          currentLoad: 2,
-          maxLoad: 4,
-          averageRating: 4.6,
-          completedReviews: 67,
-          onTimeRate: 89,
-          lastActive: "2024-01-22",
-          joinDate: "2021-08-20"
-        },
-        {
-          id: "3",
-          name: "Dr. Emily Watson",
-          email: "e.watson@research.org",
-          affiliation: "Mayo Clinic",
-          expertise: ["Oncology", "Immunotherapy", "Clinical Trials"],
-          status: 'pending',
-          currentLoad: 0,
-          maxLoad: 3,
-          averageRating: 0,
-          completedReviews: 0,
-          onTimeRate: 0,
-          lastActive: "Never",
-          joinDate: "2024-01-15"
-        },
-        {
-          id: "4",
-          name: "Dr. Robert Kim",
-          email: "r.kim@hospital.com",
-          affiliation: "Stanford Medicine",
-          expertise: ["Pediatrics", "Genetics", "Rare Diseases"],
-          status: 'inactive',
-          currentLoad: 0,
-          maxLoad: 4,
-          averageRating: 4.3,
-          completedReviews: 23,
-          onTimeRate: 78,
-          lastActive: "2023-11-30",
-          joinDate: "2020-06-10"
-        }
-      ])
+      const response = await fetch('/api/admin/reviewers')
+      const data = await response.json()
+      
+      if (data.reviewers) {
+        setReviewers(data.reviewers)
+        setStats(data.stats)
+      } else {
+        console.error('Failed to fetch reviewers:', data.error)
+        // Fallback to empty state
+        setReviewers([])
+        setStats({
+          totalReviewers: 0,
+          activeReviewers: 0,
+          pendingInvitations: 0,
+          averageResponseTime: 0,
+          overallRating: 0,
+          onTimePercentage: 0,
+        })
+      }
     } catch (error) {
       console.error('Error fetching reviewers data:', error)
+      // Fallback to empty state
+      setReviewers([])
+      setStats({
+        totalReviewers: 0,
+        activeReviewers: 0,
+        pendingInvitations: 0,
+        averageResponseTime: 0,
+        overallRating: 0,
+        onTimePercentage: 0,
+      })
     } finally {
       setLoading(false)
     }
@@ -154,21 +119,84 @@ export default function AdminReviewersPage() {
 
   const handleUpdateReviewerStatus = async (reviewerId: string, newStatus: string) => {
     try {
-      console.log(`Updating reviewer ${reviewerId} status to: ${newStatus}`)
-      // API call to update reviewer status
-      fetchReviewersData()
+      const response = await fetch(`/api/admin/reviewers/${reviewerId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        toast({
+          title: "Status Updated",
+          description: data.message,
+        })
+        fetchReviewersData()
+      } else {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        })
+      }
     } catch (error) {
       console.error('Error updating reviewer status:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update reviewer status",
+        variant: "destructive"
+      })
     }
   }
 
-  const handleInviteReviewer = async (email: string, expertise: string[]) => {
+  const handleInviteReviewer = async () => {
+    if (!inviteForm.email || !inviteForm.name) {
+      toast({
+        title: "Error",
+        description: "Email and name are required",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
-      console.log(`Inviting reviewer: ${email} with expertise: ${expertise.join(", ")}`)
-      // API call to invite reviewer
-      fetchReviewersData()
+      const expertise = inviteForm.expertise.split(',').map(e => e.trim()).filter(Boolean)
+      
+      const response = await fetch('/api/admin/reviewers/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inviteForm.email,
+          name: inviteForm.name,
+          affiliation: inviteForm.affiliation,
+          expertise
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        toast({
+          title: "Invitation Sent",
+          description: data.message,
+        })
+        setInviteForm({ email: "", name: "", affiliation: "", expertise: "" })
+        fetchReviewersData()
+      } else {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        })
+      }
     } catch (error) {
       console.error('Error inviting reviewer:', error)
+      toast({
+        title: "Error",
+        description: "Failed to send invitation",
+        variant: "destructive"
+      })
     }
   }
 
@@ -229,11 +257,28 @@ export default function AdminReviewersPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <Input placeholder="Email address" type="email" />
-              <Input placeholder="Full name" />
-              <Input placeholder="Affiliation" />
-              <Input placeholder="Areas of expertise (comma-separated)" />
-              <Button onClick={() => handleInviteReviewer("", [])} className="w-full">
+              <Input 
+                placeholder="Email address" 
+                type="email" 
+                value={inviteForm.email}
+                onChange={(e) => setInviteForm({...inviteForm, email: e.target.value})}
+              />
+              <Input 
+                placeholder="Full name" 
+                value={inviteForm.name}
+                onChange={(e) => setInviteForm({...inviteForm, name: e.target.value})}
+              />
+              <Input 
+                placeholder="Affiliation" 
+                value={inviteForm.affiliation}
+                onChange={(e) => setInviteForm({...inviteForm, affiliation: e.target.value})}
+              />
+              <Input 
+                placeholder="Areas of expertise (comma-separated)" 
+                value={inviteForm.expertise}
+                onChange={(e) => setInviteForm({...inviteForm, expertise: e.target.value})}
+              />
+              <Button onClick={handleInviteReviewer} className="w-full">
                 <Mail className="h-4 w-4 mr-2" />
                 Send Invitation
               </Button>

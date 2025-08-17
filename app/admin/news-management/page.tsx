@@ -262,7 +262,7 @@ export default function NewsManagementPage() {
   }
 
   return (
-    <RouteGuard allowedRoles={["admin"]}>
+    <RouteGuard allowedRoles={["admin", "editor-in-chief"]}>
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="mb-8">

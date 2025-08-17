@@ -1,11 +1,12 @@
 import nodemailer from 'nodemailer'
 import { emailTemplates, type EmailTemplate } from "./email-templates"
+import { logEmail, logError } from "./logger"
 
-// Create email transporter based on environment configuration
+// Create em      logEmail(`Email queued for ${to}`, to, 'queued')il transporter based on environment configuration
 const createTransporter = () => {
   if (process.env.RESEND_API_KEY) {
     // Use Resend SMTP
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: 'smtp.resend.com',
       port: 587,
       secure: false,
@@ -16,7 +17,7 @@ const createTransporter = () => {
     })
   } else if (process.env.SMTP_HOST) {
     // Use custom SMTP
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
@@ -27,7 +28,7 @@ const createTransporter = () => {
     })
   } else {
     // Use Gmail (fallback)
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -99,7 +100,7 @@ async function processEmailQueue() {
         text: job.text,
       })
       
-      console.log(`Email sent successfully to ${job.to}`)
+      logEmail(`Email sent successfully to ${job.to}`, job.to, 'sent')
     } catch (error) {
       console.error(`Failed to send email to ${job.to}:`, error)
       
@@ -159,7 +160,7 @@ export async function sendEmail({
         html,
         text,
       })
-      console.log(`Priority email sent immediately to ${to}`)
+      logEmail(`Priority email sent immediately to ${to}`, to, 'priority_sent')
     } catch (error) {
       console.error(`Priority email failed, adding to queue:`, error)
       emailQueue.push(emailJob)

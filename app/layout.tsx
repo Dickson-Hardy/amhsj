@@ -8,30 +8,38 @@ import { Toaster } from "@/components/ui/toaster"
 import ConditionalLayout from "@/components/conditional-layout"
 import RegisterServiceWorker from "@/app/register-sw"
 
+// Initialize backup scheduler in production
+if (typeof window === 'undefined') {
+  import('@/lib/backup').then(({ initializeBackupScheduler }) => {
+    initializeBackupScheduler()
+  }).catch(console.error)
+}
+
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
   title: {
-    default: "AMHSJ - Advances in Medicine & Health Sciences Journal",
-    template: "%s | AMHSJ",
+    default: "AJRS - Academic Journal Research System",
+    template: "%s | AJRS",
   },
   description:
-    "The official journal of Bayelsa Medical University, providing a medium for research findings from the Niger Delta region and beyond in Medicine and Health Sciences",
+    "A comprehensive academic journal platform supporting multidisciplinary research across all fields of study including sciences, humanities, engineering, and social sciences",
   keywords: [
-    "medical research",
-    "health sciences",
-    "Niger Delta",
-    "Bayelsa Medical University",
-    "academic journal",
+    "academic research",
+    "multidisciplinary journal",
     "peer review",
-    "clinical research",
-    "public health",
-    "biomedical sciences",
+    "scholarly publishing",
+    "research platform",
+    "academic journal",
+    "sciences",
+    "humanities",
+    "engineering",
+    "social sciences",
   ],
-  authors: [{ name: "AMHSJ Editorial Team" }],
-  creator: "AMHSJ",
-  publisher: "Advances in Medicine & Health Sciences Journal",
+  authors: [{ name: "AJRS Editorial Team" }],
+  creator: "AJRS",
+  publisher: "Academic Journal Research System",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
@@ -60,25 +68,25 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "/",
-    siteName: "AMHSJ",
-    title: "AMHSJ - Advances in Medicine & Health Sciences Journal",
+    siteName: "AJRS",
+    title: "AJRS - Academic Journal Research System",
     description:
-      "The official journal of Bayelsa Medical University - Open access medical research from the Niger Delta region",
+      "A comprehensive multidisciplinary academic journal platform supporting research across all fields",
     images: [
       {
         url: "/logo-amhsj.png",
         width: 512,
         height: 512,
-        alt: "AMHSJ - Advances in Medicine & Health Sciences Journal",
+        alt: "AJRS - Academic Journal Research System",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AMHSJ - Advances in Medicine & Health Sciences Journal",
-    description: "Open access medical research from Bayelsa Medical University",
+    title: "AJRS - Academic Journal Research System",
+    description: "Comprehensive academic journal platform for multidisciplinary research",
     images: ["/logo-amhsj.png"],
-    creator: "@amhsj_journal",
+    creator: "@ajrs_journal",
   },
   verification: {
     google: "your-google-verification-code",

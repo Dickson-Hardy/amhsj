@@ -48,8 +48,8 @@ export function Header() {
     {
       title: "About the Journal",
       items: [
-        { title: "Mission & Scope", href: "/about", description: "Our medical research mission and scope" },
-        { title: "Journal Overview", href: "/about/overview", description: "Learn about AMHSJ" },
+        { title: "Mission & Scope", href: "/about", description: "Our academic research mission and scope" },
+        { title: "Journal Overview", href: "/about/overview", description: "Learn about AJRS" },
         { title: "Aims & Objectives", href: "/about/aims", description: "Our research goals" },
       ],
     },
@@ -157,7 +157,7 @@ export function Header() {
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  {session.user?.role === "admin" && (
+                  {["admin", "editor-in-chief"].includes(session.user?.role || "") && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">
                         <Settings className="mr-2 h-4 w-4" />
@@ -199,9 +199,9 @@ export function Header() {
                         className="object-contain block"
                         style={{ maxWidth: '32px', maxHeight: '32px' }}
                       />
-                      <div className="font-bold text-lg">AMHSJ</div>
+                      <div className="font-bold text-lg">AJRS</div>
                     </div>
-                    <div className="text-sm text-gray-600">Medical Research Journal</div>
+                    <div className="text-sm text-gray-600">Academic Research Journal</div>
                   </div>
                   {navigationItems.map((item) => (
                     <div key={item.title} className="space-y-2">
@@ -243,7 +243,7 @@ export function Header() {
                             Dashboard
                           </Link>
                         </Button>
-                        {session.user?.role === "admin" && (
+                        {["admin", "editor-in-chief"].includes(session.user?.role || "") && (
                           <Button className="w-full" variant="outline" asChild>
                             <Link href="/admin">
                               <Settings className="h-4 w-4 mr-2" />
@@ -274,7 +274,7 @@ export function Header() {
                           </Link>
                         </Button>
                         <Button className="w-full bg-blue-600 hover:bg-blue-700" asChild>
-                          <Link href="/auth/signup">Join AMHSJ</Link>
+                          <Link href="/auth/signup">Join AJRS</Link>
                         </Button>
                       </>
                     )}

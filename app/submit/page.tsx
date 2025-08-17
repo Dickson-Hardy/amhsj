@@ -27,6 +27,9 @@ function SubmitPageContent() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState("")
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileData, setProfileData] = useState<any>(null)
+  const [profileCompleteness, setProfileCompleteness] = useState(0)
   const [uploadedFiles, setUploadedFiles] = useState<{[key: string]: File[]}>({
     manuscript: [],
     figures: [],
@@ -104,6 +107,32 @@ function SubmitPageContent() {
       }))
     }
   }, [session])
+
+  // Check profile completeness
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!session?.user?.id) return
+      
+      try {
+        setProfileLoading(true)
+        const response = await fetch('/api/user/profile')
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setProfileData(data.profile)
+            setProfileCompleteness(data.profile.profileCompleteness || 0)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+      } finally {
+        setProfileLoading(false)
+      }
+    }
+
+    checkProfile()
+  }, [session?.user?.id])
 
   const handleAddAuthor = () => {
     setFormData(prev => ({
@@ -259,11 +288,11 @@ function SubmitPageContent() {
         })
         return
       }
-      if (!formData.abstract || formData.abstract.length < 100) {
+      if (!formData.abstract || formData.abstract.length < 1250) {
         toast({
           variant: "destructive",
           title: "Abstract Too Short",
-          description: "Abstract must be at least 100 characters long",
+          description: "Abstract must be at least 250 words (approximately 1250 characters)",
         })
         return
       }
@@ -380,11 +409,11 @@ function SubmitPageContent() {
       return
     }
 
-    if (formData.abstract.length < 100) {
+    if (formData.abstract.length < 1250) {
       toast({
         variant: "destructive",
         title: "Abstract Too Short",
-        description: "Abstract must be at least 100 characters long",
+        description: "Abstract must be at least 250 words (approximately 1250 characters)",
       })
       return
     }
@@ -539,14 +568,58 @@ function SubmitPageContent() {
   ]
 
   const categories = [
-    "Clinical Medicine",
-    "Public Health",
-    "Biomedical Sciences",
-    "Healthcare Technology",
-    "Medical Education",
-    "Global Health",
-    "Preventive Medicine",
-    "Medical Ethics",
+    // Applied Sciences
+    "Chemical Engineering", "Materials Science", "Bioengineering", "Food Science", "Applied Physics",
+    "Industrial Engineering", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering",
+    
+    // Life Sciences
+    "Biology", "Molecular Biology", "Cell Biology", "Genetics", "Biochemistry", "Microbiology",
+    "Ecology", "Botany", "Zoology", "Marine Biology", "Evolutionary Biology", "Neuroscience",
+    
+    // Medicine & Health Sciences
+    "Clinical Medicine", "Public Health", "Biomedical Sciences", "Healthcare Technology",
+    "Medical Education", "Global Health", "Preventive Medicine", "Medical Ethics",
+    "Cardiology", "Oncology", "Neurology", "Pediatrics", "Surgery", "Internal Medicine",
+    
+    // Physical Sciences
+    "Physics", "Chemistry", "Astronomy", "Geology", "Meteorology", "Oceanography",
+    "Materials Physics", "Theoretical Physics", "Quantum Physics", "Nuclear Physics",
+    
+    // Engineering & Technology
+    "Software Engineering", "Computer Engineering", "Aerospace Engineering", "Environmental Engineering",
+    "Petroleum Engineering", "Mining Engineering", "Nuclear Engineering", "Robotics",
+    
+    // Social Sciences
+    "Psychology", "Sociology", "Anthropology", "Political Science", "Economics", "Geography",
+    "Linguistics", "Archaeology", "Criminology", "International Relations",
+    
+    // Humanities
+    "History", "Philosophy", "Literature", "Art History", "Cultural Studies", "Religious Studies",
+    "Ethics", "Comparative Literature", "Classical Studies", "Modern Languages",
+    
+    // Business & Economics
+    "Finance", "Marketing", "Management", "Accounting", "Operations Research", "Entrepreneurship",
+    "Business Strategy", "Human Resources", "Supply Chain Management", "International Business",
+    
+    // Environmental Sciences
+    "Environmental Chemistry", "Conservation Biology", "Climate Science", "Environmental Policy",
+    "Sustainable Development", "Environmental Engineering", "Renewable Energy", "Waste Management",
+    
+    // Computer Science
+    "Artificial Intelligence", "Machine Learning", "Data Science", "Cybersecurity", "Software Development",
+    "Human-Computer Interaction", "Computer Graphics", "Database Systems", "Network Security",
+    
+    // Mathematics
+    "Pure Mathematics", "Applied Mathematics", "Statistics", "Mathematical Modeling", "Operations Research",
+    "Numerical Analysis", "Probability Theory", "Discrete Mathematics", "Computational Mathematics",
+    
+    // Education
+    "Educational Psychology", "Curriculum Development", "Educational Technology", "Special Education",
+    "Higher Education", "Early Childhood Education", "Educational Policy", "Language Education",
+    
+    // Fine Arts & Architecture
+    "Visual Arts", "Performing Arts", "Music Theory", "Art History", "Architecture", "Urban Planning",
+    "Interior Design", "Landscape Architecture", "Digital Arts", "Film Studies"
   ]
 
   return (
@@ -558,14 +631,122 @@ function SubmitPageContent() {
           <p className="text-gray-600">Share your research with the global academic community</p>
         </div>
 
-        {/* Submission Guidelines Warning */}
-        <div className="mb-8">
-          <Alert className="border-red-200 bg-red-50">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <div className="ml-3">
-              <h3 className="text-lg font-semibold text-red-800 mb-2">
-                ⚠️ Important: Submission Guidelines Compliance Required
-              </h3>
+        {/* Profile Completeness Warning */}
+        {!profileLoading && profileCompleteness < 80 && (
+          <div className="mb-8">
+            <Alert className="border-orange-200 bg-orange-50">
+              <User className="h-5 w-5 text-orange-600" />
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-orange-800 mb-2">
+                  Complete Your Profile Before Submitting
+                </h3>
+                <div className="text-orange-700 space-y-3">
+                  <p>
+                    Your profile is only <span className="font-bold">{profileCompleteness}% complete</span>. 
+                    You need at least 80% profile completion to submit articles.
+                  </p>
+                  
+                  <div className="bg-orange-100 p-4 rounded-lg border border-orange-200">
+                    <h4 className="font-semibold mb-3">Complete these profile sections:</h4>
+                    <div className="grid md:grid-cols-2 gap-3 text-sm">
+                      {!profileData?.name && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Full name required</span>
+                        </div>
+                      )}
+                      {!profileData?.affiliation && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Institutional affiliation</span>
+                        </div>
+                      )}
+                      {(!profileData?.bio || profileData.bio.length < 50) && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Professional biography (50+ chars)</span>
+                        </div>
+                      )}
+                      {!profileData?.orcid && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>ORCID identifier</span>
+                        </div>
+                      )}
+                      {(!profileData?.expertise || profileData.expertise.length === 0) && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Areas of expertise</span>
+                        </div>
+                      )}
+                      {(!profileData?.specializations || profileData.specializations.length === 0) && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Academic specializations</span>
+                        </div>
+                      )}
+                      {(!profileData?.researchInterests || profileData.researchInterests.length === 0) && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Research interests</span>
+                        </div>
+                      )}
+                      {(!profileData?.languagesSpoken || profileData.languagesSpoken.length === 0) && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <span>Languages spoken</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 pt-2">
+                    <Button 
+                      onClick={() => router.push('/dashboard/profile')}
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Complete Profile Now
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <div className="w-32 bg-orange-200 rounded-full h-2">
+                        <div 
+                          className="bg-orange-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${profileCompleteness}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium">{profileCompleteness}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Alert>
+          </div>
+        )}
+
+        {/* Disable form if profile incomplete */}
+        {!profileLoading && profileCompleteness < 80 && (
+          <div className="mb-8 p-6 bg-gray-100 border border-gray-300 rounded-lg text-center">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Submission Temporarily Disabled</h3>
+            <p className="text-gray-600">
+              Please complete your profile to enable article submissions. This ensures we have all 
+              necessary information for the peer review process and author communications.
+            </p>
+          </div>
+        )}
+
+        {/* Show form only if profile is complete enough */}
+        {(profileLoading || profileCompleteness >= 80) && (
+          <>
+            {/* Submission Guidelines Warning */}
+            <div className="mb-8">
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <div className="ml-3">
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">
+                    ⚠️ Important: Submission Guidelines Compliance Required
+                  </h3>
               <div className="text-red-700 space-y-2">
                 <p className="font-medium">
                   Manuscripts that do not follow the submission guidelines and formatting requirements will be rejected without review.
@@ -575,7 +756,7 @@ function SubmitPageContent() {
                   <ul className="space-y-1 text-sm">
                     <li>✓ Proper formatting according to journal standards</li>
                     <li>✓ Complete author information for all contributors</li>
-                    <li>✓ Abstract within word limit (250 words max)</li>
+                    <li>✓ Abstract at least 250 words minimum</li>
                     <li>✓ Appropriate keywords (4-8 keywords)</li>
                     <li>✓ Proper citation format and reference list</li>
                     <li>✓ Required sections: Introduction, Methods, Results, Discussion, Conclusion</li>
@@ -668,10 +849,10 @@ function SubmitPageContent() {
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="category">Medical Specialization *</Label>
+                    <Label htmlFor="category">Research Field *</Label>
                     <Select value={formData.category} onValueChange={(value) => handleFormChange('category', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select specialization" />
+                        <SelectValue placeholder="Select research field" />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
@@ -688,14 +869,14 @@ function SubmitPageContent() {
                   <Label htmlFor="abstract">Abstract *</Label>
                   <Textarea
                     id="abstract"
-                    placeholder="Provide a structured abstract (minimum 100 characters)"
+                    placeholder="Provide a structured abstract (minimum 250 words)"
                     className="min-h-[120px]"
                     value={formData.abstract}
                     onChange={(e) => handleFormChange('abstract', e.target.value)}
                   />
                   <p className="text-sm text-gray-500">
-                    <span className={formData.abstract.length >= 100 ? "text-green-600" : "text-red-500"}>
-                      {formData.abstract.length}/100 characters minimum
+                    <span className={formData.abstract.length >= 1250 ? "text-green-600" : "text-red-500"}>
+                      {Math.round(formData.abstract.length / 5)} words (minimum 250 words required)
                     </span>
                   </p>
                 </div>
@@ -1030,7 +1211,7 @@ function SubmitPageContent() {
                                 id={`reviewer-${index}-affiliation`}
                                 value={reviewer.affiliation}
                                 onChange={(e) => handleUpdateRecommendedReviewer(index, 'affiliation', e.target.value)}
-                                placeholder="Department of Medicine, University of Excellence, Country"
+                                placeholder="Department of Medicine/Engineering/Science, University of Excellence, Country"
                                 className="mt-1"
                               />
                             </div>
@@ -1042,7 +1223,7 @@ function SubmitPageContent() {
                                 id={`reviewer-${index}-expertise`}
                                 value={reviewer.expertise}
                                 onChange={(e) => handleUpdateRecommendedReviewer(index, 'expertise', e.target.value)}
-                                placeholder="Cardiology, Clinical Research, etc."
+                                placeholder="Medicine, Computer Science, Physics, etc."
                                 className="mt-1"
                               />
                             </div>
@@ -1414,8 +1595,8 @@ function SubmitPageContent() {
                         <span className="font-medium">
                           {formData.abstract ? `${formData.abstract.substring(0, 30)}...` : "Not provided"}
                           {formData.abstract && (
-                            <span className={`ml-2 text-xs ${formData.abstract.length >= 100 ? 'text-green-600' : 'text-red-500'}`}>
-                              ({formData.abstract.length} chars)
+                            <span className={`ml-2 text-xs ${formData.abstract.length >= 1250 ? 'text-green-600' : 'text-red-500'}`}>
+                              ({Math.round(formData.abstract.length / 5)} words)
                             </span>
                           )}
                         </span>
@@ -1531,6 +1712,8 @@ function SubmitPageContent() {
             </div>
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
     </div>
   )

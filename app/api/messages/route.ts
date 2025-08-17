@@ -81,54 +81,151 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { conversationId, content, attachments } = await request.json()
+    const body = await request.json()
+    
+    // Check if this is a conversation-based message (existing system)
+    if (body.conversationId) {
+      const { conversationId, content, attachments } = body
 
-    if (!conversationId || !content?.trim()) {
-      return NextResponse.json({ error: "Conversation ID and content are required" }, { status: 400 })
-    }
+      if (!conversationId || !content?.trim()) {
+        return NextResponse.json({ error: "Conversation ID and content are required" }, { status: 400 })
+      }
 
-    console.log("Sending message to conversation:", conversationId, "Content:", content.trim())
+      console.log("Sending message to conversation:", conversationId, "Content:", content.trim())
 
-    // Verify user has access to this conversation (simplified check for now)
-    const conversation = await db
-      .select()
-      .from(conversations)
-      .where(eq(conversations.id, conversationId))
-      .limit(1)
+      // Verify user has access to this conversation (simplified check for now)
+      const conversation = await db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.id, conversationId))
+        .limit(1)
 
-    if (conversation.length === 0) {
-      return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
-    }
+      if (conversation.length === 0) {
+        return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
+      }
 
-    console.log("Found conversation:", conversation[0])
+      console.log("Found conversation:", conversation[0])
 
-    // Insert the new message
-    const [newMessage] = await db
-      .insert(messages)
-      .values({
-        conversationId,
-        senderId: session.user.id,
-        content: content.trim(),
-        attachments: attachments || [],
-        isRead: false,
+      // Insert the new message
+      const [newMessage] = await db
+        .insert(messages)
+        .values({
+          conversationId,
+          senderId: session.user.id,
+          content: content.trim(),
+          attachments: attachments || [],
+          isRead: false,
+        })
+        .returning()
+
+      // Update the conversation's last activity
+      await db
+        .update(conversations)
+        .set({
+          lastActivity: new Date(),
+          lastMessageId: newMessage.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(conversations.id, conversationId))
+
+      return NextResponse.json({
+        success: true,
+        message: "Message sent successfully",
+        messageId: newMessage.id,
       })
-      .returning()
+    } else {
+      // New direct message system (for general messages)
+      const { recipientType, subject, content, submissionId } = body
 
-    // Update the conversation's last activity
-    await db
-      .update(conversations)
-      .set({
-        lastActivity: new Date(),
-        lastMessageId: newMessage.id,
-        updatedAt: new Date(),
+      if (!subject?.trim() || !content?.trim()) {
+        return NextResponse.json({ error: "Subject and content are required" }, { status: 400 })
+      }
+
+      // Determine recipient based on type
+      let recipientId = ""
+      let recipientName = ""
+      
+      if (recipientType === 'admin') {
+        // Find an admin user
+        const admin = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(eq(users.role, "admin"))
+          .limit(1)
+        if (admin.length) {
+          recipientId = admin[0].id
+          recipientName = admin[0].name || "Administrator"
+        }
+      } else if (recipientType === 'editor') {
+        // Find an editor user
+        const editor = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(sql`role IN ('editor-in-chief', 'managing-editor', 'section-editor')`)
+          .limit(1)
+        if (editor.length) {
+          recipientId = editor[0].id
+          recipientName = editor[0].name || "Editor"
+        }
+      } else if (recipientType === 'support') {
+        // Find support/admin user for technical issues
+        const support = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(eq(users.role, "admin"))
+          .limit(1)
+        if (support.length) {
+          recipientId = support[0].id
+          recipientName = "Technical Support"
+        }
+      }
+
+      if (!recipientId) {
+        return NextResponse.json({ error: "Could not find appropriate recipient" }, { status: 400 })
+      }
+
+      // Create a conversation first
+      const [newConversation] = await db
+        .insert(conversations)
+        .values({
+          subject,
+          type: "general",
+          relatedId: submissionId || null,
+          relatedTitle: submissionId ? `Submission ${submissionId}` : subject,
+          participants: [
+            { id: session.user.id, name: session.user.name || "User", role: session.user.role || "user" }
+          ],
+          lastActivity: new Date(),
+        })
+        .returning()
+
+      // Create the message
+      const [newMessage] = await db
+        .insert(messages)
+        .values({
+          conversationId: newConversation.id,
+          senderId: session.user.id,
+          content: content.trim(),
+          attachments: [],
+          isRead: false,
+        })
+        .returning()
+
+      // Update conversation with last message
+      await db
+        .update(conversations)
+        .set({
+          lastMessageId: newMessage.id,
+        })
+        .where(eq(conversations.id, newConversation.id))
+
+      return NextResponse.json({
+        success: true,
+        message: "Message sent successfully",
+        conversationId: newConversation.id,
+        messageId: newMessage.id,
       })
-      .where(eq(conversations.id, conversationId))
-
-    return NextResponse.json({
-      success: true,
-      message: "Message sent successfully",
-      messageId: newMessage.id,
-    })
+    }
   } catch (error) {
     logError(error as Error, { endpoint: "/api/messages POST" })
     return NextResponse.json({ success: false, error: "Failed to send message" }, { status: 500 })

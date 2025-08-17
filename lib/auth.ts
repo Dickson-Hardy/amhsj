@@ -6,6 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { logAuth, logError } from "./logger"
 
 // NextAuth configuration
 export const authOptions: NextAuthOptions = {
@@ -72,7 +73,7 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.role = dbUser.role
             token.lastUpdated = Date.now()
-            console.log(`Token refreshed for user ${token.sub}, role: ${dbUser.role}`)
+            logAuth(`Token refreshed for user ${token.sub}`, token.sub, 'token_refresh')
           }
         } catch (error) {
           console.error("Error refreshing token:", error)
@@ -87,7 +88,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string
         
         // Debug logging
-        console.log(`Session created/updated for ${session.user.email}, role: ${session.user.role}`)
+        logAuth(`Session created for ${session.user.email}`, session.user.id, 'session_create')
       }
       return session
     },
@@ -116,7 +117,7 @@ async function sendVerificationEmail(email: string, verificationToken: string) {
     const userName = user?.name || email.split('@')[0] // Use actual name or fallback
     
     await sendEmailVerification(email, userName, verificationUrl)
-    console.log(`Verification email sent to ${email}`)
+    logAuth(`Verification email sent to ${email}`, undefined, 'email_verification_sent')
   } catch (error) {
     console.error(`Failed to send verification email to ${email}:`, error)
     throw new Error("Failed to send verification email")

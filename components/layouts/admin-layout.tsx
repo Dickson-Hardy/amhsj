@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { LiveSystemStats } from '@/components/admin/live-system-stats'
 import {
   Users,
   FileText,
@@ -143,10 +144,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               )
             })}
           </nav>
-          {/* Placeholder for future dynamic widgets */}
+          {/* Live Stats Component */}
           <div className="p-4 border-t border-amhsj-border text-[11px] text-amhsj-text-muted">
-            {/* TODO: Inject small live stats component (system health, pending tasks) */}
-            <p className="italic">Stats will appear here once connected.</p>
+            <LiveSystemStats />
           </div>
         </aside>
 

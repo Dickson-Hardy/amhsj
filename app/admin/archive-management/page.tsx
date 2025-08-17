@@ -123,11 +123,17 @@ export default function ArchiveManagementDashboard() {
   async function fetchVolumes() {
     setLoading(true)
     try {
-      const response = await fetch('/api/archive?action=volumes')
+      const response = await fetch('/api/admin/archive/volumes')
       const data = await response.json()
       
-      if (data.success) {
+      if (data.volumes) {
         setVolumes(data.volumes)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch volumes",
+          variant: "destructive"
+        })
       }
     } catch (error) {
       console.error("Error fetching volumes:", error)
@@ -141,16 +147,30 @@ export default function ArchiveManagementDashboard() {
     }
   }
 
-  async function fetchIssues(volumeId: string) {
+  async function fetchIssues(volumeId?: string) {
     try {
-      const response = await fetch(`/api/archive?action=issues&volumeId=${volumeId}`)
+      const url = volumeId 
+        ? `/api/admin/archive/issues?volumeId=${volumeId}`
+        : '/api/admin/archive/issues'
+      const response = await fetch(url)
       const data = await response.json()
       
-      if (data.success) {
+      if (data.issues) {
         setIssues(data.issues)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch issues",
+          variant: "destructive"
+        })
       }
     } catch (error) {
       console.error("Error fetching issues:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch issues",
+        variant: "destructive"
+      })
     }
   }
 
@@ -178,13 +198,14 @@ export default function ArchiveManagementDashboard() {
     }
 
     try {
-      const response = await fetch('/api/archive', {
+      const response = await fetch('/api/admin/archive/volumes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'create-volume',
-          ...volumeForm,
-          guestEditors: volumeForm.title ? [volumeForm.title] : []
+          number: parseInt(volumeForm.number),
+          year: parseInt(volumeForm.year.toString()),
+          title: volumeForm.title,
+          description: volumeForm.description
         })
       })
 
@@ -193,18 +214,22 @@ export default function ArchiveManagementDashboard() {
       if (data.success) {
         toast({
           title: "Success",
-          description: "Volume created successfully"
+          description: data.message
         })
         setShowVolumeDialog(false)
         setVolumeForm({ number: '', year: new Date().getFullYear(), title: '', description: '', coverImage: '' })
         fetchVolumes()
       } else {
-        throw new Error(data.error)
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        })
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to create volume: ${error.message}`,
+        description: `Failed to create volume: ${(error as Error).message}`,
         variant: "destructive"
       })
     }
@@ -227,7 +252,7 @@ export default function ArchiveManagementDashboard() {
         body: JSON.stringify({
           action: 'create-issue',
           ...issueForm,
-          guestEditors: issueForm.guestEditors ? issueForm.guestEditors.split(',').map(e => e.trim()) : []
+          guestEditors: issueForm.guestEditors ? issueForm.guestEditors.split(',').map((e: string) => e.trim()) : []
         })
       })
 
@@ -250,7 +275,7 @@ export default function ArchiveManagementDashboard() {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to create issue: ${error.message}`,
+        description: `Failed to create issue: ${(error as Error).message}`,
         variant: "destructive"
       })
     }
@@ -281,7 +306,7 @@ export default function ArchiveManagementDashboard() {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to publish volume: ${error.message}`,
+        description: `Failed to publish volume: ${(error as Error).message}`,
         variant: "destructive"
       })
     }
@@ -315,7 +340,7 @@ export default function ArchiveManagementDashboard() {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to publish issue: ${error.message}`,
+        description: `Failed to publish issue: ${(error as Error).message}`,
         variant: "destructive"
       })
     }
@@ -351,7 +376,7 @@ export default function ArchiveManagementDashboard() {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to assign article: ${error.message}`,
+        description: `Failed to assign article: ${(error as Error).message}`,
         variant: "destructive"
       })
     }
