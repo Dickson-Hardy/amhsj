@@ -91,7 +91,7 @@ export const cache = {
         }
       } catch (error) {
         // Silent fail for Redis - we already have memory cache
-        console.debug('Redis set failed, using memory cache:', error instanceof Error ? error.message : 'Unknown error')
+        // Redis set failed, using memory cache
       }
     }
   },
@@ -120,7 +120,7 @@ export const cache = {
           return parsed
         }
       } catch (error) {
-        console.debug('Redis get failed:', error instanceof Error ? error.message : 'Unknown error')
+        // Redis get failed
       }
     }
     

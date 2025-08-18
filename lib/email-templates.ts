@@ -2534,4 +2534,104 @@ Advances in Medicine and Health Science Journal`
     text: `Decision on Your Manuscript – Major Revision Required – ${manuscriptTitle} (Manuscript No. ${manuscriptNumber})\n\nDear ${authorName},\n\nYour manuscript "${manuscriptTitle}" requires major revision before final decision.\n\nWhile reviewers found merit in your work, substantial issues must be addressed.\n\nDeadline: ${deadline} (2 weeks from today)\n\nRequirements:\n- Address each reviewer comment carefully\n- Provide detailed response letter\n- Mark all changes clearly in revised manuscript\n- Submit clean revised manuscript\n\nNote: Revised version will undergo further peer review.\n\nFor deadline extensions: editor@amhsj.org\n\nReviewer Comments:\n${reviewerComments}\n\nKind regards,\nSylvester Izah, Ph.D.\nEditor\nAdvances in Medicine and Health Science Journal`
   }),
 
+  weeklyDigest: (
+    userName: string,
+    weekRange: string,
+    newSubmissions: number,
+    publishedArticles: number,
+    newUsers: number,
+    latestArticlesList: string,
+    roleSpecificContent: string
+  ): EmailTemplate => {
+    const logo = getEmailLogo('medium')
+    return {
+      subject: `AMHSJ Weekly Digest - ${weekRange}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>AMHSJ Weekly Digest</title>
+          ${getEmailStyles()}
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <img src="${logo.url}" alt="${logo.alt}" width="${logo.width}" height="${logo.height}" style="margin-bottom: 15px;">
+              <h1>📊 Weekly Digest</h1>
+              <p style="color: ${AMHSJ_COLORS.backgroundAlt}; margin: 0; font-size: 16px;">${weekRange}</p>
+            </div>
+            
+            <div class="content">
+              <h2 style="color: ${AMHSJ_COLORS.primary};">Hello ${userName}!</h2>
+              
+              <p>Here's your weekly summary of activity at Advances in Medicine & Health Sciences Journal:</p>
+              
+              <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 25px 0;">
+                <div class="stat-card" style="background: ${AMHSJ_COLORS.background}; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb;">
+                  <h3 style="color: ${AMHSJ_COLORS.primary}; margin: 0; font-size: 24px;">${newSubmissions}</h3>
+                  <p style="margin: 5px 0 0 0; color: ${AMHSJ_COLORS.textLight};">New Submissions</p>
+                </div>
+                
+                <div class="stat-card" style="background: ${AMHSJ_COLORS.background}; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb;">
+                  <h3 style="color: ${AMHSJ_COLORS.success}; margin: 0; font-size: 24px;">${publishedArticles}</h3>
+                  <p style="margin: 5px 0 0 0; color: ${AMHSJ_COLORS.textLight};">Published Articles</p>
+                </div>
+                
+                <div class="stat-card" style="background: ${AMHSJ_COLORS.background}; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb;">
+                  <h3 style="color: ${AMHSJ_COLORS.accent}; margin: 0; font-size: 24px;">${newUsers}</h3>
+                  <p style="margin: 5px 0 0 0; color: ${AMHSJ_COLORS.textLight};">New Users</p>
+                </div>
+              </div>
+              
+              ${roleSpecificContent}
+              
+              ${latestArticlesList ? `
+                <div class="articles-section" style="margin: 25px 0;">
+                  <h3 style="color: ${AMHSJ_COLORS.primary};">📚 Latest Publications</h3>
+                  <ul style="list-style: none; padding: 0;">
+                    ${latestArticlesList}
+                  </ul>
+                </div>
+              ` : ''}
+              
+              <div class="cta-section" style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.NEXTAUTH_URL || 'https://amhsj.org'}/dashboard" 
+                   style="display: inline-block; background: ${AMHSJ_COLORS.primary}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px;">
+                  📊 View Dashboard
+                </a>
+                
+                <a href="${process.env.NEXTAUTH_URL || 'https://amhsj.org'}/articles" 
+                   style="display: inline-block; background: ${AMHSJ_COLORS.secondary}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px;">
+                  📖 Browse Articles
+                </a>
+              </div>
+              
+              <div class="tips-section" style="background: ${AMHSJ_COLORS.backgroundAlt}; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                <h3 style="color: ${AMHSJ_COLORS.primary}; margin-top: 0;">💡 Weekly Tip</h3>
+                <p>Remember to check your dashboard regularly for new review invitations, submission updates, and important announcements. Stay engaged with the academic community!</p>
+              </div>
+              
+              <p style="color: ${AMHSJ_COLORS.textLight}; font-size: 14px; margin-top: 30px;">
+                You're receiving this digest because you're an active member of AMHSJ. 
+                To manage your email preferences, <a href="${process.env.NEXTAUTH_URL || 'https://amhsj.org'}/settings" style="color: ${AMHSJ_COLORS.primary};">visit your settings</a>.
+              </p>
+            </div>
+            
+            <div class="footer">
+              <p><strong>Advances in Medicine & Health Sciences Journal</strong></p>
+              <p>Advancing medical knowledge through rigorous peer review</p>
+              <p style="font-size: 12px; color: ${AMHSJ_COLORS.textLight};">
+                © 2025 AMHSJ. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `AMHSJ Weekly Digest - ${weekRange}\n\nHello ${userName}!\n\nWeekly Summary:\n- New Submissions: ${newSubmissions}\n- Published Articles: ${publishedArticles}\n- New Users: ${newUsers}\n\n${latestArticlesList ? `Latest Publications:\n${latestArticlesList.replace(/<[^>]*>/g, '')}\n\n` : ''}Visit your dashboard: ${process.env.NEXTAUTH_URL || 'https://amhsj.org'}/dashboard\n\nStay engaged with the academic community!\n\n© 2025 AMHSJ. All rights reserved.`
+    }
+  },
+
 }

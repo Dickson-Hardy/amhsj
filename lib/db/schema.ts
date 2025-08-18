@@ -1,4 +1,49 @@
 import { pgTable, text, timestamp, integer, boolean, uuid, jsonb, serial, varchar } from "drizzle-orm/pg-core"
+import type { WorkflowHistoryEntry, ArticleMetadata, VolumeMetadata, IssueMetadata, EmailMetadata } from "../types/schema"
+
+// Interface for co-authors
+export interface CoAuthor {
+  firstName: string
+  lastName: string
+  email: string
+  affiliation?: string
+  orcid?: string
+  institution?: string
+  department?: string
+  country?: string
+  isCorrespondingAuthor?: boolean
+}
+
+// Interface for reviewer data
+export interface Reviewer {
+  id: string
+  email: string
+  name: string
+  currentReviewLoad: number
+  maxReviewsPerMonth: number
+  qualityScore: number
+  availabilityStatus: string
+  reviewerProfile?: any
+}
+
+// Interface for article data
+export interface ArticleData {
+  title: string
+  abstract: string
+  authors: CoAuthor[]
+  content?: string
+  category: string
+  keywords: string[]
+  recommendedReviewers?: any[]
+}
+
+// Interface for reviewer criteria
+export interface ReviewerCriteria {
+  expertise: string[]
+  minQualityScore: number
+  excludeConflicts: (string | null)[]
+  maxWorkload: number
+}
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -139,13 +184,13 @@ export const articles = pgTable("articles", {
   publishedDate: timestamp("published_date"),
   submittedDate: timestamp("submitted_date").defaultNow(),
   authorId: uuid("author_id").references(() => users.id),
-  coAuthors: jsonb("co_authors").$type<string[]>(),
+  coAuthors: jsonb("co_authors").$type<CoAuthor[]>(),
   reviewerIds: jsonb("reviewer_ids").$type<string[]>(),
   editorId: uuid("editor_id").references(() => users.id),
   files: jsonb("files").$type<{ url: string; type: string; name: string; fileId: string }[]>(),
   views: integer("views").default(0),
   downloads: integer("downloads").default(0),
-  metadata: jsonb("metadata"),
+  metadata: jsonb("metadata").$type<ArticleMetadata>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
@@ -195,7 +240,7 @@ export const submissions = pgTable("submissions", {
   articleId: uuid("article_id").references(() => articles.id),
   authorId: uuid("author_id").references(() => users.id),
   status: text("status").notNull().default("draft"), // draft, submitted, under_review, accepted, rejected
-  statusHistory: jsonb("status_history").$type<any[]>().default([]),
+  statusHistory: jsonb("status_history").$type<WorkflowHistoryEntry[]>().default([]),
   submittedAt: timestamp("submitted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -245,7 +290,7 @@ export const comments = pgTable("comments", {
   userId: uuid("user_id").references(() => users.id),
   content: text("content").notNull(),
   type: text("type").notNull(), // review, editorial, author_response
-  isPrivate: text("is_private").notNull().default("false"), // "true" or "false" as string
+  isPrivate: boolean("is_private").notNull().default(false), // boolean for private comments
   lineNumber: integer("line_number"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -261,7 +306,7 @@ export const volumes = pgTable("volumes", {
   coverImage: text("cover_image"),
   publishedDate: timestamp("published_date"),
   status: text("status").notNull().default("draft"), // draft, published, archived
-  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  metadata: jsonb("metadata").$type<VolumeMetadata>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
@@ -278,7 +323,7 @@ export const issues = pgTable("issues", {
   status: text("status").notNull().default("draft"), // draft, published, archived
   specialIssue: boolean("special_issue").default(false),
   guestEditors: jsonb("guest_editors").$type<string[]>(),
-  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  metadata: jsonb("metadata").$type<IssueMetadata>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
@@ -296,7 +341,7 @@ export const emailLogs = pgTable("email_logs", {
   status: text("status").notNull().default("sent"), // sent, failed, pending
   sentAt: timestamp("sent_at").defaultNow(),
   failureReason: text("failure_reason"),
-  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  metadata: jsonb("metadata").$type<EmailMetadata>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
@@ -451,5 +496,39 @@ export const userDocuments = pgTable("user_documents", {
   mimeType: text("mime_type").notNull(),
   isActive: boolean("is_active").default(true),
   uploadedAt: timestamp("uploaded_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Review assignments table for tracking reviewer assignments
+export const review_assignments = pgTable("review_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").references(() => articles.id).notNull(),
+  reviewerId: uuid("reviewer_id").references(() => users.id).notNull(),
+  assignedBy: uuid("assigned_by").references(() => users.id).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  dueDate: timestamp("due_date").notNull(),
+  status: text("status").notNull().default("assigned"), // assigned, accepted, declined, completed, overdue
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
+  reviewScore: integer("review_score"),
+  reviewComments: text("review_comments"),
+  confidentialComments: text("confidential_comments"),
+  recommendation: text("recommendation"), // accept, minor_revisions, major_revisions, reject
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Editorial decisions table for tracking editor decisions
+export const editorial_decisions = pgTable("editorial_decisions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").references(() => articles.id).notNull(),
+  editorId: uuid("editor_id").references(() => users.id).notNull(),
+  decision: text("decision").notNull(), // accept, minor_revisions, major_revisions, reject
+  comments: text("comments"),
+  confidentialComments: text("confidential_comments"),
+  revisionDeadline: timestamp("revision_deadline"),
+  finalDecision: boolean("final_decision").default(false),
+  round: integer("round").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { users, reviewer_applications } from "@/lib/db/schema"
+import { users, reviewerProfiles } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
@@ -32,19 +32,19 @@ export async function GET(request: NextRequest) {
         specializations: users.specializations,
         expertise: users.expertise,
         role: users.role,
-        created_at: users.created_at
+        created_at: users.createdAt
       })
       .from(users)
       .where(eq(users.role, "reviewer"))
 
-    // Get reviewer applications for additional details
+    // Get reviewer profiles for additional details
     const reviewerApplications = await db
       .select()
-      .from(reviewer_applications)
-      .where(eq(reviewer_applications.status, "approved"))
+      .from(reviewerProfiles)
+      .where(eq(reviewerProfiles.isActive, true))
 
     const applicationMap = reviewerApplications.reduce((acc, app) => {
-      acc[app.user_id] = app
+      acc[app.userId] = app
       return acc
     }, {} as Record<string, any>)
 

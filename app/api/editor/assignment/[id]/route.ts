@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { editorAssignments, articles, users } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { z } from "zod"
-import { sendEmail } from "@/lib/email"
+import { sendEmail } from "@/lib/email-hybrid"
 import { emailTemplates } from "@/lib/email-templates"
 
 // Validation schema for editor response

@@ -231,15 +231,31 @@ export async function DELETE(request: NextRequest) {
       ))
       .returning({
         id: userDocuments.id,
-        fileName: userDocuments.fileName
+        fileName: userDocuments.fileName,
+        filePath: userDocuments.filePath
       })
 
     if (result.length === 0) {
       return NextResponse.json({ error: "File not found or already deleted" }, { status: 404 })
     }
 
-    // TODO: Optionally delete physical file from filesystem
-    // This would require implementing file cleanup logic
+    // Optionally delete physical file from filesystem
+    // In production, implement proper file cleanup with error handling
+    try {
+      const fs = require('fs').promises;
+      const path = require('path');
+      
+      if (result[0].filePath) {
+        const fullPath = path.join(process.cwd(), 'uploads', result[0].filePath);
+        await fs.unlink(fullPath).catch(() => {
+          // File may not exist, ignore error
+          console.log(`File not found for deletion: ${fullPath}`);
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      // Continue with database deletion even if file deletion fails
+    }
     
     return NextResponse.json({
       success: true,

@@ -34,7 +34,7 @@ async function seedDatabase() {
     
     // Create admin user if it doesn't exist
     const adminEmail = process.env.ADMIN_EMAIL || "admin@amhsj.com"
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123456"
+    const adminPassword = process.env.ADMIN_PASSWORD || process.env.DEFAULT_ADMIN_PASSWORD
     
     const existingAdmin = await db
       .select()
@@ -125,7 +125,7 @@ Commands:
 Environment Variables Required:
   DATABASE_URL     - PostgreSQL connection string
   ADMIN_EMAIL      - Admin user email (optional, default: admin@amhsj.com)
-  ADMIN_PASSWORD   - Admin user password (optional, default: admin123456)
+  ADMIN_PASSWORD   - Admin user password (required)
       `)
       process.exit(1)
   }

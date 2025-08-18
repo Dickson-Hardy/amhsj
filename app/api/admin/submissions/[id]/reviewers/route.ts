@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 import { reviews, users, notifications, articles } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { logError } from "@/lib/logger"
-import { sendReviewInvitation } from "@/lib/email-improved"
+import { sendReviewInvitation } from "@/lib/email-hybrid"
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   try {

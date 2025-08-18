@@ -1,85 +1,238 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { uploadFile } from "@/lib/imagekit"
-import { 
-  FILE_UPLOAD_CONFIG, 
-  validateFileSize, 
-  validateFileType,
-  validateFileCount,
-  validateTotalSize 
-} from "@/lib/file-upload-config"
+import { logError } from "@/lib/logger"
+import { z } from "zod"
+import { v4 as uuidv4 } from "uuid"
+import { promises as fs } from "fs"
+import path from "path"
+import { db } from "@/lib/db"
+import { userDocuments } from "@/lib/db/schema"
+import { eq, desc, and } from "drizzle-orm"
+
+// File upload validation schema
+const fileUploadSchema = z.object({
+  fileName: z.string().min(1, "File name is required"),
+  fileType: z.string().min(1, "File type is required"),
+  fileSize: z.number().min(1, "File size must be greater than 0"),
+  fileData: z.string().min(1, "File data is required"), // Base64 encoded
+  category: z.enum(["manuscript", "supplementary", "cover_letter", "ethics_approval", "conflict_disclosure"]),
+  description: z.string().optional()
+})
+
+// Allowed file types and size limits
+const ALLOWED_FILE_TYPES = {
+  manuscript: ['.doc', '.docx', '.pdf', '.rtf'],
+  supplementary: ['.doc', '.docx', '.pdf', '.xls', '.xlsx', '.zip', '.rar'],
+  cover_letter: ['.doc', '.docx', '.pdf', '.txt'],
+  ethics_approval: ['.pdf', '.jpg', '.jpeg', '.png'],
+  conflict_disclosure: ['.doc', '.docx', '.pdf', '.txt']
+}
+
+const MAX_FILE_SIZES = {
+  manuscript: 10 * 1024 * 1024, // 10MB
+  supplementary: 50 * 1024 * 1024, // 50MB
+  cover_letter: 5 * 1024 * 1024, // 5MB
+  ethics_approval: 5 * 1024 * 1024, // 5MB
+  conflict_disclosure: 2 * 1024 * 1024 // 2MB
+}
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const files = formData.getAll("files") as File[]
-    const category = (formData.get("category") as keyof typeof FILE_UPLOAD_CONFIG.ALLOWED_FILE_TYPES) || "manuscript"
-    const folder = (formData.get("folder") as string) || "articles"
-
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: "No files provided" }, { status: 400 })
+    const body = await request.json()
+    const validation = fileUploadSchema.safeParse(body)
+    
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: "Validation failed", 
+        details: validation.error.errors 
+      }, { status: 400 })
     }
 
-    // Validate file count
-    const countValidation = validateFileCount(files)
-    if (!countValidation.valid) {
-      return NextResponse.json({ error: countValidation.message }, { status: 400 })
+    const { fileName, fileType, fileSize, fileData, category, description } = validation.data
+
+    // Validate file type
+    const allowedTypes = ALLOWED_FILE_TYPES[category]
+    const fileExtension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
+    
+    if (!allowedTypes.includes(fileExtension)) {
+      return NextResponse.json({ 
+        error: `File type ${fileExtension} not allowed for ${category}. Allowed: ${allowedTypes.join(', ')}` 
+      }, { status: 400 })
     }
 
-    // Validate total size
-    const sizeValidation = validateTotalSize(files)
-    if (!sizeValidation.valid) {
-      return NextResponse.json({ error: sizeValidation.message }, { status: 400 })
+    // Validate file size
+    const maxSize = MAX_FILE_SIZES[category]
+    if (fileSize > maxSize) {
+      return NextResponse.json({ 
+        error: `File size ${(fileSize / 1024 / 1024).toFixed(2)}MB exceeds limit of ${(maxSize / 1024 / 1024).toFixed(2)}MB for ${category}` 
+      }, { status: 400 })
     }
 
-    // Validate individual files
-    const uploadResults = []
-    for (const file of files) {
-      // Validate file size
-      const fileSizeValidation = validateFileSize(file)
-      if (!fileSizeValidation.valid) {
-        return NextResponse.json({ error: fileSizeValidation.message }, { status: 400 })
+    // Generate unique file ID
+    const fileId = uuidv4()
+    const timestamp = new Date().toISOString()
+    
+    // Create file metadata
+    const fileMetadata = {
+      id: fileId,
+      originalName: fileName,
+      fileType: fileExtension,
+      category,
+      size: fileSize,
+      uploadedBy: session.user.id,
+      uploadedAt: timestamp,
+      description: description || '',
+      status: 'uploaded',
+      virusScanned: false,
+      processed: false
+    }
+
+    // Store file to local filesystem or cloud storage
+    try {
+      // Decode base64 file data (handle potential data URL prefix)
+      const base64 = fileData.includes(',') ? fileData.split(',')[1] : fileData
+      const buffer = Buffer.from(base64, 'base64')
+      
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = path.join(process.cwd(), 'uploads', category)
+      await fs.mkdir(uploadsDir, { recursive: true })
+      
+      // Generate unique filename
+      const uniqueFilename = `${fileId}${fileExtension}`
+      const filePath = path.join(uploadsDir, uniqueFilename)
+      
+      // Write file to filesystem
+      await fs.writeFile(filePath, buffer)
+
+      // Infer simple MIME type from extension
+      const mimeByExt: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.rtf': 'application/rtf',
+        '.txt': 'text/plain',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.zip': 'application/zip',
+        '.rar': 'application/vnd.rar'
       }
+      const mimeType = mimeByExt[fileExtension] || 'application/octet-stream'
+      
+      // Store file metadata in database
+      await db.insert(userDocuments).values({
+        id: fileId,
+        userId: session.user.id,
+        documentType: category,
+        fileName: uniqueFilename,
+        originalName: fileName,
+        filePath: filePath,
+        fileSize: buffer.length,
+        mimeType: mimeType,
+        uploadedAt: new Date()
+      })
 
-      // Validate file type
-      const fileTypeValidation = validateFileType(file, category)
-      if (!fileTypeValidation.valid) {
-        return NextResponse.json({ error: fileTypeValidation.message }, { status: 400 })
-      }
-
-      try {
-        const result = await uploadFile(file, folder)
-        uploadResults.push({
-          ...result,
-          originalName: file.name,
-          category,
-          uploadedAt: new Date().toISOString()
-        })
-      } catch (uploadError) {
-        console.error(`Upload error for file ${file.name}:`, uploadError)
-        return NextResponse.json({ 
-          error: `Failed to upload file: ${file.name}` 
-        }, { status: 500 })
-      }
-    }
-
+      // Return file upload response
+      return NextResponse.json({
+        success: true,
+        file: {
+          ...fileMetadata,
+          url: `/api/files/${fileId}`,
+          downloadUrl: `/api/files/${fileId}/download`,
+          previewUrl: `/api/files/${fileId}/preview`
+        },
+        message: "File uploaded successfully"
+      })
+    } catch (storageError) {
+      logError(storageError as Error, { endpoint: "/api/upload", operation: "file_storage" })
+      return NextResponse.json({ 
+        error: "Failed to store file" 
+      }, { status: 500 })
+    }  } catch (error) {
+    logError(error as Error, { endpoint: "/api/upload", operation: "POST" })
     return NextResponse.json({ 
-      success: true, 
-      files: uploadResults,
-      summary: {
-        totalFiles: uploadResults.length,
-        totalSize: files.reduce((sum, file) => sum + file.size, 0),
-        category
+      error: "Internal server error" 
+    }, { status: 500 })
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const category = searchParams.get("category")
+    const userId = searchParams.get("userId")
+
+    // Only allow users to see their own files or admins to see all
+    if (userId && session.user.role !== "admin" && session.user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    // Get files from database
+    try {
+      // Build query conditions
+      const conditions: any[] = []
+      
+      // Filter by user permissions
+      if (session.user.role === "admin") {
+        // Admin can see all files
+        if (userId) {
+          conditions.push(eq(userDocuments.userId, userId))
+        }
+      } else {
+        // Users can only see their own files
+        conditions.push(eq(userDocuments.userId, session.user.id))
       }
-    })
+      
+      // Filter by category if specified
+      if (category) {
+        conditions.push(eq(userDocuments.documentType, category))
+      }
+      
+      // Execute query with all conditions
+      const files = conditions.length > 0 
+        ? await db.select().from(userDocuments).where(and(...conditions)).orderBy(desc(userDocuments.uploadedAt))
+        : await db.select().from(userDocuments).orderBy(desc(userDocuments.uploadedAt))
+      
+      return NextResponse.json({
+        success: true,
+        files: files.map(file => ({
+          id: file.id,
+          originalName: file.originalName,
+          fileName: file.fileName,
+          fileType: file.mimeType,
+          documentType: file.documentType,
+          size: file.fileSize,
+          uploadedAt: file.uploadedAt,
+          url: `/api/files/${file.id}`,
+          downloadUrl: `/api/files/${file.id}/download`,
+          previewUrl: `/api/files/${file.id}/preview`
+        })),
+        message: "Files retrieved successfully"
+      })
+    } catch (error) {
+      logError(error as Error, { endpoint: "/api/upload", operation: "file_listing" })
+      return NextResponse.json({ 
+        error: "Failed to retrieve files" 
+      }, { status: 500 })
+    }
+
   } catch (error) {
-    console.error("Upload error:", error)
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    logError(error as Error, { endpoint: "/api/upload", operation: "GET" })
+    return NextResponse.json({ 
+      error: "Internal server error" 
+    }, { status: 500 })
   }
 }

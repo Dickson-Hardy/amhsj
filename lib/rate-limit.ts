@@ -82,7 +82,7 @@ export class RateLimiter {
         resetTime: now + this.config.windowMs,
       }
     } catch (error) {
-      console.debug("Rate limiter error, allowing request:", error instanceof Error ? error.message : 'Unknown error')
+      // Rate limiter error, allowing request
       // If rate limiting fails, allow the request to avoid blocking users
       return {
         allowed: true,

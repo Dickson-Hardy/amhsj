@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { users, reviewerProfiles, userApplications } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { sendEmail } from "@/lib/email"
+import { sendEmail } from "@/lib/email-hybrid"
 import { nanoid } from "nanoid"
 
 export async function POST(request: NextRequest) {

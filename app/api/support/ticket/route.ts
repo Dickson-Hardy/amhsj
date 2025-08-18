@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { emailLogs } from "@/lib/db/schema"
-import { sendEmail } from "@/lib/email"
+import { sendEmail } from "@/lib/email-hybrid"
 import { logError } from "@/lib/logger"
 import { v4 as uuidv4 } from "uuid"
 

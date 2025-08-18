@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { reviews, articles, users, notifications } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { z } from "zod"
-import { sendEmail } from "@/lib/email"
+import { sendEmail } from "@/lib/email-hybrid"
 import { emailTemplates } from "@/lib/email-templates"
 import { v4 as uuidv4 } from "uuid"
 

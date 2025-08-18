@@ -106,7 +106,7 @@ export const authOptions: NextAuthOptions = {
   }
 }
 
-import { sendEmailVerification } from "./email"
+import { sendEmailVerification } from "./email-hybrid"
 import { UserService } from "./database"
 
 // Real implementation of email verification using our email service

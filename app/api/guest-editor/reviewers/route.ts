@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { users, reviewerInvitations } from '@/lib/db/schema'
+import { users, reviewInvitations } from '@/lib/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 
 export async function GET() {
@@ -9,21 +9,20 @@ export async function GET() {
     const specialIssueReviewers = await db
       .select({
         id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
+        name: users.name,
         email: users.email,
         expertise: users.expertise,
-        invitationStatus: reviewerInvitations.status,
+        invitationStatus: reviewInvitations.status,
       })
       .from(users)
-      .leftJoin(reviewerInvitations, eq(users.id, reviewerInvitations.reviewerId))
+      .leftJoin(reviewInvitations, eq(users.id, reviewInvitations.reviewerId))
       .where(inArray(users.role, ['reviewer', 'section_editor']))
 
     const formattedReviewers = specialIssueReviewers.map(reviewer => ({
       id: reviewer.id,
-      name: `${reviewer.firstName} ${reviewer.lastName}`,
+      name: reviewer.name,
       email: reviewer.email,
-      expertise: reviewer.expertise ? reviewer.expertise.split(',') : [],
+      expertise: Array.isArray(reviewer.expertise) ? reviewer.expertise : [],
       invitationStatus: reviewer.invitationStatus || 'not_invited',
       assignedSubmissions: [], // Would need to query reviewer assignments
       specialIssueRelevance: 8.5, // Would calculate based on expertise matching

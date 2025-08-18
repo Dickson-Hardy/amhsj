@@ -93,7 +93,7 @@ class PerformanceOptimizer {
         db: parseInt(process.env.REDIS_PERFORMANCE_DB || '3'),
       })
       
-      console.log('✅ Performance optimization Redis connected')
+              // Performance optimization Redis connected
     } catch (error) {
       console.warn('⚠️ Performance Redis unavailable:', error)
     }

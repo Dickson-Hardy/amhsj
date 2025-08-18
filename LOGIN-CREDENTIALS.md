@@ -1,6 +1,6 @@
 # 🔑 AMJHS Login Credentials - Quick Reference
 
-## Default Password for ALL accounts: `password123`
+## Default Password for ALL accounts: Set in environment variables
 
 ⚠️ **Important**: Change these passwords in production!
 

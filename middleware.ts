@@ -91,7 +91,7 @@ export default withAuth(
           response.headers.set("X-RateLimit-Reset", resetTime.toString())
           return response
         } catch (rateLimitError) {
-          console.error("Rate limiting error:", rateLimitError)
+          // Rate limiting error
           // Continue without rate limiting if there's an error
         }
       }
@@ -105,7 +105,7 @@ export default withAuth(
 
       return response
     } catch (error) {
-      console.error("Middleware error:", error)
+      // Middleware error
       return NextResponse.next()
     }
   },

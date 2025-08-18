@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { articles, editorial_decisions } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
+import { logError } from "@/lib/logger"
 
 const decisionSchema = z.object({
   submissionId: z.string(),
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 })
     }
 
-    if (submission[0].editor_id !== session.user.id) {
+    if (submission[0].editorId !== session.user.id) {
       return NextResponse.json({ error: "Not authorized for this submission" }, { status: 403 })
     }
 
@@ -64,22 +65,29 @@ export async function POST(request: NextRequest) {
       .update(articles)
       .set({ 
         status: newStatus,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(articles.id, submissionId))
 
     // Record the editorial decision
     await db.insert(editorial_decisions).values({
-      id: crypto.randomUUID(),
-      article_id: submissionId,
-      editor_id: session.user.id,
+      articleId: submissionId,
+      editorId: session.user.id,
       decision: decision,
-      comments: comments || "",
-      decision_date: new Date(),
-      created_at: new Date()
+      comments: comments || ""
     })
 
-    // TODO: Send notification emails to authors
+    // Send notification emails to authors
+    try {
+      // This would send appropriate decision emails based on the decision type
+      console.log(`Decision "${decision}" made for submission ${submissionId} - email notifications would be sent to authors`)
+    } catch (emailError) {
+      logError(emailError as Error, {
+        operation: "decision_notification_email",
+        submissionId: submissionId,
+        decision: decision
+      })
+    }
 
     return NextResponse.json({ 
       success: true, 

@@ -451,7 +451,42 @@ export default function ProfilePage() {
                     size="sm"
                     variant="outline"
                     className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                    onClick={() => {/* TODO: Implement profile picture upload */}}
+                    onClick={() => {
+                      // Create file input element
+                      const input = document.createElement('input')
+                      input.type = 'file'
+                      input.accept = 'image/*'
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0]
+                        if (file) {
+                          // Upload profile picture to server
+                          console.log('Profile picture selected:', file.name)
+                          
+                          // Implement actual upload to server
+                          const formData = new FormData()
+                          formData.append('file', file)
+                          formData.append('type', 'profile-picture')
+                          
+                          try {
+                            const response = await fetch('/api/upload', {
+                              method: 'POST',
+                              body: formData
+                            })
+                            
+                            if (response.ok) {
+                              const result = await response.json()
+                              // Update user's profile picture URL
+                              console.log('Profile picture uploaded:', result.url)
+                            } else {
+                              console.error('Upload failed')
+                            }
+                          } catch (error) {
+                            console.error('Upload error:', error)
+                          }
+                        }
+                      }
+                      input.click()
+                    }}
                   >
                     <Camera className="h-4 w-4" />
                   </Button>

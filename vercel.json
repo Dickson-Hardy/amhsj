@@ -33,12 +33,11 @@
   "devCommand": "pnpm dev",
   "crons": [
     {
-      "path": "/api/cron/cleanup",
+      "path": "/api/cron/maintenance",
       "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/email-digest",
-      "schedule": "0 9 * * 1"
     }
-  ]
+  ],
+  "env": {
+    "CRON_SECRET": "@cron_secret"
+  }
 }

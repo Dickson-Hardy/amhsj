@@ -143,7 +143,7 @@ class EnterpriseSecuritySystem {
         password: process.env.REDIS_PASSWORD,
         db: parseInt(process.env.REDIS_SECURITY_DB || '1'),
       })
-      console.log('✅ Security Redis initialized')
+      // Security Redis initialized
     } catch (error) {
       console.warn('⚠️ Security Redis unavailable:', error)
     }
@@ -447,7 +447,7 @@ class EnterpriseSecuritySystem {
         // In production, this should trigger immediate alerts
       }
 
-      console.log(`🔒 Security Event [${event.severity.toUpperCase()}]:`, auditLog)
+              // Security Event logged
     } catch (error) {
       console.error('Security logging error:', error)
     }

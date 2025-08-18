@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { db } from "@/lib/db"
 import { reviews, articles, users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { sendEmail } from "@/lib/email"
+import { sendEmail } from "@/lib/email-hybrid"
 import { emailTemplates } from "@/lib/email-templates"
 
 export async function POST(

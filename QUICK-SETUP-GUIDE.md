@@ -61,10 +61,10 @@ pnpm dev
 ### Quick Test Accounts
 | Role | Email | Password | Purpose |
 |------|-------|----------|---------|
-| **Admin** | `admin@amhsj.org` | `password123` | System management |
-| **Editor-in-Chief** | `eic@amhsj.org` | `password123` | Editorial oversight |
-| **Reviewer** | `reviewer1@amhsj.org` | `password123` | Manuscript review |
-| **Author** | `author1@example.org` | `password123` | Content submission |
+| **Admin** | `admin@amhsj.org` | `[Set in .env]` | System management |
+| **Editor-in-Chief** | `eic@amhsj.org` | `[Set in .env]` | Editorial oversight |
+| **Reviewer** | `reviewer1@amhsj.org` | `[Set in .env]` | Manuscript review |
+| **Author** | `author1@example.org` | `[Set in .env]` | Content submission |
 
 ---
 

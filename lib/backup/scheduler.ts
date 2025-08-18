@@ -131,14 +131,23 @@ class BackupScheduler {
 
   private async logActivity(action: string, details: string) {
     try {
+      // Try to insert with all required fields
       await db.insert(adminLogs).values({
+        id: `backup_${Date.now()}_${Math.random().toString(36).substring(2)}`,
+        adminId: 'backup-system',
+        adminEmail: 'system@backup.amjhs.org',
         action,
+        resourceType: 'backup',
+        resourceId: 'scheduler',
         details,
+        ipAddress: 'localhost',
+        userAgent: 'backup-scheduler',
         createdAt: new Date(),
-        userId: 'backup-scheduler',
       })
     } catch (error) {
-      console.error('Failed to log backup activity:', error)
+      // If the insert fails due to missing columns, just log it and continue
+      // This prevents backup operations from failing due to logging issues
+      console.warn('Failed to log backup activity (continuing without logging):', error instanceof Error ? error.message : String(error))
     }
   }
 

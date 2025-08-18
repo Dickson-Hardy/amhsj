@@ -4,7 +4,7 @@ import { db } from "./db"
 import { reviewInvitations, articles, users } from "./db/schema"
 import { eq, and, lt, isNull, not } from "drizzle-orm"
 import { emailTemplates } from "./email-templates"
-import { sendEmail } from "./email"
+import { sendEmail } from "./email-hybrid"
 
 export class ReviewDeadlineManager {
   /**

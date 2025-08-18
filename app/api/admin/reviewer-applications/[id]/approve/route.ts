@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { userApplications, users, reviewerProfiles } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { sendEmail } from "@/lib/email"
+import { sendEmail } from "@/lib/email-hybrid"
 
 export async function POST(
   req: NextRequest,
