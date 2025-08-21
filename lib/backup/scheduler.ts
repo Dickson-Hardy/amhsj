@@ -197,7 +197,7 @@ class BackupScheduler {
       schedules.push({
         id,
         running: task.getStatus() === 'scheduled',
-        nextExecution: task.nextDate()?.toISO()
+        nextExecution: 'Next execution time not available'
       })
     }
     return schedules
