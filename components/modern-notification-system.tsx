@@ -291,7 +291,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
               </div>
             </div>
             
-            <Tabs value={filter} onValueChange={(value: any) => setFilter(value)}>
+            <Tabs value={filter} onValueChange={(value: string) => setFilter(value)}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="unread">

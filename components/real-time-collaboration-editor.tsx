@@ -94,7 +94,7 @@ interface EditOperation {
   position: number
   content?: string
   length?: number
-  attributes?: Record<string, any>
+  attributes?: Record<string, string | number | boolean>
 }
 
 interface RealTimeCollaborationEditorProps {
@@ -289,7 +289,7 @@ export function RealTimeCollaborationEditor({
         }
       }
       
-      wsRef.current = mockWebSocket as any
+      wsRef.current = mockWebSocket as WebSocket
 
     } catch (error) {
       logger.error('Failed to initialize WebSocket:', error)

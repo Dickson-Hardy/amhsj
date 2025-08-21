@@ -55,12 +55,8 @@ export function Header() {
     },
     {
       title: "Editorial Board",
-      items: [
-        { title: "Editor-in-Chief", href: "/editorial-board", description: "Meet our editorial leadership" },
-        { title: "Associate Editors", href: "/editorial-board/associates", description: "Editorial team members" },
-        { title: "Editorial Profiles", href: "/editorial-board/profiles", description: "Editor profiles and affiliations" },
-        { title: "Advisory Board", href: "/editorial-board/advisory", description: "Our advisory committee" },
-      ],
+      href: "/editorial-board",
+      isSingle: true,
     },
     {
       title: "Submission Guidelines",

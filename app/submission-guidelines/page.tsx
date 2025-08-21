@@ -39,33 +39,37 @@ export default function SubmissionGuidelinesPage() {
   }
   const articleTypes = [
     {
-      type: "Original Research",
-      description: "Novel research findings with significant clinical or scientific impact",
-      wordLimit: "4000-6000 words",
-      abstractLimit: "250 words minimum",
-      references: "Up to 50",
+      type: "Original Research Articles",
+      description: "Reports of original medical and health sciences research",
+      wordLimit: "3000 words maximum",
+      abstractLimit: "300 words maximum",
+      references: "APA format",
+      figures: "Allow 250 words per table/figure"
     },
     {
-      type: "Review Articles",
-      description: "Comprehensive reviews of current knowledge in specific areas",
-      wordLimit: "6000-8000 words",
-      abstractLimit: "300 words",
-      references: "Up to 100",
+      type: "Review Articles", 
+      description: "Comprehensive reviews of current topics in health sciences",
+      wordLimit: "3500 words maximum",
+      abstractLimit: "300 words maximum", 
+      references: "APA format",
+      figures: "Allow 250 words per table/figure"
     },
     {
-      type: "Case Reports",
-      description: "Unique clinical cases with educational value",
-      wordLimit: "1500-2500 words",
-      abstractLimit: "150 words",
-      references: "Up to 20",
+      type: "Case/Audit Reports",
+      description: "Detailed reports of interesting clinical cases",
+      wordLimit: "800 words maximum",
+      abstractLimit: "300 words maximum",
+      references: "APA format", 
+      figures: "Allow 250 words per table/figure"
     },
     {
-      type: "Short Communications",
-      description: "Brief reports of preliminary findings or novel techniques",
-      wordLimit: "1500-2000 words",
-      abstractLimit: "150 words",
-      references: "Up to 15",
-    },
+      type: "Letters",
+      description: "Brief communications to the editor",
+      wordLimit: "As appropriate",
+      abstractLimit: "Not required",
+      references: "APA format",
+      figures: "Minimal"
+    }
   ]
 
   const submissionSteps = [
@@ -102,8 +106,18 @@ export default function SubmissionGuidelinesPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">Submission Guidelines</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Comprehensive guidelines for authors submitting to AJRS. Please read carefully before submission.
+            African Medical and Health Sciences Journal (AMHSJ) submission guidelines. Please read carefully before submission.
           </p>
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-lg font-semibold text-blue-800 mb-2">
+              Submit manuscripts to: <span className="text-blue-600">editor@amhsjournal.org</span>
+            </p>
+            <div className="text-sm text-blue-700 space-y-1">
+              <p>• Peer-review timeframe: <strong>14 days</strong></p>
+              <p>• Publication timeline: <strong>4-6 weeks after submission</strong></p>
+              <p>• ISSN: Print 2672-4588 | Online 2672-4596</p>
+            </div>
+          </div>
         </div>
 
         {/* Rejection Warning */}
@@ -154,7 +168,7 @@ export default function SubmissionGuidelinesPage() {
         <Alert className="mb-8 border-indigo-200 bg-indigo-50">
           <AlertCircle className="h-4 w-4 text-indigo-600" />
           <AlertDescription className="text-indigo-800">
-            <strong>Quick Start:</strong> New to AJRS? Download our{" "}
+            <strong>Quick Start:</strong> New to AMHSJ? Download our{" "}
             <Button 
               variant="link" 
               className="p-0 h-auto text-indigo-600 underline"
@@ -170,7 +184,7 @@ export default function SubmissionGuidelinesPage() {
             >
               Manuscript Template
             </Button>{" "}
-            to get started quickly.
+            to get started quickly. All submissions must not have been published previously in any printed or electronic media.
           </AlertDescription>
         </Alert>
 
@@ -178,7 +192,7 @@ export default function SubmissionGuidelinesPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-2xl">Article Types</CardTitle>
-            <CardDescription>AJRS accepts the following types of submissions</CardDescription>
+            <CardDescription>AMHSJ accepts the following types of submissions. All papers will be peer-reviewed by at least three independent referees.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">
@@ -199,9 +213,19 @@ export default function SubmissionGuidelinesPage() {
                       <span className="text-gray-500">References:</span>
                       <span className="font-medium">{article.references}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Figures:</span>
+                      <span className="font-medium">{article.figures}</span>
+                    </div>
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <h4 className="font-semibold text-amber-800 mb-2">Important Note:</h4>
+              <p className="text-sm text-amber-700">
+                Allow 250 words for each table, figure or group of eight references when calculating total word count.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -252,15 +276,11 @@ export default function SubmissionGuidelinesPage() {
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Double-spaced, 12-point Times New Roman font
+                    Font: Times New Roman, size 12, double-spaced
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    1-inch margins on all sides
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Line numbers throughout the manuscript
+                    Single column format using Microsoft Word
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
@@ -268,32 +288,36 @@ export default function SubmissionGuidelinesPage() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    References in Vancouver style
+                    Word count provided (excluding references, tables, legends)
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    References in APA format
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">File Requirements</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Title Page Requirements</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Main manuscript: DOC or DOCX only
+                    Full title of the article
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Figures: TIFF, EPS, or high-res JPEG
+                    Names and up to 2 degrees of all authors
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Tables: Editable format (Word/Excel)
+                    Department(s) and institution(s)
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Maximum file size: 50MB per file
+                    Five keywords
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    Supplementary materials: Any format
+                    Corresponding author name, email and postal address
                   </li>
                 </ul>
               </div>
@@ -304,28 +328,23 @@ export default function SubmissionGuidelinesPage() {
         {/* Manuscript Structure */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">Manuscript Structure</CardTitle>
-            <CardDescription>Required sections for original research articles</CardDescription>
+            <CardTitle className="text-2xl">Abstract Structure</CardTitle>
+            <CardDescription>Required structure for abstracts (maximum 300 words)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
                 {
-                  section: "Title Page",
-                  description: "Title, authors, affiliations, corresponding author details, word count",
+                  section: "Background",
+                  description: "Study rationale, context, and what was previously known",
                 },
                 {
-                  section: "Abstract",
-                  description: "Structured abstract with Background, Methods, Results, Conclusions",
+                  section: "Objectives",
+                  description: "Clear statement of study aims and research questions",
                 },
-                { section: "Keywords", description: "3-8 keywords using MeSH terms where possible" },
-                { section: "Introduction", description: "Background, rationale, and objectives" },
-                { section: "Methods", description: "Study design, participants, procedures, statistical analysis" },
-                { section: "Results", description: "Main findings with appropriate statistics" },
-                { section: "Discussion", description: "Interpretation, limitations, implications" },
-                { section: "Conclusions", description: "Main conclusions and clinical relevance" },
-                { section: "References", description: "Vancouver style, numbered consecutively" },
-                { section: "Figures & Tables", description: "High-quality figures and properly formatted tables" },
+                { section: "Methods", description: "Study design, participants, procedures, and analytical methods" },
+                { section: "Results", description: "Main findings with key data and statistical significance" },
+                { section: "Conclusion", description: "Principal conclusions and their clinical/scientific implications" }
               ].map((item, index) => (
                 <div key={index} className="flex items-start p-4 bg-gray-50 rounded-lg">
                   <div className="bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-4 mt-1">
@@ -338,87 +357,157 @@ export default function SubmissionGuidelinesPage() {
                 </div>
               ))}
             </div>
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">Note for Original Articles:</h4>
+              <p className="text-sm text-blue-700">
+                All original article contributions should contain a structured abstract not exceeding 300 words following the Background, Objectives, Methods, Results, and Conclusion format.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Ethical Guidelines */}
+        {/* Covering Letter & Submission */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">Ethical Guidelines</CardTitle>
+            <CardTitle className="text-2xl">Covering Letter & Submission Requirements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Covering Letter</h3>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Must identify the corresponding author</li>
+                  <li>• Must be signed by all co-authors</li>
+                  <li>• Only those who have contributed significantly should be included as authors</li>
+                  <li>• Corresponding author should explain any authors unable to sign</li>
+                  <li>• All authors must sign declaration and copyright form when manuscript is accepted</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Submission Process</h3>
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                  <h4 className="font-semibold text-blue-800 mb-2">Email Submission</h4>
+                  <p className="text-blue-700 text-lg font-semibold mb-2">editor@amhsjournal.org</p>
+                  <div className="text-sm text-blue-600 space-y-1">
+                    <p>• Peer-review timeframe: <strong>14 days</strong></p>
+                    <p>• Manuscripts are anonymized including peer-reviewer comments</p>
+                    <p>• Publication target: <strong>4-6 weeks after submission</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Peer Review Criteria */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl">Peer Review Criteria</CardTitle>
+            <CardDescription>Criteria used by reviewers to evaluate manuscripts</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Human Studies</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Structure & Content</h3>
                 <ul className="space-y-2 text-gray-700 text-sm">
-                  <li>• IRB/Ethics committee approval required</li>
-                  <li>• Informed consent from all participants</li>
-                  <li>• Declaration of Helsinki compliance</li>
-                  <li>• Patient privacy and confidentiality</li>
+                  <li>• Does the title reflect the contents of the article?</li>
+                  <li>• Does abstract reflect all study aspects (background, objectives, methods, results, conclusions)?</li>
+                  <li>• Is study rationale adequately described?</li>
+                  <li>• Are objectives clearly stated and defined?</li>
+                  <li>• Do results justify the conclusions?</li>
+                  <li>• Is the paper clearly written with logical flow?</li>
                 </ul>
               </div>
+              
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Animal Studies</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Methodology & Analysis</h3>
                 <ul className="space-y-2 text-gray-700 text-sm">
-                  <li>• IACUC approval required</li>
-                  <li>• ARRIVE guidelines compliance</li>
-                  <li>• Minimize animal use and suffering</li>
-                  <li>• Appropriate anesthesia and euthanasia</li>
+                  <li>• Is study design appropriate for objectives?</li>
+                  <li>• Is sample size appropriate and justified?</li>
+                  <li>• Are data collection methods well described?</li>
+                  <li>• Are bias minimization techniques documented?</li>
+                  <li>• Are data analysis methods appropriate?</li>
+                  <li>• Is statistical significance well documented?</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Discussion & References</h3>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Are key findings clearly stated?</li>
+                  <li>• Are differences with other studies discussed?</li>
+                  <li>• Are implications clearly explained?</li>
+                  <li>• Are references appropriate, relevant and up-to-date?</li>
+                  <li>• Do references follow APA style correctly?</li>
+                  <li>• Any obvious important references missing?</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Ethics & Quality</h3>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Are ethical considerations adequately described?</li>
+                  <li>• Is ethics approval documented (for human studies)?</li>
+                  <li>• Are results credible and findings presented logically?</li>
+                  <li>• Are there grammar/spelling/language problems?</li>
+                  <li>• Is interpretation warranted by the data?</li>
+                  <li>• Are conflicts of interest declared?</li>
                 </ul>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Review Process */}
+        {/* Authorship & Publication */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">Review Process</CardTitle>
+            <CardTitle className="text-2xl">Authorship & Publication Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <Clock className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">Initial Review</h3>
-                <p className="text-sm text-gray-600">Editorial screening within 5-7 days</p>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">ICMJE Authorship Criteria</h3>
+                <p className="text-sm text-gray-600 mb-3">All authors must meet ALL four criteria:</p>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Substantial contributions to conception/design OR data acquisition/analysis/interpretation</li>
+                  <li>• Drafting the work OR revising it critically for important intellectual content</li>
+                  <li>• Final approval of the version to be published</li>
+                  <li>• Agreement to be accountable for all aspects of the work</li>
+                </ul>
+                
+                <h4 className="font-semibold text-gray-800 mt-6 mb-2">Conflicts of Interest</h4>
+                <p className="text-sm text-gray-600">Financial conflicts of interest must be declared.</p>
+                
+                <h4 className="font-semibold text-gray-800 mt-4 mb-2">ORCID Support</h4>
+                <p className="text-sm text-gray-600">AMHSJ supports ORCID. Authors encouraged to use ORCID iDs during peer review.</p>
               </div>
-              <div className="text-center">
-                <Users className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">Peer Review</h3>
-                <p className="text-sm text-gray-600">Double-blind review by 2-3 experts</p>
-              </div>
-              <div className="text-center">
-                <Award className="h-12 w-12 text-purple-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">Final Decision</h3>
-                <p className="text-sm text-gray-600">Editorial decision within 8-12 weeks</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Publication Details</h3>
+                
+                <div className="mb-6">
+                  <h4 className="font-semibold text-gray-800 mb-2">Open Access Policy</h4>
+                  <p className="text-sm text-gray-600 mb-2">
+                    AMHSJ provides free, unrestricted online access. Published under Creative Commons Attribution-NonCommercial-NoDerivs (CC BY-NC-ND) license.
+                  </p>
+                </div>
+                
+                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+                  <h4 className="font-semibold text-yellow-800 mb-2">Publication Fee</h4>
+                  <p className="text-yellow-700 text-sm mb-2">
+                    <strong>US $100.00</strong> payable upon acceptance to Medical & Dental Consultants Association of Nigeria (MDCAN), NDUTH Chapter.
+                  </p>
+                </div>
 
-        {/* Downloads */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl">Downloads & Resources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { name: "Author Checklist", icon: CheckCircle },
-                { name: "Manuscript Template", icon: FileText },
-                { name: "Figure Guidelines", icon: BookOpen },
-                { name: "Reference Style Guide", icon: Download },
-              ].map((resource, index) => (
-                <Button 
-                  key={index} 
-                  variant="outline" 
-                  className="h-auto p-4 flex flex-col items-center hover:bg-indigo-50"
-                  onClick={() => handleDownloadResource(resource.name)}
-                >
-                  <resource.icon className="h-8 w-8 mb-2 text-indigo-600" />
-                  <span className="text-sm">{resource.name}</span>
-                </Button>
-              ))}
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">Copyright & Citation</h4>
+                  <ul className="space-y-1 text-sm text-gray-600">
+                    <li>• AMHSJ retains copyright of all published work</li>
+                    <li>• Citation format: Nig Del Med J 2017; 2: 1-5</li>
+                    <li>• ISSN: Print 2672-4588 | Online 2672-4596</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -426,20 +515,52 @@ export default function SubmissionGuidelinesPage() {
         {/* Contact */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Need Help?</CardTitle>
+            <CardTitle className="text-2xl">Editorial Contact & Important Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center">
-              <p className="text-gray-600 mb-4">
-                Have questions about the submission process? Our editorial team is here to help.
-              </p>
-              <Button 
-                className="bg-indigo-600 hover:bg-indigo-700"
-                onClick={handleContactEditorial}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Contact Editorial Office
-              </Button>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Manuscript Submission</h3>
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-4">
+                  <p className="text-blue-700 font-semibold text-lg mb-2">editor@amhsjournal.org</p>
+                  <div className="text-sm text-blue-600 space-y-1">
+                    <p>• Peer-review: 14 days</p>
+                    <p>• Publication: 4-6 weeks after submission</p>
+                    <p>• Manuscripts anonymized including reviewer comments</p>
+                  </div>
+                </div>
+                
+                <h4 className="font-semibold text-gray-800 mb-2">Report Issues</h4>
+                <p className="text-sm text-gray-600">
+                  Plagiarism & Research Fraud should be reported to the Editor-in-Chief.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Journal Information</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <strong>ISSN:</strong>
+                    <p className="text-gray-600">Print: 2672-4588 | Online: 2672-4596</p>
+                  </div>
+                  <div>
+                    <strong>License:</strong>
+                    <p className="text-gray-600">CC BY-NC-ND (Open Access)</p>
+                  </div>
+                  <div>
+                    <strong>Reference Style:</strong>
+                    <p className="text-gray-600">APA format</p>
+                  </div>
+                  <div>
+                    <strong>Citation Example:</strong>
+                    <p className="text-gray-600">Nig Del Med J 2017; 2: 1-5</p>
+                  </div>
+                  <div>
+                    <strong>Publication Fee:</strong>
+                    <p className="text-gray-600">US $100.00 upon acceptance</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

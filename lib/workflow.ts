@@ -93,11 +93,37 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowStatus, WorkflowStatus[]> = {
   technical_check: ["under_review", "rejected", "revision_requested"],
   under_review: ["revision_requested", "accepted", "rejected"],
   revision_requested: ["revision_submitted", "withdrawn"],
-  revision_submitted: ["technical_check", "accepted", "rejected"],
+  revision_submitted: ["technical_check", "under_review", "accepted", "rejected"],
   accepted: ["published"],
-  rejected: [],
+  rejected: ["withdrawn"], // Allow withdrawal after rejection for appeals
   published: [],
   withdrawn: []
+}
+
+/**
+ * Enhanced workflow state validation with proper error handling
+ */
+export function validateWorkflowTransition(
+  currentStatus: WorkflowStatus, 
+  newStatus: WorkflowStatus
+): { valid: boolean; error?: string } {
+  if (!WORKFLOW_TRANSITIONS[currentStatus]) {
+    return {
+      valid: false,
+      error: `Invalid current status: ${currentStatus}`
+    }
+  }
+
+  const allowedTransitions = WORKFLOW_TRANSITIONS[currentStatus]
+  
+  if (!allowedTransitions.includes(newStatus)) {
+    return {
+      valid: false,
+      error: `Invalid transition from ${currentStatus} to ${newStatus}. Allowed: ${allowedTransitions.join(', ')}`
+    }
+  }
+
+  return { valid: true }
 }
 
 // Reviewer assignment criteria
@@ -627,13 +653,45 @@ export class ReviewerAssignmentService {
   }
 
   /**
-   * Original assign reviewers function (kept for backward compatibility)
+   * Assign reviewers to an article with optional recommended reviewers integration
    */
   async assignReviewers(
     articleId: string, 
     reviewerIds: string[], 
     editorId: string,
-    deadline: Date = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000) // 21 days default
+    deadline: Date = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days default
+    useRecommendations: boolean = true
+  ): Promise<{ success: boolean; assignedReviewers: string[]; errors: string[] }> {
+    
+    // If we should use recommendations and no specific reviewers provided, 
+    // use the enhanced method
+    if (useRecommendations && (!reviewerIds || reviewerIds.length === 0)) {
+      const result = await this.assignReviewersWithRecommendations(
+        articleId, 
+        editorId, 
+        3, // target reviewer count
+        deadline
+      )
+      
+      return {
+        success: result.success,
+        assignedReviewers: result.assignedReviewers,
+        errors: result.errors
+      }
+    }
+
+    // Otherwise use direct assignment
+    return this.assignSpecificReviewers(articleId, reviewerIds, editorId, deadline)
+  }
+
+  /**
+   * Direct assignment of specific reviewers (legacy method renamed for clarity)
+   */
+  private async assignSpecificReviewers(
+    articleId: string, 
+    reviewerIds: string[], 
+    editorId: string,
+    deadline: Date = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000)
   ): Promise<{ success: boolean; assignedReviewers: string[]; errors: string[] }> {
     const errors: string[] = []
     const assignedReviewers: string[] = []
@@ -1038,13 +1096,12 @@ export class ArticleSubmissionService {
       }
 
       // Validate status transition
-      const currentStatus = submission.status as WorkflowStatus
-      const allowedTransitions = WORKFLOW_TRANSITIONS[currentStatus]
+      const validation = validateWorkflowTransition(currentStatus, newStatus)
       
-      if (!allowedTransitions.includes(newStatus)) {
+      if (!validation.valid) {
         return {
           success: false,
-          message: `Invalid status transition from ${currentStatus} to ${newStatus}`
+          message: validation.error || "Invalid status transition"
         }
       }
 
@@ -1235,23 +1292,42 @@ export class ReviewManagementService {
   private determineArticleStatusFromReviews(recommendations: (string | null)[]): WorkflowStatus {
     const validRecommendations = recommendations.filter(r => r) as string[]
     
-    if (validRecommendations.includes("reject")) {
+    if (validRecommendations.length === 0) {
+      return "technical_check" // No valid recommendations yet
+    }
+    
+    // Count different recommendation types
+    const counts = {
+      reject: validRecommendations.filter(r => r === "reject").length,
+      major_revision: validRecommendations.filter(r => r === "major_revision").length,
+      minor_revision: validRecommendations.filter(r => r === "minor_revision").length,
+      accept: validRecommendations.filter(r => r === "accept").length
+    }
+    
+    // Decision logic based on majority
+    const totalReviews = validRecommendations.length
+    
+    // If any reviewer recommends rejection and it's not unanimous acceptance
+    if (counts.reject > 0 && counts.accept < totalReviews) {
       return "rejected"
     }
     
-    if (validRecommendations.includes("major_revision")) {
+    // If any reviewer recommends major revision
+    if (counts.major_revision > 0) {
       return "revision_requested"
     }
     
-    if (validRecommendations.includes("minor_revision")) {
+    // If any reviewer recommends minor revision
+    if (counts.minor_revision > 0) {
       return "revision_requested"
     }
     
-    if (validRecommendations.every(r => r === "accept")) {
+    // If all reviewers recommend acceptance
+    if (counts.accept === totalReviews) {
       return "accepted"
     }
 
-    return "technical_check" // Default if unclear
+    return "technical_check" // Default fallback
   }
 
   /**

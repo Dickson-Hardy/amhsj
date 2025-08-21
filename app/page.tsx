@@ -120,45 +120,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section - SAMJ Style */}
-      <section className="bg-white border-b-2 border-blue-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <Image
-                src="/logo-amhsj.png"
-                alt="AMHSJ Logo"
-                width={120}
-                height={120}
-                className="object-contain"
-                priority
-              />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-serif font-bold text-blue-900 mb-6 leading-tight">
-              African Medical and Health Sciences Journal
-            </h1>
-            <div className="w-24 h-1 bg-blue-800 mx-auto mb-6"></div>
-            <p className="text-lg md:text-xl text-gray-700 max-w-4xl mx-auto mb-8 leading-relaxed">
-              A premier peer-reviewed, open-access journal dedicated to advancing medical and health sciences research 
-              across Africa. Publishing cutting-edge research, clinical studies, and innovative healthcare solutions 
-              that address the unique challenges facing African healthcare systems.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-3"
-                onClick={handleSubmitManuscript}
-              >
-                Submit Manuscript
-              </Button>
-              <Button size="lg" variant="outline" className="border-blue-800 text-blue-800 hover:bg-blue-50 px-8 py-3" asChild>
-                <Link href="/current-issue">Current Issue</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero section removed */}
 
       {/* Main Navigation breadcrumb */}
       <div className="bg-gray-50 border-b">
@@ -198,10 +160,14 @@ export default function HomePage() {
                 About the Journal
               </h2>
               <div className="prose max-w-none text-gray-700 leading-relaxed text-sm">
-                <p className="mb-4">
-                  The Advances in Medicine & Health Sciences Journal (AMHSJ) - published quarterly since 2020 - 
-                  is a peer-reviewed, open access medical journal publishing leading research impacting clinical 
-                  care in Nigeria and beyond.
+                <p className="mb-3">
+                  The Advances in Medicine & Health Sciences Journal (AMHSJ) of Bayelsa Medical University publishes quarterly, disseminating peer‑reviewed research from the rural Niger Delta and worldwide across all medical and health science specialties.
+                </p>
+                <p className="mb-3">
+                  All articles are open access under CC BY-NC-ND 3.0, immediately free to read and download.
+                </p>
+                <p className="mb-2">
+                  <a href="/about" className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">Read full scope <span aria-hidden>→</span></a>
                 </p>
               </div>
             </section>

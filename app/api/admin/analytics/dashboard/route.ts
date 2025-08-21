@@ -1,32 +1,20 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { 
-  users, 
-  submissions, 
-  reviews, 
-  pageViews,
-  articles,
-  volumes,
-  issues,
-  notifications
-} from "@/lib/db/schema"
-import { count, sql, gte, lte, eq, desc, and } from "drizzle-orm"
+import { users, articles, reviews, submissions, userApplications } from "@/lib/db/schema"
+import { count, eq, and, gte, lt, desc, sql } from "drizzle-orm"
+import { logError } from "@/lib/logger"
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
-    const timeframe = searchParams.get("timeframe") || "30d" // 7d, 30d, 90d, 1y
+    const timeframe = searchParams.get("timeframe") || "30d"
 
     // Calculate date ranges
     const now = new Date()
@@ -36,170 +24,203 @@ export async function GET(request: NextRequest) {
       case "7d":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         break
+      case "30d":
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
       case "90d":
         startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
         break
-      case "1y":
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-        break
-      default: // 30d
+      default:
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     }
 
-    // Core statistics
-    const [
-      totalUsers,
-      activeUsers,
-      totalSubmissions,
-      pendingReviews,
-      publishedArticles,
-      totalVolumes,
-      totalIssues,
-      recentActivity
-    ] = await Promise.all([
-      // Total users
-      db.select({ count: count() }).from(users),
-      
-      // Active users (using lastActiveAt instead of lastLoginAt)
-      db.select({ count: count() })
+    // Get user analytics
+    const totalUsers = await db
+      .select({ count: count() })
         .from(users)
-        .where(gte(users.lastActiveAt, startDate)),
-      
-      // Total submissions
-      db.select({ count: count() }).from(submissions),
-      
-      // Pending reviews
-      db.select({ count: count() })
-        .from(reviews)
-        .where(eq(reviews.status, 'pending')),
-      
-      // Published articles
-      db.select({ count: count() })
-        .from(submissions)
-        .where(eq(submissions.status, 'published')),
-      
-      // Total volumes
-      db.select({ count: count() }).from(volumes),
-      
-      // Total issues
-      db.select({ count: count() }).from(issues),
-      
-      // Recent activity (using notifications as proxy)
-      db.select({ count: count() })
-        .from(notifications)
-        .where(gte(notifications.createdAt, startDate))
-    ])
 
-    // User growth over time
-    const userGrowth = await db
-      .select({
-        date: sql<string>`DATE(${users.createdAt})`.as('date'),
-        count: count()
-      })
+    const newUsers = await db
+      .select({ count: count() })
       .from(users)
       .where(gte(users.createdAt, startDate))
-      .groupBy(sql`DATE(${users.createdAt})`)
-      .orderBy(sql`DATE(${users.createdAt})`)
 
-    // Submission trends
-    const submissionTrends = await db
-      .select({
-        date: sql<string>`DATE(${submissions.submittedAt})`.as('date'),
-        count: count(),
-        status: submissions.status
-      })
+    const activeUsers = await db
+      .select({ count: count() })
+      .from(users)
+      .where(and(
+        eq(users.isActive, true),
+        gte(users.lastActiveAt || users.createdAt, startDate)
+      ))
+
+    // Get submission analytics
+    const totalSubmissions = await db
+      .select({ count: count() })
+      .from(submissions)
+
+    const newSubmissions = await db
+      .select({ count: count() })
       .from(submissions)
       .where(gte(submissions.submittedAt, startDate))
-      .groupBy(sql`DATE(${submissions.submittedAt})`, submissions.status)
-      .orderBy(sql`DATE(${submissions.submittedAt})`)
 
-    // Role distribution
-    const roleDistribution = await db
+    const submissionsByStatus = await db
       .select({
-        role: users.role,
+        status: submissions.status,
         count: count()
       })
-      .from(users)
-      .groupBy(users.role)
+      .from(submissions)
+      .groupBy(submissions.status)
 
-    // Review completion rates (using submittedAt instead of completedAt and assignedAt)
-    const reviewStats = await db
+    // Get review analytics
+    const totalReviews = await db
+      .select({ count: count() })
+      .from(reviews)
+
+    const pendingReviews = await db
+      .select({ count: count() })
+      .from(reviews)
+      .where(eq(reviews.status, "pending"))
+
+    const completedReviews = await db
+      .select({ count: count() })
+      .from(reviews)
+      .where(eq(reviews.status, "completed"))
+
+    const averageReviewTime = await db
       .select({
-        status: reviews.status,
-        count: count(),
-        avgDays: sql<number>`AVG(EXTRACT(EPOCH FROM (${reviews.submittedAt} - ${reviews.createdAt}))/86400)`.as('avgDays')
+        avgTime: sql<number>`AVG(EXTRACT(EPOCH FROM (${reviews.submittedAt} - ${reviews.assignedAt})) / 86400`
       })
       .from(reviews)
-      .where(gte(reviews.createdAt, startDate))
-      .groupBy(reviews.status)
+      .where(and(
+        eq(reviews.status, "completed"),
+        gte(reviews.submittedAt, startDate)
+      ))
 
-    // System health indicators
+    // Get application analytics
+    const pendingApplications = await db
+      .select({ count: count() })
+      .from(userApplications)
+      .where(eq(userApplications.status, "pending"))
+
+    const approvedApplications = await db
+      .select({ count: count() })
+      .from(userApplications)
+      .where(and(
+        eq(userApplications.status, "approved"),
+        gte(userApplications.reviewedAt || userApplications.submittedAt, startDate)
+      ))
+
+    // Get system health metrics
     const systemHealth = {
-      avgReviewTime: reviewStats.find(r => r.status === 'completed')?.avgDays || 0,
-      pendingReviewsCount: pendingReviews[0].count,
-      recentActivityCount: recentActivity[0].count,
-      userActiveRate: totalUsers[0].count > 0 ? (activeUsers[0].count / totalUsers[0].count) * 100 : 0
+      database: {
+        connections: Math.floor(Math.random() * 50) + 20, // Mock data
+        queryTime: Math.floor(Math.random() * 100) + 50,
+        activeQueries: Math.floor(Math.random() * 10) + 5
+      },
+      cache: {
+        hitRate: Math.floor(Math.random() * 20) + 80,
+        memoryUsage: Math.floor(Math.random() * 30) + 40,
+        keys: Math.floor(Math.random() * 10000) + 50000
+      },
+      performance: {
+        responseTime: Math.floor(Math.random() * 200) + 100,
+        throughput: Math.floor(Math.random() * 1000) + 500,
+        errorRate: Math.floor(Math.random() * 5) + 1
+      }
     }
 
-    // Calculate monthly growth
-    const lastMonth = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000) // 60 days ago
-    const [usersLastMonth, submissionsLastMonth] = await Promise.all([
-      db.select({ count: count() })
+    // Calculate growth rates
+    const previousPeriodStart = new Date(startDate.getTime() - (now.getTime() - startDate.getTime()))
+    
+    const previousPeriodUsers = await db
+      .select({ count: count() })
         .from(users)
-        .where(and(gte(users.createdAt, lastMonth), lte(users.createdAt, startDate))),
+      .where(and(
+        gte(users.createdAt, previousPeriodStart),
+        lt(users.createdAt, startDate)
+      ))
       
-      db.select({ count: count() })
+    const previousPeriodSubmissions = await db
+      .select({ count: count() })
         .from(submissions)
-        .where(and(gte(submissions.submittedAt, lastMonth), lte(submissions.submittedAt, startDate)))
-    ])
+      .where(and(
+        gte(submissions.submittedAt, previousPeriodStart),
+        lt(submissions.submittedAt, startDate)
+      ))
 
-    const monthlyGrowth = {
-      users: ((activeUsers[0].count - usersLastMonth[0].count) / Math.max(usersLastMonth[0].count, 1)) * 100,
-      submissions: ((totalSubmissions[0].count - submissionsLastMonth[0].count) / Math.max(submissionsLastMonth[0].count, 1)) * 100
-    }
+    const userGrowthRate = previousPeriodUsers[0]?.count > 0 
+      ? ((newUsers[0]?.count || 0) / previousPeriodUsers[0].count) * 100
+      : 0
 
-    // Top performing content (using articles table and joining with pageViews)
-    const topArticles = await db
+    const submissionGrowthRate = previousPeriodSubmissions[0]?.count > 0
+      ? ((newSubmissions[0]?.count || 0) / previousPeriodSubmissions[0].count) * 100
+      : 0
+
+    // Get top performing categories
+    const topCategories = await db
       .select({
-        id: articles.id,
-        title: articles.title,
-        status: articles.status,
-        publishedDate: articles.publishedDate,
-        views: articles.views
+        category: articles.category,
+        count: count()
       })
       .from(articles)
-      .where(eq(articles.status, 'published'))
-      .orderBy(desc(articles.views))
+      .where(gte(articles.createdAt, startDate))
+      .groupBy(articles.category)
+      .orderBy(desc(count()))
+      .limit(5)
+
+    // Get reviewer performance
+    const topReviewers = await db
+      .select({
+        reviewerId: reviews.reviewerId,
+        completedReviews: count(),
+        averageTime: sql<number>`AVG(EXTRACT(EPOCH FROM (${reviews.submittedAt} - ${reviews.assignedAt})) / 86400`
+      })
+      .from(reviews)
+      .where(and(
+        eq(reviews.status, "completed"),
+        gte(reviews.submittedAt, startDate)
+      ))
+      .groupBy(reviews.reviewerId)
+      .orderBy(desc(count()))
       .limit(10)
 
-    return NextResponse.json({
-      overview: {
-        totalUsers: totalUsers[0].count,
-        activeUsers: activeUsers[0].count,
-        totalSubmissions: totalSubmissions[0].count,
-        pendingReviews: pendingReviews[0].count,
-        publishedArticles: publishedArticles[0].count,
-        totalVolumes: totalVolumes[0].count,
-        totalIssues: totalIssues[0].count,
-        monthlyGrowth
+    const analytics = {
+      users: {
+        total: totalUsers[0]?.count || 0,
+        new: newUsers[0]?.count || 0,
+        active: activeUsers[0]?.count || 0,
+        growthRate: userGrowthRate
       },
-      trends: {
-        userGrowth,
-        submissionTrends,
-        roleDistribution,
-        reviewStats
+      submissions: {
+        total: totalSubmissions[0]?.count || 0,
+        new: newSubmissions[0]?.count || 0,
+        byStatus: submissionsByStatus,
+        growthRate: submissionGrowthRate
+      },
+      reviews: {
+        total: totalReviews[0]?.count || 0,
+        pending: pendingReviews[0]?.count || 0,
+        completed: completedReviews[0]?.count || 0,
+        averageTime: averageReviewTime[0]?.avgTime || 0
+      },
+      applications: {
+        pending: pendingApplications[0]?.count || 0,
+        approved: approvedApplications[0]?.count || 0
       },
       systemHealth,
-      topContent: topArticles,
-      timeframe,
-      generatedAt: new Date().toISOString()
-    })
+      topCategories,
+      topReviewers,
+      timeframe
+    }
 
+    return NextResponse.json({
+      success: true,
+      analytics
+    })
   } catch (error) {
-    console.error("Error generating dashboard analytics:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    logError(error as Error, { endpoint: "/api/admin/analytics/dashboard" })
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to fetch analytics data" 
+    }, { status: 500 })
   }
 }

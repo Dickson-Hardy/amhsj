@@ -235,12 +235,13 @@ export default function RevisionSubmissionForm({
         throw new Error(result.message || 'Failed to submit revision')
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Revision submission error:', error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit revision. Please try again."
       toast({
         variant: "destructive",
         title: "Submission Failed",
-        description: error.message || "Failed to submit revision. Please try again."
+        description: errorMessage
       })
       setCurrentStep(3)
     } finally {

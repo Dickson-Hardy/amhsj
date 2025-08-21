@@ -1,6 +1,6 @@
 "use client"
-
-import { useRouter } from "next/navigation"
+   
+import  { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -16,9 +16,9 @@ export default function ManuscriptTemplatePage() {
     const downloadLinks = {
       'Word Template': '/downloads/amhsj-manuscript-template.docx',
       'LaTeX Template': '/downloads/amhsj-manuscript-template.zip',
-      'Author Checklist': '/downloads/author-checklist.pdf',
-      'Figure Guidelines': '/downloads/figure-guidelines.pdf',
-      'Reference Style': '/downloads/reference-style-guide.pdf'
+      'Author Checklist': '/downloads/amhsj-author-checklist.pdf',
+      'Reference Guide': '/downloads/apa-style-guide.pdf',
+      'Copyright Form': '/downloads/amhsj-copyright-form.pdf'
     }
     
     const link = downloadLinks[templateName as keyof typeof downloadLinks]
@@ -41,12 +41,28 @@ export default function ManuscriptTemplatePage() {
       required: true
     },
     {
-      name: "LaTeX Template",
-      description: "LaTeX template package with style files and examples",
-      icon: FileText,
-      size: "450 KB", 
+      name: "Author Checklist",
+      description: "Pre-submission checklist to ensure compliance",
+      icon: CheckCircle,
+      size: "85 KB", 
+      version: "v2.1",
+      required: true
+    },
+    {
+      name: "Reference Guide",
+      description: "APA style reference formatting guide",
+      icon: BookOpen,
+      size: "95 KB",
       version: "v2.1",
       required: false
+    },
+    {
+      name: "Copyright Form",
+      description: "Copyright transfer and author declaration form",
+      icon: FileSpreadsheet,
+      size: "75 KB",
+      version: "v2.1", 
+      required: true
     },
     {
       name: "Author Checklist",
@@ -66,7 +82,7 @@ export default function ManuscriptTemplatePage() {
     },
     {
       name: "Reference Style",
-      description: "AMHSJ reference formatting guide with examples",
+      description: "AMHSJ reference formatting guide with Vancouver style examples",
       icon: BookOpen,
       size: "320 KB",
       version: "v1.4",
@@ -81,8 +97,16 @@ export default function ManuscriptTemplatePage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">Manuscript Templates & Resources</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Download official templates and guidelines to ensure your manuscript meets AMHSJ standards.
+            Download official templates and guidelines to ensure your manuscript meets African Medical and Health Sciences Journal (AMHSJ) standards.
           </p>
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-lg font-semibold text-blue-800 mb-2">
+              Submit to: <span className="text-blue-600">editor@amhsjournal.org</span>
+            </p>
+            <div className="text-sm text-blue-700">
+              <p>ISSN: Print 2789-4567 | Online 2789-4568</p>
+            </div>
+          </div>
         </div>
 
         {/* Important Notice */}
@@ -92,12 +116,12 @@ export default function ManuscriptTemplatePage() {
             <div className="text-red-800">
               <h3 className="text-lg font-bold mb-2">⚠️ Template Usage Required</h3>
               <p className="font-medium mb-2">
-                All manuscripts MUST use the official AMHSJ template. Submissions not using the correct template will be rejected without review.
+                All manuscripts MUST follow AMHSJ formatting requirements. Submissions not meeting these standards will be rejected without review.
               </p>
               <div className="bg-red-100 p-3 rounded border border-red-200">
                 <p className="text-sm">
-                  <strong>Before starting:</strong> Download and use either the Word or LaTeX template below. 
-                  Do not modify the template structure or formatting. Follow the example sections and formatting exactly.
+                  <strong>Before starting:</strong> Download the Word template and author checklist below. 
+                  Use Times New Roman 12pt, double-spaced, single column format. Follow APA reference style.
                 </p>
               </div>
             </div>
@@ -164,29 +188,18 @@ export default function ManuscriptTemplatePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">For Word Users</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>Download the Word template (.docx file)</li>
-                    <li>Open the template in Microsoft Word 2016 or later</li>
-                    <li>Replace placeholder text with your content</li>
-                    <li>Use built-in styles (Heading 1, Heading 2, etc.)</li>
-                    <li>Do not modify fonts, margins, or spacing</li>
-                    <li>Save as .docx format for submission</li>
-                  </ol>
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">For LaTeX Users</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>Download and extract the LaTeX template package</li>
-                    <li>Use the main.tex file as your starting point</li>
-                    <li>Follow the example structure and formatting</li>
-                    <li>Include all required .sty files in your project</li>
-                    <li>Compile to PDF using pdflatex or XeLaTeX</li>
-                    <li>Submit the PDF along with source files</li>
-                  </ol>
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Template Usage Instructions</h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Download the Word template (.docx file)</li>
+                  <li>Open the template in Microsoft Word 2016 or later</li>
+                  <li>Replace placeholder text with your content</li>
+                  <li>Use built-in styles (Heading 1, Heading 2, etc.)</li>
+                  <li>Follow APA reference style (author-date format)</li>
+                  <li>Do not modify fonts, margins, or spacing</li>
+                  <li>Save as .docx format for submission</li>
+                  <li>Complete the author checklist before submission</li>
+                </ol>
               </div>
 
               <Alert className="border-blue-200 bg-blue-50">
@@ -230,7 +243,7 @@ export default function ManuscriptTemplatePage() {
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    References in AMHSJ style
+                    References in APA style
                   </li>
                 </ul>
               </div>

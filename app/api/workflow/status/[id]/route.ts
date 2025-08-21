@@ -18,7 +18,7 @@ const statusUpdateSchema = z.object({
   notes: z.string().optional(),
   assigneeId: z.string().optional(),
   deadline: z.string().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.string()).optional()
 })
 
 export async function PUT(
@@ -147,7 +147,7 @@ export async function GET(
 }
 
 // Helper function to check update permissions
-async function checkUpdatePermission(user: any, submissionId: string, newStatus: string): Promise<boolean> {
+async function checkUpdatePermission(user: { id: string; role: string }, submissionId: string, newStatus: string): Promise<boolean> {
   try {
     // Get submission details
     const [submission] = await db

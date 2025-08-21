@@ -16,6 +16,9 @@ import CommunicationCenter from "@/components/communication-center"
 import { SectionLoading } from "@/components/modern-loading"
 import { handleError, handleApiError } from "@/lib/modern-error-handler"
 import { toast } from "@/hooks/use-toast"
+import { SubmissionActionButtons } from "@/components/submission-action-buttons"
+import { SubmissionFilterBar } from "@/components/submission-filter-bar"
+import { ProfileCompletionAlert } from "@/components/profile-completion-alert"
 import {
   FileText,
   Clock,
@@ -552,37 +555,24 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         {/* Filter Bar */}
-        <div className="flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-200">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-700">Filter:</span>
-          </div>
-          <div className="flex gap-2">
-            {["All", "Technical Check", "Under Review", "Published", "Revision Needed"].map((filter) => {
-              const isActive = (filter === 'All' && activeFilter === 'all') ||
-                             (filter === 'Technical Check' && activeFilter === 'technical_check') ||
-                             (filter === 'Under Review' && activeFilter === 'under_review') ||
-                             (filter === 'Published' && activeFilter === 'published') ||
-                             (filter === 'Revision Needed' && activeFilter === 'revisions')
-              
-              return (
-                <Button 
-                  key={filter} 
-                  variant={isActive ? "default" : "outline"} 
-                  size="sm" 
-                  className="h-8"
-                  onClick={() => handleFilterChange(filter)}
-                >
-                  {filter}
-                </Button>
-              )
-            })}
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <SortDesc className="h-4 w-4 text-slate-400" />
-            <span className="text-sm text-slate-600">Sort by date</span>
-          </div>
-        </div>
+        <SubmissionFilterBar 
+          activeFilter={activeFilter}
+          onFilterChange={(filter) => {
+            const params = new URLSearchParams(searchParams.toString())
+            if (filter === 'all') {
+              params.delete('filter')
+            } else {
+              const filterMap: { [key: string]: string } = {
+                'Technical Check': 'technical_check',
+                'Under Review': 'under_review',
+                'Published': 'published', 
+                'Revision Needed': 'revisions'
+              }
+              params.set('filter', filterMap[filter] || filter.toLowerCase())
+            }
+            router.push(`?${params.toString()}`)
+          }}
+        />
 
         {/* Submissions List */}
         <div className="space-y-4">
@@ -661,41 +651,7 @@ export default function DashboardPage() {
                       <div className="text-sm text-slate-500">
                         Last updated: {new Date(submission.lastUpdate).toLocaleDateString()}
                       </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="hover:bg-indigo-50"
-                          onClick={() => router.push(`/submissions/${submission.id}`)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="hover:bg-blue-50"
-                          onClick={() => router.push(`/submissions/${submission.id}/messages`)}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Messages
-                          {submission.comments > 0 && (
-                            <Badge className="ml-1 bg-blue-500 text-white text-xs">
-                              {submission.comments}
-                            </Badge>
-                          )}
-                        </Button>
-                        {submission.status === "revision_requested" && (
-                          <Button 
-                            size="sm" 
-                            className="bg-orange-500 hover:bg-orange-600 text-white"
-                            onClick={() => router.push(`/submissions/${submission.id}/revise`)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Submit Revision
-                          </Button>
-                        )}
-                      </div>
+                      <SubmissionActionButtons submission={submission} />
                     </div>
                   </CardContent>
                 </Card>
@@ -1190,85 +1146,10 @@ export default function DashboardPage() {
 
           <TabsContent value="overview" className="space-y-6">
             {/* Profile Completion Alert */}
-            {profileCompleteness > 0 && profileCompleteness < 80 && (
-              <Card className="border-l-4 border-l-orange-500 bg-orange-50/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-orange-700">
-                    <User className="h-5 w-5 mr-2" />
-                    Complete Your Author Profile ({profileCompleteness}%)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-orange-800 mb-3">
-                        Your profile is {profileCompleteness}% complete. Complete your profile to improve visibility and enable article submissions.
-                      </p>
-                      <div className="w-full bg-orange-200 rounded-full h-2 mb-4">
-                        <div 
-                          className="bg-orange-600 h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${profileCompleteness}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {!profileData?.affiliation && (
-                          <Badge variant="outline" className="border-orange-300 text-orange-700">
-                            Missing: Affiliation
-                          </Badge>
-                        )}
-                        {(!profileData?.bio || profileData.bio.length < 50) && (
-                          <Badge variant="outline" className="border-orange-300 text-orange-700">
-                            Missing: Biography
-                          </Badge>
-                        )}
-                        {(!profileData?.expertise || profileData.expertise.length === 0) && (
-                          <Badge variant="outline" className="border-orange-300 text-orange-700">
-                            Missing: Expertise
-                          </Badge>
-                        )}
-                        {(!profileData?.specializations || profileData.specializations.length === 0) && (
-                          <Badge variant="outline" className="border-orange-300 text-orange-700">
-                            Missing: Specializations
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => router.push('/dashboard/profile')}
-                    className="bg-orange-600 hover:bg-orange-700"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Complete Profile Now
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Profile Complete Success */}
-            {profileCompleteness >= 80 && (
-              <Card className="border-l-4 border-l-green-500 bg-green-50/30">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-green-800">Profile Complete!</p>
-                      <p className="text-sm text-green-700">
-                        Your profile is {profileCompleteness}% complete. You can now submit articles.
-                      </p>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => router.push('/submit')}
-                      className="ml-auto border-green-300 text-green-700 hover:bg-green-100"
-                    >
-                      Submit Article
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <ProfileCompletionAlert 
+              profileCompleteness={profileCompleteness}
+              profileData={profileData}
+            />
 
             {/* Main Content Grid */}
             <div className="grid md:grid-cols-2 gap-6">

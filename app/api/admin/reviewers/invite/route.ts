@@ -1,128 +1,148 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { users, reviewerProfiles, userApplications } from "@/lib/db/schema"
+import { users, userApplications } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { sendEmail } from "@/lib/email-hybrid"
-import { nanoid } from "nanoid"
+import { logError } from "@/lib/logger"
+import { sendEmail } from "@/lib/email"
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { email, name, affiliation, expertise } = await request.json()
 
-    // Validate input
     if (!email || !name) {
-      return NextResponse.json(
-        { error: "Email and name are required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ 
+        success: false, 
+        error: "Email and name are required" 
+      }, { status: 400 })
     }
 
     // Check if user already exists
     const existingUser = await db
-      .select()
+      .select({ id: users.id, role: users.role })
       .from(users)
       .where(eq(users.email, email))
-      .limit(1)
 
     if (existingUser.length > 0) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 400 }
-      )
-    }
+      if (existingUser[0].role === "reviewer") {
+        return NextResponse.json({ 
+          success: false, 
+          error: "User is already a reviewer" 
+        }, { status: 400 })
+      }
+      
+      // If user exists but isn't a reviewer, update their role
+      await db
+        .update(users)
+        .set({ 
+          role: "reviewer",
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, existingUser[0].id))
 
-    // Create invitation token
-    const invitationToken = nanoid(32)
-    
-    // Create user application record with proper fields
-    const application = await db
-      .insert(userApplications)
-      .values({
-        userId: nanoid(), // Temporary ID until user registers
+      // Create reviewer profile
+      await db.insert(userApplications).values({
+        userId: existingUser[0].id,
         requestedRole: "reviewer",
-        currentRole: "guest",
-        status: "invited",
+        currentRole: existingUser[0].role,
+        status: "approved",
         applicationData: {
-          email,
           name,
-          affiliation: affiliation || "",
-          expertise: expertise || [],
-          invitationToken,
-          invitedBy: session.user.id
+          affiliation,
+          expertise: Array.isArray(expertise) ? expertise : [expertise],
+          invitedBy: session.user.email,
+          invitedAt: new Date().toISOString()
         },
-        reviewedBy: session.user.id
+        reviewedBy: session.user.id,
+        reviewedAt: new Date(),
+        submittedAt: new Date()
       })
-      .returning()
 
-    // Send invitation email
-    const invitationLink = `${process.env.NEXTAUTH_URL}/auth/signup?token=${invitationToken}&type=reviewer`
-    
-    try {
+      // Send invitation email to existing user
       await sendEmail({
         to: email,
-        subject: "Invitation to Join AMHSJ as a Reviewer",
+        subject: "You've been invited to be a reviewer",
         html: `
-          <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-            <h2 style="color: #1e40af;">Invitation to Join AMHSJ Medical Journal</h2>
-            
-            <p>Dear ${name},</p>
-            
-            <p>You have been invited to join the American Medical High School Journal (AMHSJ) as a peer reviewer. We believe your expertise would be valuable to our journal's mission of promoting high-quality medical research.</p>
-            
-            <p><strong>Your invitation details:</strong></p>
-            <ul>
-              <li>Name: ${name}</li>
-              <li>Email: ${email}</li>
-              ${affiliation ? `<li>Affiliation: ${affiliation}</li>` : ''}
-              ${expertise && expertise.length > 0 ? `<li>Areas of Expertise: ${expertise.join(", ")}</li>` : ''}
-            </ul>
-            
-            <p>To accept this invitation and create your reviewer account, please click the link below:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${invitationLink}" style="background-color: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-            </div>
-            
-            <p>This invitation will expire in 7 days. If you have any questions, please contact us at admin@amhsj.com.</p>
-            
-            <p>Best regards,<br>The AMHSJ Editorial Team</p>
-            
-            <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e5e5;">
-            <p style="font-size: 12px; color: #666;">This is an automated email from the American Medical High School Journal. Please do not reply to this email.</p>
-          </div>
+          <h2>Reviewer Invitation</h2>
+          <p>Hello ${name},</p>
+          <p>You have been invited to join our journal as a reviewer. Your account has been updated with reviewer privileges.</p>
+          <p>You can now access the reviewer dashboard and start reviewing manuscripts.</p>
+          <p>Best regards,<br>The Editorial Team</p>
         `
       })
-    } catch (emailError) {
-      console.error("Failed to send invitation email:", emailError)
-      // Continue anyway - admin can manually send invitation
+
+      return NextResponse.json({
+        success: true,
+        message: "Existing user promoted to reviewer and invitation sent"
+      })
     }
 
-    // Log the action
-    console.log(`Admin ${session.user.email} invited reviewer: ${email}`)
+    // Create new user account
+    const newUser = await db.insert(users).values({
+      email,
+      name,
+      role: "reviewer",
+      affiliation,
+      expertise: Array.isArray(expertise) ? expertise : [expertise],
+      isVerified: false,
+      isActive: true,
+      profileCompleteness: 50
+    }).returning()
+
+    if (newUser.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Failed to create user account" 
+      }, { status: 500 })
+    }
+
+    // Create application record
+    await db.insert(userApplications).values({
+      userId: newUser[0].id,
+      requestedRole: "reviewer",
+      currentRole: "author",
+      status: "approved",
+      applicationData: {
+        name,
+        affiliation,
+        expertise: Array.isArray(expertise) ? expertise : [expertise],
+        invitedBy: session.user.email,
+        invitedAt: new Date().toISOString()
+      },
+      reviewedBy: session.user.id,
+      reviewedAt: new Date(),
+      submittedAt: new Date()
+    })
+
+    // Send invitation email
+    await sendEmail({
+      to: email,
+      subject: "You've been invited to be a reviewer",
+      html: `
+        <h2>Reviewer Invitation</h2>
+        <p>Hello ${name},</p>
+        <p>You have been invited to join our journal as a reviewer. A new account has been created for you.</p>
+        <p>Please complete your profile and start reviewing manuscripts.</p>
+        <p>Best regards,<br>The Editorial Team</p>
+      `
+    })
 
     return NextResponse.json({
       success: true,
-      application: application[0],
-      invitationLink,
-      message: `Invitation sent to ${email}`
+      message: "Reviewer invitation sent successfully",
+      user: newUser[0]
     })
-
   } catch (error) {
-    console.error("Error inviting reviewer:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    logError(error as Error, { endpoint: "/api/admin/reviewers/invite" })
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to send reviewer invitation" 
+    }, { status: 500 })
   }
 }

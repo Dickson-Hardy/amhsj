@@ -30,14 +30,50 @@ import {
   Cell,
 } from 'recharts'
 
+interface SystemMetrics {
+  cpu: number
+  memory: number
+  disk: number
+  network: number
+  uptime: number
+}
+
+interface DatabaseMetrics {
+  connections: number
+  queryTime: number
+  activeQueries: number
+  slowQueries: number
+}
+
+interface CacheMetrics {
+  hitRate: number
+  memoryUsage: number
+  keys: number
+  evictions: number
+}
+
+interface SecurityMetrics {
+  failedLogins: number
+  blockedIPs: number
+  suspiciousActivity: number
+  lastIncident?: string
+}
+
+interface PerformanceMetrics {
+  responseTime: number
+  throughput: number
+  errorRate: number
+  activeUsers: number
+}
+
 interface MonitoringData {
   timestamp: number
-  monitoring: any
-  security: any
-  performance: any
-  cache: any
+  monitoring: SystemMetrics
+  security: SecurityMetrics
+  performance: PerformanceMetrics
+  cache: CacheMetrics
   overview: {
-    systemHealth: any
+    systemHealth: SystemMetrics
     activeAlerts: number
     criticalIssues: number
     avgResponseTime: number
@@ -189,7 +225,7 @@ export default function MonitoringDashboard() {
           
           <select
             value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value as any)}
+            onChange={(e) => setTimeframe(e.target.value as '1h' | '24h' | '7d' | '30d')}
             className="px-3 py-2 border rounded-md text-sm"
           >
             <option value="1h">Last Hour</option>
@@ -708,21 +744,21 @@ export default function MonitoringDashboard() {
 }
 
 // Helper functions
-function getSystemStatus(health: any): string {
+function getSystemStatus(health: SystemMetrics): string {
   if (!health) return 'Unknown'
   
-  if (health.memory?.usage > 0.9 || health.cpu?.usage > 0.9) {
+  if (health.memory > 90 || health.cpu > 90) {
     return 'Critical'
   }
   
-  if (health.memory?.usage > 0.8 || health.cpu?.usage > 0.8) {
+  if (health.memory > 80 || health.cpu > 80) {
     return 'Warning'
   }
 
   return 'Healthy'
 }
 
-function getStatusColor(health: any): string {
+function getStatusColor(health: SystemMetrics): string {
   const status = getSystemStatus(health)
   return status === 'Healthy' ? 'bg-green-500' :
          status === 'Warning' ? 'bg-yellow-500' : 'bg-red-500'

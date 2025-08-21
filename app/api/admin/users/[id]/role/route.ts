@@ -1,94 +1,73 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { logAdminAction } from "@/lib/admin-logger"
+import { logError } from "@/lib/logger"
 
 export async function PUT(
-  req: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { role } = await req.json()
-    const userId = params.id
-
-    // Validate role
-    const validRoles = ["admin", "editor", "reviewer", "author", "user"]
-    if (!validRoles.includes(role)) {
-      return NextResponse.json(
-        { error: "Invalid role specified" },
-        { status: 400 }
-      )
+    const { role } = await request.json()
+    
+    if (!role || !["admin", "editor-in-chief", "managing-editor", "section-editor", "editor", "reviewer", "author"].includes(role)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Invalid role. Must be one of: admin, editor-in-chief, managing-editor, section-editor, editor, reviewer, author" 
+      }, { status: 400 })
     }
 
-    // Prevent self-demotion from admin
-    if (session.user.id === userId && session.user.role === "admin" && role !== "admin") {
-      return NextResponse.json(
-        { error: "Cannot remove admin role from yourself" },
-        { status: 400 }
-      )
+    // Prevent admin from changing their own role to non-admin
+    if (params.id === session.user.id && role !== "admin") {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Cannot change your own role from admin" 
+      }, { status: 400 })
     }
 
-    // Get current user data for logging
-    const currentUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1)
-
-    if (currentUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
+    // Prevent changing editor-in-chief role
+    const existingUser = await db.select({ role: users.role }).from(users).where(eq(users.id, params.id))
+    if (existingUser[0]?.role === "editor-in-chief" && role !== "editor-in-chief") {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Cannot change editor-in-chief role" 
+      }, { status: 400 })
     }
 
-    // Update user role
-    const updatedUser = await db
+    const result = await db
       .update(users)
       .set({ 
         role,
         updatedAt: new Date()
       })
-      .where(eq(users.id, userId))
+      .where(eq(users.id, params.id))
       .returning()
 
-    // Log the action
-    await logAdminAction({
-      adminId: session.user.id!,
-      adminEmail: session.user.email!,
-      action: 'UPDATE_USER_ROLE',
-      resourceType: 'user',
-      resourceId: userId,
-      details: `Changed role from ${currentUser[0].role} to ${role} for user ${currentUser[0].email}`,
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
-      userAgent: req.headers.get('user-agent') || 'unknown'
-    })
-
-    console.log(`Admin ${session.user.email} updated user ${userId} role to ${role}`)
+    if (result.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "User not found" 
+      }, { status: 404 })
+    }
 
     return NextResponse.json({
       success: true,
-      user: updatedUser[0],
-      message: `User role updated to ${role}`
+      message: `User role updated to ${role}`,
+      user: result[0]
     })
-
   } catch (error) {
-    console.error("Error updating user role:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    logError(error as Error, { endpoint: `/api/admin/users/${params.id}/role` })
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to update user role" 
+    }, { status: 500 })
   }
 }

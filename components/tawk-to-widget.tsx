@@ -7,6 +7,26 @@ interface TawkToWidgetProps {
   widgetId?: string
 }
 
+// Extend Window interface to include Tawk.to properties
+declare global {
+  interface Window {
+    Tawk_API?: {
+      onLoad?: () => void
+      onChatMaximized?: () => void
+      onChatMinimized?: () => void
+      onChatStarted?: () => void
+      onChatEnded?: () => void
+      maximize?: () => void
+      minimize?: () => void
+      toggle?: () => void
+      showWidget?: () => void
+      hideWidget?: () => void
+      setAttributes?: (attributes: Record<string, string>) => void
+    }
+    Tawk_LoadStart?: Date
+  }
+}
+
 export default function TawkToWidget({ 
   propertyId = process.env.NEXT_PUBLIC_TAWK_TO_PROPERTY_ID || "YOUR_PROPERTY_ID", 
   widgetId = process.env.NEXT_PUBLIC_TAWK_TO_WIDGET_ID || "YOUR_WIDGET_ID" 
@@ -21,10 +41,10 @@ export default function TawkToWidget({
       return
     }
     // Check if Tawk_API already exists to avoid loading multiple times
-    if (typeof window !== 'undefined' && !(window as any).Tawk_API) {
+    if (typeof window !== 'undefined' && !window.Tawk_API) {
       // Initialize Tawk_API
-      ;(window as any).Tawk_API = (window as any).Tawk_API || {}
-      ;(window as any).Tawk_LoadStart = new Date()
+      window.Tawk_API = window.Tawk_API || {}
+      window.Tawk_LoadStart = new Date()
 
       // Create script element
       const script = document.createElement('script')
@@ -40,7 +60,7 @@ export default function TawkToWidget({
       }
 
       // Optional: Configure Tawk.to settings
-      ;(window as any).Tawk_API.onLoad = function() {
+      window.Tawk_API.onLoad = function() {
         console.log('Tawk.to chat widget loaded successfully')
         
         // Optional: Set visitor information if user is logged in
@@ -53,19 +73,19 @@ export default function TawkToWidget({
       }
 
       // Optional: Handle chat events
-      ;(window as any).Tawk_API.onChatMaximized = function() {
+      window.Tawk_API.onChatMaximized = function() {
         console.log('Chat maximized')
       }
 
-      ;(window as any).Tawk_API.onChatMinimized = function() {
+      window.Tawk_API.onChatMinimized = function() {
         console.log('Chat minimized')
       }
 
-      ;(window as any).Tawk_API.onChatStarted = function() {
+      window.Tawk_API.onChatStarted = function() {
         console.log('Chat started')
       }
 
-      ;(window as any).Tawk_API.onChatEnded = function() {
+      window.Tawk_API.onChatEnded = function() {
         console.log('Chat ended')
       }
     }
@@ -83,33 +103,33 @@ export default function TawkToWidget({
 // Helper function to show/hide the chat widget
 export const tawkToHelpers = {
   maximize: () => {
-    if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-      ;(window as any).Tawk_API.maximize()
+    if (typeof window !== 'undefined' && window.Tawk_API) {
+      window.Tawk_API.maximize?.()
     }
   },
   minimize: () => {
-    if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-      ;(window as any).Tawk_API.minimize()
+    if (typeof window !== 'undefined' && window.Tawk_API) {
+      window.Tawk_API.minimize?.()
     }
   },
   toggle: () => {
-    if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-      ;(window as any).Tawk_API.toggle()
+    if (typeof window !== 'undefined' && window.Tawk_API) {
+      window.Tawk_API.toggle?.()
     }
   },
   showWidget: () => {
-    if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-      ;(window as any).Tawk_API.showWidget()
+    if (typeof window !== 'undefined' && window.Tawk_API) {
+      window.Tawk_API.showWidget?.()
     }
   },
   hideWidget: () => {
-    if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-      ;(window as any).Tawk_API.hideWidget()
+    if (typeof window !== 'undefined' && window.Tawk_API) {
+      window.Tawk_API.hideWidget?.()
     }
   },
   setAttributes: (attributes: Record<string, string>) => {
-    if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-      ;(window as any).Tawk_API.setAttributes(attributes)
+    if (typeof window !== 'undefined' && window.Tawk_API) {
+      window.Tawk_API.setAttributes?.(attributes)
     }
   }
 }

@@ -155,12 +155,13 @@ export default function SupportTicketForm({
         throw new Error(result.message || 'Failed to submit ticket')
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Support ticket submission error:', error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit support ticket. Please try again."
       toast({
         variant: "destructive",
         title: "Submission Failed",
-        description: error.message || "Failed to submit support ticket. Please try again."
+        description: errorMessage
       })
     } finally {
       setIsSubmitting(false)
@@ -278,7 +279,7 @@ export default function SupportTicketForm({
             <Label htmlFor="priority">Priority Level</Label>
             <Select 
               value={formData.priority} 
-              onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}
+              onValueChange={(value: string) => setFormData(prev => ({ ...prev, priority: value }))}
             >
               <SelectTrigger>
                 <SelectValue />

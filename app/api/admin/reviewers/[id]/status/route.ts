@@ -1,90 +1,82 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { users, reviewerProfiles } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { logError } from "@/lib/logger"
 
 export async function PUT(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { status } = await request.json()
-    const reviewerId = params.id
-
-    // Validate status and convert to isActive boolean
-    const validStatuses = ["active", "inactive"]
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        { error: "Invalid status specified. Use 'active' or 'inactive'" },
-        { status: 400 }
-      )
+    
+    if (!status || !["active", "inactive", "suspended"].includes(status)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Invalid status. Must be one of: active, inactive, suspended" 
+      }, { status: 400 })
     }
 
-    const isActive = status === "active"
+    // Check if user exists and is a reviewer
+    const existingUser = await db
+      .select({ 
+        role: users.role, 
+        isActive: users.isActive 
+      })
+      .from(users)
+      .where(eq(users.id, params.id))
 
-    // Update reviewer status
-    const updatedUser = await db
+    if (existingUser.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "User not found" 
+      }, { status: 404 })
+    }
+
+    if (existingUser[0].role !== "reviewer") {
+      return NextResponse.json({ 
+        success: false, 
+        error: "User is not a reviewer" 
+      }, { status: 400 })
+    }
+
+    // Update user status
+    const isActive = status === "active"
+    await db
       .update(users)
       .set({ 
         isActive,
         updatedAt: new Date()
       })
-      .where(eq(users.id, reviewerId))
-      .returning()
+      .where(eq(users.id, params.id))
 
-    if (updatedUser.length === 0) {
-      return NextResponse.json(
-        { error: "Reviewer not found" },
-        { status: 404 }
-      )
-    }
-
-    // If activating reviewer, ensure they have a reviewer profile
-    if (isActive) {
-      const existingProfile = await db
-        .select()
-        .from(reviewerProfiles)
-        .where(eq(reviewerProfiles.userId, reviewerId))
-        .limit(1)
-
-      if (existingProfile.length === 0) {
-        await db.insert(reviewerProfiles).values({
-          userId: reviewerId,
-          maxReviewsPerMonth: 3,
-          currentReviewLoad: 0,
-          completedReviews: 0,
-          lateReviews: 0,
-          qualityScore: 0,
-          isActive: true
-        })
-      }
-    }
-
-    // Log the action
-    console.log(`Admin ${session.user.email} updated reviewer ${reviewerId} status to ${status}`)
+    // Update reviewer profile status
+    await db
+      .update(reviewerProfiles)
+      .set({ 
+        isActive: isActive,
+        updatedAt: new Date()
+      })
+      .where(eq(reviewerProfiles.userId, params.id))
 
     return NextResponse.json({
       success: true,
-      user: updatedUser[0],
-      message: `Reviewer status updated to ${status}`
+      message: `Reviewer status updated to ${status}`,
+      status
     })
-
   } catch (error) {
-    console.error("Error updating reviewer status:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    logError(error as Error, { endpoint: `/api/admin/reviewers/${params.id}/status` })
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to update reviewer status" 
+    }, { status: 500 })
   }
 }

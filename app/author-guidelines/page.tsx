@@ -131,7 +131,7 @@ export default function AuthorGuidelinesPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button className="bg-indigo-600 hover:bg-indigo-700">
                   <Mail className="h-4 w-4 mr-2" />
-                  Submit to: editor@ndmjournal.org
+                  Submit to: editor@amhsjournal.org
                 </Button>
                 <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" />
@@ -287,7 +287,7 @@ export default function AuthorGuidelinesPage() {
                 <p className="text-sm text-blue-700 mb-2">
                   <strong>Email your manuscript to the Editor-in-Chief:</strong>
                 </p>
-                <p className="text-lg font-semibold text-blue-800">editor@ndmjournal.org</p>
+                <p className="text-lg font-semibold text-blue-800">editor@amhsjournal.org</p>
                 <div className="mt-3 space-y-1 text-sm text-blue-700">
                   <p>• Peer-review timeframe: <strong>14 days</strong></p>
                   <p>• Manuscripts are anonymized including peer-reviewer comments</p>
@@ -386,7 +386,7 @@ export default function AuthorGuidelinesPage() {
               <div>
                 <h4 className="font-semibold mb-2">ORCID Support</h4>
                 <p className="text-sm text-gray-600">
-                  NDMJ is a supporting member of ORCID. We encourage all authors to use ORCID iDs during peer review.
+                  AMHSJ is a supporting member of ORCID. We encourage all authors to use ORCID iDs during peer review.
                 </p>
               </div>
             </CardContent>
@@ -404,7 +404,7 @@ export default function AuthorGuidelinesPage() {
               <div>
                 <h4 className="font-semibold mb-2">Open Access Policy</h4>
                 <p className="text-sm text-gray-600 mb-2">
-                  NDMJ provides free, unrestricted online access to scholarly articles. All articles are published under Creative Commons Attribution-NonCommercial-NoDerivs (CC BY-NC-ND) license.
+                  AMHSJ provides free, unrestricted online access to scholarly articles. All articles are published under Creative Commons Attribution-NonCommercial-NoDerivs (CC BY-NC-ND) license.
                 </p>
               </div>
               
@@ -423,7 +423,7 @@ export default function AuthorGuidelinesPage() {
               <div>
                 <h4 className="font-semibold mb-2">Copyright & Citation</h4>
                 <ul className="space-y-1 text-sm text-gray-600">
-                  <li>• NDMJ retains copyright of all published work</li>
+                  <li>• AMHSJ retains copyright of all published work</li>
                   <li>• Proper attribution required for all materials used</li>
                   <li>• Citation format: Nig Del Med J 2017; 2: 1-5 (Vancouver style)</li>
                 </ul>
@@ -448,7 +448,7 @@ export default function AuthorGuidelinesPage() {
               Pre-Submission Checklist
             </CardTitle>
             <CardDescription>
-              Please ensure all items are completed before submission to editor@ndmjournal.org
+              Please ensure all items are completed before submission to editor@amhsjournal.org
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -506,7 +506,7 @@ export default function AuthorGuidelinesPage() {
             <CardContent className="space-y-3">
               <div>
                 <strong>Manuscript Submissions:</strong>
-                <p className="text-lg font-semibold text-blue-600">editor@ndmjournal.org</p>
+                <p className="text-lg font-semibold text-blue-600">editor@amhsjournal.org</p>
               </div>
               <div>
                 <strong>Editor-in-Chief:</strong>

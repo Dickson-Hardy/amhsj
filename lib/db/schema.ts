@@ -15,6 +15,18 @@ export interface CoAuthor {
 }
 
 // Interface for reviewer data
+export interface ReviewerProfile {
+  availabilityStatus: string
+  maxReviewsPerMonth: number
+  currentReviewLoad: number
+  averageReviewTime?: number
+  completedReviews: number
+  lateReviews: number
+  qualityScore: number
+  lastReviewDate?: string
+  isActive: boolean
+}
+
 export interface Reviewer {
   id: string
   email: string
@@ -23,7 +35,7 @@ export interface Reviewer {
   maxReviewsPerMonth: number
   qualityScore: number
   availabilityStatus: string
-  reviewerProfile?: any
+  reviewerProfile?: ReviewerProfile
 }
 
 // Interface for article data
@@ -34,7 +46,7 @@ export interface ArticleData {
   content?: string
   category: string
   keywords: string[]
-  recommendedReviewers?: any[]
+  recommendedReviewers?: string[]
 }
 
 // Interface for reviewer criteria

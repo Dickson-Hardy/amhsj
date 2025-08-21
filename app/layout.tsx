@@ -7,6 +7,7 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/toaster"
 import ConditionalLayout from "@/components/conditional-layout"
 import RegisterServiceWorker from "@/app/register-sw"
+import SiteFooter from "@/components/site-footer"
 
 // Initialize backup scheduler in production
 if (typeof window === 'undefined') {
@@ -107,6 +108,7 @@ export default function RootLayout({
           <Providers>
             <ConditionalLayout>
               {children}
+              <SiteFooter />
             </ConditionalLayout>
             <Toaster />
             <RegisterServiceWorker />
