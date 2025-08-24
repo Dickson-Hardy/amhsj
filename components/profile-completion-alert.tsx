@@ -1,9 +1,10 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { User } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface ProfileCompletionAlertProps {
   profileCompleteness: number
@@ -91,13 +92,13 @@ export function ProfileCompletionAlert({
               )}
             </div>
             
-            <Button 
-              onClick={() => router.push('/dashboard/profile')}
-              className="bg-orange-600 hover:bg-orange-700"
+            <Link 
+              href="/dashboard/profile"
+              className={buttonVariants({ className: "bg-orange-600 hover:bg-orange-700" })}
             >
               <User className="h-4 w-4 mr-2" />
               Complete Profile Now
-            </Button>
+            </Link>
           </div>
         </div>
       </CardContent>

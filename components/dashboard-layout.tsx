@@ -64,7 +64,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { id: "submit", label: "Submit Article", icon: Upload, href: "/submit" },
     { id: "reviews", label: "My Reviews", icon: Eye, href: "/dashboard?tab=reviews" },
     { id: "bookmarks", label: "Bookmarks", icon: Bookmark, href: "/dashboard?tab=bookmarks" },
-    { id: "profile", label: "Profile", icon: User, href: "/dashboard?tab=profile" },
+  { id: "profile", label: "Profile", icon: User, href: "/dashboard/profile" },
   ]
 
   const handleNavigation = (href: string) => {

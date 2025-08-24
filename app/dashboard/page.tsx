@@ -188,13 +188,20 @@ export default function DashboardPage() {
   // Handle tab changes by updating URL
   const handleTabChange = (value: string) => {
     console.log('Tab changed to:', value)
+    // Navigate to profile page for profile tab
+    if (value === 'profile') {
+      router.push('/dashboard/profile')
+      return
+    }
     const params = new URLSearchParams(searchParams.toString())
     if (value === 'overview') {
       params.delete('tab')
     } else {
       params.set('tab', value)
     }
-    const newUrl = params.toString() ? `?${params.toString()}` : '/dashboard'
+  // Build full path for query navigation
+  const path = '/dashboard'
+  const newUrl = params.toString() ? `${path}?${params.toString()}` : path
     console.log('Navigating to:', newUrl)
     router.push(newUrl)
   }
@@ -1141,7 +1148,13 @@ export default function DashboardPage() {
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+            {/* Navigate to profile page on click */}
+            <TabsTrigger
+              value="profile"
+              onClick={() => router.push('/dashboard/profile')}
+            >
+              Profile
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

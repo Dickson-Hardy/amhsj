@@ -26,6 +26,10 @@ export default withAuth(
       // Dashboard route redirects for old URLs
       if (req.nextUrl.pathname.startsWith("/dashboard/")) {
         const oldPath = req.nextUrl.pathname
+        // Allow new profile page without redirection
+        if (oldPath === "/dashboard/profile") {
+          return NextResponse.next()
+        }
         let redirectPath = "/dashboard"
         
         // Map old dashboard routes to new tab-based navigation
@@ -51,7 +55,7 @@ export default withAuth(
           redirectPath = "/dashboard?tab=overview"
         } else if (oldPath === "/dashboard/archive") {
           redirectPath = "/archive"
-        } else if (oldPath === "/dashboard/settings" || oldPath === "/dashboard/profile" || oldPath === "/dashboard/guidelines") {
+        } else if (oldPath === "/dashboard/settings" || oldPath === "/dashboard/guidelines") {
           redirectPath = "/dashboard"
         }
         

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { RouteGuard } from "@/components/route-guard"
@@ -144,32 +144,7 @@ export default function ProfilePage() {
   const [newSpecialization, setNewSpecialization] = useState("")
   const [newResearchInterest, setNewResearchInterest] = useState("")
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchProfile()
-      fetchCVFiles()
-    }
-  }, [session])
-
-  const fetchCVFiles = async () => {
-    try {
-      setLoadingCVFiles(true)
-      const response = await fetch('/api/user/profile/cv')
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setCvFiles(data.files || [])
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch CV files:', error)
-    } finally {
-      setLoadingCVFiles(false)
-    }
-  }
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/user/profile')
@@ -199,7 +174,32 @@ export default function ProfilePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  const fetchCVFiles = useCallback(async () => {
+    try {
+      setLoadingCVFiles(true)
+      const response = await fetch('/api/user/profile/cv')
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setCvFiles(data.files || [])
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch CV files:', error)
+    } finally {
+      setLoadingCVFiles(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchProfile()
+      fetchCVFiles()
+    }
+  }, [session, fetchProfile, fetchCVFiles])
 
   const calculateProfileCompleteness = (profileData: ProfileFormData): number => {
     let completed = 0
@@ -216,19 +216,6 @@ export default function ProfilePage() {
 
     return Math.round((completed / total) * 100)
   }
-
-  // Update profile completeness when form data changes
-  useEffect(() => {
-    if (formData.name || formData.affiliation || formData.bio || formData.orcid || 
-        formData.expertise.length > 0 || formData.specializations.length > 0 || 
-        formData.researchInterests.length > 0 || formData.languagesSpoken.length > 0) {
-      const newCompleteness = calculateProfileCompleteness(formData)
-      // Update the profile completeness in real-time
-      if (profile && newCompleteness !== profile.profileCompleteness) {
-        setProfile(prev => prev ? { ...prev, profileCompleteness: newCompleteness } : null)
-      }
-    }
-  }, [formData, profile])
 
   const handleSaveProfile = async () => {
     try {
