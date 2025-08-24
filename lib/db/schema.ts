@@ -62,7 +62,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   password: text("password"),
-  role: text("role").notNull().default("author"), // author, reviewer, editor, admin
+  role: text("role").notNull().default("author"), // author, reviewer, editor, editorial-assistant, admin
   affiliation: text("affiliation"),
   orcid: text("orcid"),
   orcidVerified: boolean("orcid_verified").default(false),
@@ -541,6 +541,33 @@ export const editorial_decisions = pgTable("editorial_decisions", {
   revisionDeadline: timestamp("revision_deadline"),
   finalDecision: boolean("final_decision").default(false),
   round: integer("round").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// New table for conflict of interest questionnaires
+export const conflictQuestionnaires = pgTable("conflict_questionnaires", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  manuscriptId: uuid("manuscript_id").references(() => submissions.id).notNull(),
+  role: text("role").notNull(), // "associate-editor", "reviewer"
+  questionnaireData: jsonb("questionnaire_data").notNull(), // Store all questionnaire responses
+  hasConflicts: boolean("has_conflicts").default(false),
+  conflictDetails: text("conflict_details"),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// New table for workflow stage time limits
+export const workflowTimeLimits = pgTable("workflow_time_limits", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  stage: text("stage").notNull().unique(), // "editorial-assistant-review", "associate-editor-review", "reviewer-review"
+  timeLimitDays: integer("time_limit_days").notNull(),
+  reminderDays: jsonb("reminder_days").$type<number[]>(), // [7, 3, 1] days before deadline
+  escalationDays: jsonb("escalation_days").$type<number[]>(), // [7, 14, 21] days after deadline
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })

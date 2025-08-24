@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Upload, FileText, AlertCircle, CheckCircle, X, Plus, Image, Table, FileSpreadsheet, Mail, Shield, Award, Globe, User, AlertTriangle } from "lucide-react"
+import { Upload, FileText, AlertCircle, CheckCircle, X, Plus, Image, Table, FileSpreadsheet, Mail, Shield, Award, Globe, User, AlertTriangle, RefreshCw } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
@@ -20,6 +20,7 @@ import AuthorLayout from "@/components/layouts/author-layout"
 import { RouteGuard } from "@/components/route-guard"
 import { FileUploadSection } from "@/components/file-upload-section"
 import { FormValidationIndicator } from "@/components/form-validation-indicator"
+import { validateCurrentStep, type SubmissionFormData } from "@/lib/form-validation"
 
 function SubmitPageContent() {
   const { data: session, status } = useSession()
@@ -110,24 +111,33 @@ function SubmitPageContent() {
     }
   }, [session])
 
-  // Check profile completeness
+  // Check profile completeness and submission eligibility
   useEffect(() => {
     const checkProfile = async () => {
       if (!session?.user?.id) return
       
       try {
         setProfileLoading(true)
-        const response = await fetch('/api/user/profile')
         
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success) {
-            setProfileData(data.profile)
-            setProfileCompleteness(data.profile.profileCompleteness || 0)
+        // Check submission eligibility first
+        const eligibilityResponse = await fetch('/api/submission/eligibility')
+        if (eligibilityResponse.ok) {
+          const eligibilityData = await eligibilityResponse.json()
+          if (eligibilityData.success) {
+            setProfileCompleteness(eligibilityData.eligibility.score)
+          }
+        }
+        
+        // Also fetch full profile data for display
+        const profileResponse = await fetch('/api/user/profile')
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json()
+          if (profileData.success) {
+            setProfileData(profileData.profile)
           }
         }
       } catch (error) {
-        console.error('Failed to fetch profile:', error)
+        console.error('Failed to fetch profile data:', error)
       } finally {
         setProfileLoading(false)
       }
@@ -280,100 +290,17 @@ function SubmitPageContent() {
   }
 
   const handleNextStep = () => {
-    // Validate current step before proceeding
-    if (currentStep === 1) {
-      if (!formData.title || formData.title.length < 10) {
-        toast({
-          variant: "destructive",
-          title: "Title Too Short",
-          description: "Title must be at least 10 characters long",
-        })
-        return
-      }
-      if (!formData.abstract || formData.abstract.length < 1250) {
-        toast({
-          variant: "destructive",
-          title: "Abstract Too Short",
-          description: "Abstract must be at least 250 words (approximately 1250 characters)",
-        })
-        return
-      }
-      if (!formData.category) {
-        toast({
-          variant: "destructive",
-          title: "Category Required",
-          description: "Please select a category for your article",
-        })
-        return
-      }
-      const keywordArray = formData.keywords.split(',').map(k => k.trim()).filter(Boolean)
-      if (keywordArray.length < 4) {
-        toast({
-          variant: "destructive",
-          title: "Keywords Required",
-          description: "Please provide at least 4 keywords separated by commas",
-        })
-        return
-      }
-    }
+    // Use consolidated validation
+    const validation = validateCurrentStep(currentStep, formData as SubmissionFormData)
     
-    if (currentStep === 2) {
-      // Validate all authors have required information
-      const invalidAuthors = formData.authors.filter(author => 
-        !author.firstName || !author.lastName || !author.email || 
-        !author.institution || !author.department || !author.country || !author.affiliation
-      )
-      
-      if (invalidAuthors.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Author Information Required",
-          description: "Please fill in all required author information including name, email, institution, department, country, and affiliation",
-        })
-        return
-      }
-
-      // Validate exactly one corresponding author
-      const correspondingAuthors = formData.authors.filter(author => author.isCorrespondingAuthor)
-      if (correspondingAuthors.length !== 1) {
-        toast({
-          variant: "destructive",
-          title: "Corresponding Author Required",
-          description: "Please designate exactly one corresponding author",
-        })
-        return
-      }
-    }
-    
-    if (currentStep === 3) {
-      // Validate recommended reviewers (minimum 3 required)
-      const validReviewers = formData.recommendedReviewers.filter(reviewer => 
-        reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim()
-      )
-      
-      if (validReviewers.length < 3) {
-        toast({
-          variant: "destructive",
-          title: "Minimum 3 Reviewers Required",
-          description: "Please provide at least 3 recommended reviewers with their name, email, and affiliation",
-        })
-        return
-      }
-
-      // Validate email formats
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      const invalidEmails = formData.recommendedReviewers.filter(reviewer => 
-        reviewer.email.trim() && !emailRegex.test(reviewer.email.trim())
-      )
-      
-      if (invalidEmails.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Invalid Email Addresses",
-          description: "Please provide valid email addresses for all recommended reviewers",
-        })
-        return
-      }
+    if (!validation.isValid) {
+      const firstError = validation.errors[0]
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: firstError,
+      })
+      return
     }
     
     setSubmissionError("") // Clear any previous errors
@@ -383,62 +310,39 @@ function SubmitPageContent() {
   }
 
   const handleSubmitManuscript = async () => {
-    if (!formData.termsAccepted) {
+    // Check profile completeness before submission
+    try {
+      const eligibilityResponse = await fetch('/api/submission/eligibility')
+      if (eligibilityResponse.ok) {
+        const eligibilityData = await eligibilityResponse.json()
+        if (eligibilityData.success && !eligibilityData.eligibility.canSubmit) {
+          toast({
+            variant: "destructive",
+            title: "Profile Incomplete",
+            description: `Your profile is only ${eligibilityData.eligibility.score}% complete. You need at least 80% to submit articles.`,
+          })
+          return
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check eligibility:', error)
       toast({
         variant: "destructive",
-        title: "Terms and Conditions Required",
-        description: "Please accept the terms and conditions to proceed.",
+        title: "Submission Error",
+        description: "Unable to verify profile completion. Please try again.",
       })
       return
     }
 
-    if (!formData.guidelinesAccepted) {
+    // Use consolidated validation for final submission
+    const validation = validateCurrentStep(5, formData as SubmissionFormData)
+    
+    if (!validation.isValid) {
+      const firstError = validation.errors[0]
       toast({
         variant: "destructive",
-        title: "Submission Guidelines Acknowledgment Required",
-        description: "You must confirm that your manuscript follows all submission guidelines and formatting requirements.",
-      })
-      return
-    }
-
-    // Final validation before submission
-    if (formData.title.length < 10) {
-      toast({
-        variant: "destructive",
-        title: "Title Too Short",
-        description: "Title must be at least 10 characters long",
-      })
-      return
-    }
-
-    if (formData.abstract.length < 1250) {
-      toast({
-        variant: "destructive",
-        title: "Abstract Too Short",
-        description: "Abstract must be at least 250 words (approximately 1250 characters)",
-      })
-      return
-    }
-
-    const keywordArray = formData.keywords.split(',').map(k => k.trim()).filter(Boolean)
-    if (keywordArray.length < 4) {
-      toast({
-        variant: "destructive",
-        title: "Not Enough Keywords",
-        description: "Please provide at least 4 keywords separated by commas",
-      })
-      return
-    }
-
-    // Validate recommended reviewers
-    const validReviewers = formData.recommendedReviewers.filter(reviewer => 
-      reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim()
-    )
-    if (validReviewers.length < 3) {
-      toast({
-        variant: "destructive",
-        title: "Minimum 3 Reviewers Required",
-        description: "Please provide at least 3 recommended reviewers with complete information",
+        title: "Submission Error",
+        description: firstError,
       })
       return
     }
@@ -709,6 +613,25 @@ function SubmitPageContent() {
                     >
                       <User className="h-4 w-4 mr-2" />
                       Complete Profile Now
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setProfileLoading(true)
+                        // Refresh profile completeness
+                        fetch('/api/submission/eligibility')
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.success) {
+                              setProfileCompleteness(data.eligibility.score)
+                            }
+                          })
+                          .finally(() => setProfileLoading(false))
+                      }}
+                      variant="outline"
+                      className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Refresh Status
                     </Button>
                     <div className="flex items-center gap-2">
                       <div className="w-32 bg-orange-200 rounded-full h-2">

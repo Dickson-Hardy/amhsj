@@ -127,43 +127,43 @@ export default function ORCIDIntegration({ user }: { user: User }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className=\"flex items-center gap-2\">
-            <User className=\"h-5 w-5\" />
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
             ORCID Integration
           </CardTitle>
           <CardDescription>
             Connect your ORCID iD to verify your identity and sync your academic profile
           </CardDescription>
         </CardHeader>
-        <CardContent className=\"space-y-4\">
+        <CardContent className="space-y-4">
           <Alert>
-            <ExternalLink className=\"h-4 w-4\" />
+            <ExternalLink className="h-4 w-4" />
             <AlertDescription>
               ORCID provides a persistent digital identifier that distinguishes you from other researchers.
               Connecting your ORCID iD helps verify your authorship and academic credentials.
             </AlertDescription>
           </Alert>
 
-          <div className=\"flex flex-col space-y-3\">
+          <div className="flex flex-col space-y-3">
             <Button 
               onClick={handleConnectORCID}
               disabled={isLoading}
-              className=\"w-full\"
+              className="w-full"
             >
               {isLoading ? (
                 <>
-                  <RefreshCw className=\"mr-2 h-4 w-4 animate-spin\" />
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                   Connecting...
                 </>
               ) : (
                 <>
-                  <ExternalLink className=\"mr-2 h-4 w-4\" />
+                  <ExternalLink className="mr-2 h-4 w-4" />
                   Connect with ORCID
                 </>
               )}
             </Button>
 
-            <div className=\"text-xs text-muted-foreground text-center\">
+            <div className="text-xs text-muted-foreground text-center">
               You'll be redirected to ORCID to authorize the connection
             </div>
           </div>
@@ -175,11 +175,11 @@ export default function ORCIDIntegration({ user }: { user: User }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className=\"flex items-center gap-2\">
-          <User className=\"h-5 w-5\" />
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
           ORCID Profile
-          <Badge variant=\"secondary\" className=\"flex items-center gap-1\">
-            <Check className=\"h-3 w-3\" />
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Check className="h-3 w-3" />
             Connected
           </Badge>
         </CardTitle>
@@ -187,21 +187,21 @@ export default function ORCIDIntegration({ user }: { user: User }) {
           Your ORCID iD is connected and verified
         </CardDescription>
       </CardHeader>
-      <CardContent className=\"space-y-4\">
+      <CardContent className="space-y-4">
         {/* ORCID Profile Information */}
-        <div className=\"space-y-3\">
-          <div className=\"flex items-center justify-between\">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
             <div>
-              <div className=\"font-medium\">ORCID iD</div>
-              <div className=\"text-sm text-muted-foreground\">{user.orcid}</div>
+              <div className="font-medium">ORCID iD</div>
+              <div className="text-sm text-muted-foreground">{user.orcid}</div>
             </div>
             <a
               href={`https://orcid.org/${user.orcid}`}
-              target=\"_blank\"
-              rel=\"noopener noreferrer\"
-              className=\"text-blue-600 hover:text-blue-800\"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800"
             >
-              <ExternalLink className=\"h-4 w-4\" />
+              <ExternalLink className="h-4 w-4" />
             </a>
           </div>
 
@@ -209,16 +209,16 @@ export default function ORCIDIntegration({ user }: { user: User }) {
             <>
               <Separator />
               <div>
-                <div className=\"font-medium\">Display Name</div>
-                <div className=\"text-sm text-muted-foreground\">
+                <div className="font-medium">Display Name</div>
+                <div className="text-sm text-muted-foreground">
                   {user.orcidProfile.name.displayName}
                 </div>
               </div>
 
               {user.orcidProfile.biography && (
                 <div>
-                  <div className=\"font-medium\">Biography</div>
-                  <div className=\"text-sm text-muted-foreground\">
+                  <div className="font-medium">Biography</div>
+                  <div className="text-sm text-muted-foreground">
                     {user.orcidProfile.biography}
                   </div>
                 </div>
@@ -226,16 +226,16 @@ export default function ORCIDIntegration({ user }: { user: User }) {
 
               {user.orcidProfile.emails.length > 0 && (
                 <div>
-                  <div className=\"font-medium\">Email Addresses</div>
-                  <div className=\"space-y-1\">
+                  <div className="font-medium">Email Addresses</div>
+                  <div className="space-y-1">
                     {user.orcidProfile.emails.map((email, index) => (
-                      <div key={index} className=\"flex items-center gap-2 text-sm\">
-                        <span className=\"text-muted-foreground\">{email.email}</span>
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">{email.email}</span>
                         {email.primary && (
-                          <Badge variant=\"outline\" className=\"text-xs\">Primary</Badge>
+                          <Badge variant="outline" className="text-xs">Primary</Badge>
                         )}
                         {email.verified && (
-                          <Check className=\"h-3 w-3 text-green-600\" />
+                          <Check className="h-3 w-3 text-green-600" />
                         )}
                       </div>
                     ))}
@@ -247,47 +247,47 @@ export default function ORCIDIntegration({ user }: { user: User }) {
 
           <Separator />
           
-          <div className=\"flex items-center justify-between text-sm\">
-            <span className=\"text-muted-foreground\">Last Synced</span>
-            <span className=\"font-medium\">{formatLastSync(user.orcidLastSync)}</span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Last Synced</span>
+            <span className="font-medium">{formatLastSync(user.orcidLastSync)}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className=\"flex flex-col space-y-2\">
+        <div className="flex flex-col space-y-2">
           <Button
-            variant=\"outline\"
+            variant="outline"
             onClick={handleSyncProfile}
             disabled={isLoading}
-            className=\"w-full\"
+            className="w-full"
           >
             {isLoading ? (
               <>
-                <RefreshCw className=\"mr-2 h-4 w-4 animate-spin\" />
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 Syncing...
               </>
             ) : (
               <>
-                <RefreshCw className=\"mr-2 h-4 w-4\" />
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Sync Profile
               </>
             )}
           </Button>
 
           <Button
-            variant=\"destructive\"
+            variant="destructive"
             onClick={handleDisconnectORCID}
             disabled={isDisconnecting}
-            className=\"w-full\"
+            className="w-full"
           >
             {isDisconnecting ? (
               <>
-                <RefreshCw className=\"mr-2 h-4 w-4 animate-spin\" />
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 Disconnecting...
               </>
             ) : (
               <>
-                <Unlink className=\"mr-2 h-4 w-4\" />
+                <Unlink className="mr-2 h-4 w-4" />
                 Disconnect ORCID
               </>
             )}

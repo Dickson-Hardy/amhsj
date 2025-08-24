@@ -217,9 +217,26 @@ export default function ProfilePage() {
     return Math.round((completed / total) * 100)
   }
 
+  // Update profile completeness when form data changes
+  useEffect(() => {
+    if (formData.name || formData.affiliation || formData.bio || formData.orcid || 
+        formData.expertise.length > 0 || formData.specializations.length > 0 || 
+        formData.researchInterests.length > 0 || formData.languagesSpoken.length > 0) {
+      const newCompleteness = calculateProfileCompleteness(formData)
+      // Update the profile completeness in real-time
+      if (profile && newCompleteness !== profile.profileCompleteness) {
+        setProfile(prev => prev ? { ...prev, profileCompleteness: newCompleteness } : null)
+      }
+    }
+  }, [formData, profile])
+
   const handleSaveProfile = async () => {
     try {
       setSaving(true)
+      
+      const completeness = calculateProfileCompleteness(formData)
+      console.log('Saving profile with completeness:', completeness)
+      console.log('Form data:', formData)
       
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -228,7 +245,7 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           ...formData,
-          profileCompleteness: calculateProfileCompleteness(formData)
+          profileCompleteness: completeness
         })
       })
 
@@ -238,15 +255,21 @@ export default function ProfilePage() {
       }
 
       const data = await response.json()
+      console.log('Profile save response:', data)
+      
       if (data.success) {
         setProfile(data.profile)
         setIsEditing(false)
         toast({
           title: "Profile Updated",
-          description: "Your profile has been successfully updated.",
+          description: `Your profile has been successfully updated. Profile completion: ${data.profile.profileCompleteness}%`,
         })
+        
+        // Refresh the profile to get updated completeness
+        fetchProfile()
       }
     } catch (error) {
+      console.error('Profile save error:', error)
       handleError(error, { component: 'profile', action: 'save' })
     } finally {
       setSaving(false)
@@ -434,6 +457,9 @@ export default function ProfilePage() {
 
   const profileCompleteness = calculateProfileCompleteness(formData)
   const isProfileComplete = profileCompleteness >= 80
+  
+  // Show real-time completeness or stored completeness
+  const displayCompleteness = profile?.profileCompleteness || profileCompleteness
 
   return (
     <RouteGuard allowedRoles={["author", "reviewer", "editor", "admin"]}>
@@ -544,46 +570,140 @@ export default function ProfilePage() {
                           strokeWidth="8"
                           fill="transparent"
                           strokeDasharray={`${2 * Math.PI * 40}`}
-                          strokeDashoffset={`${2 * Math.PI * 40 * (1 - profileCompleteness / 100)}`}
-                          className={profileCompleteness >= 80 ? "text-green-500" : profileCompleteness >= 50 ? "text-yellow-500" : "text-red-500"}
+                          strokeDashoffset={`${2 * Math.PI * 40 * (1 - displayCompleteness / 100)}`}
+                          className={displayCompleteness >= 80 ? "text-green-500" : displayCompleteness >= 50 ? "text-yellow-500" : "text-red-500"}
                           strokeLinecap="round"
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={`text-lg font-bold ${profileCompleteness >= 80 ? "text-green-600" : profileCompleteness >= 50 ? "text-yellow-600" : "text-red-600"}`}>
-                          {profileCompleteness}%
+                        <span className={`text-lg font-bold ${displayCompleteness >= 80 ? "text-green-600" : displayCompleteness >= 50 ? "text-yellow-600" : "text-red-600"}`}>
+                          {displayCompleteness}%
                         </span>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="mt-3">
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            displayCompleteness >= 80 ? 'bg-green-500' : 
+                            displayCompleteness >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${displayCompleteness}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        {displayCompleteness < 80 ? `${80 - displayCompleteness}% more needed` : 'Ready for submission!'}
                       </div>
                     </div>
                   </div>
 
-                  <Button
-                    variant={isEditing ? "outline" : "default"}
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="min-w-32"
-                  >
-                    {isEditing ? (
-                      <>
-                        <X className="h-4 w-4 mr-2" />
-                        Cancel
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Profile
-                      </>
+                  <div className="space-y-2">
+                    <Button
+                      variant={isEditing ? "outline" : "default"}
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="min-w-32"
+                    >
+                      {isEditing ? (
+                        <>
+                          <X className="h-4 w-4 mr-2" />
+                          Cancel
+                        </>
+                      ) : (
+                        <>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Profile
+                        </>
+                      )}
+                    </Button>
+                    
+                    {isProfileComplete && (
+                      <Button
+                        onClick={() => router.push('/submit')}
+                        className="min-w-32 bg-green-600 hover:bg-green-700"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Submit Article
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </div>
               </div>
 
               {/* Profile Completion Alert */}
-              {!isProfileComplete && (
+              {!isProfileComplete ? (
                 <Alert className="mt-6 border-orange-200 bg-orange-50">
                   <AlertCircle className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
-                    Complete your profile to improve your visibility and enable article submissions. 
-                    You need at least 80% completion to submit articles.
+                    <div className="space-y-2">
+                      <p>Complete your profile to improve your visibility and enable article submissions. 
+                      You need at least 80% completion to submit articles.</p>
+                      
+                      <div className="bg-orange-100 p-3 rounded-lg border border-orange-200">
+                        <h4 className="font-semibold mb-2">Missing fields:</h4>
+                        <div className="grid md:grid-cols-2 gap-2 text-sm">
+                          {!formData.name.trim() && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Full name</span>
+                            </div>
+                          )}
+                          {!formData.affiliation.trim() && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Institutional affiliation</span>
+                            </div>
+                          )}
+                          {(!formData.bio.trim() || formData.bio.length < 50) && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Professional biography (50+ chars)</span>
+                            </div>
+                          )}
+                          {!formData.orcid.trim() && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>ORCID identifier</span>
+                            </div>
+                          )}
+                          {formData.expertise.length === 0 && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Areas of expertise</span>
+                            </div>
+                          )}
+                          {formData.specializations.length === 0 && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Medical specializations</span>
+                            </div>
+                          )}
+                          {formData.researchInterests.length === 0 && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Research interests</span>
+                            </div>
+                          )}
+                          {formData.languagesSpoken.length === 0 && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3 text-orange-600" />
+                              <span>Languages spoken</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="mt-6 border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">🎉 Profile Complete!</span>
+                      <span>You can now submit articles to the journal.</span>
+                    </div>
                   </AlertDescription>
                 </Alert>
               )}
@@ -613,27 +733,27 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        disabled={!isEditing}
-                        placeholder="Enter your full name"
-                      />
-                    </div>
+                                       <div className="space-y-2">
+                     <Label htmlFor="name">Full Name</Label>
+                     <Input
+                       id="name"
+                       value={formData.name}
+                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                       disabled={!isEditing}
+                       placeholder="Enter your full name"
+                     />
+                   </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="affiliation">Institutional Affiliation</Label>
-                      <Input
-                        id="affiliation"
-                        value={formData.affiliation}
-                        onChange={(e) => setFormData(prev => ({ ...prev, affiliation: e.target.value }))}
-                        disabled={!isEditing}
-                        placeholder="University, Hospital, or Organization"
-                      />
-                    </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="affiliation">Institutional Affiliation</Label>
+                     <Input
+                       id="affiliation"
+                       value={formData.affiliation}
+                       onChange={(e) => setFormData(prev => ({ ...prev, affiliation: e.target.value }))}
+                       disabled={!isEditing}
+                       placeholder="University, Hospital, or Organization"
+                     />
+                   </div>
                   </div>
 
                   <div className="space-y-2">
@@ -677,28 +797,71 @@ export default function ProfilePage() {
                     <div className="text-xs text-slate-500">
                       ORCID provides a persistent digital identifier for researchers
                     </div>
-                  </div>
+                                     </div>
 
-                  {isEditing && (
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsEditing(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleSaveProfile} disabled={saving}>
-                        {saving ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-2" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
+                   <div className="space-y-2">
+                     <Label htmlFor="bio">Professional Biography</Label>
+                     <Textarea
+                       id="bio"
+                       value={formData.bio}
+                       onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                       disabled={!isEditing}
+                       placeholder="Describe your professional background, research focus, and achievements (minimum 50 characters)"
+                       rows={4}
+                       className="resize-none"
+                     />
+                     <div className="text-xs text-slate-500">
+                       {formData.bio.length}/50 characters minimum
+                     </div>
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label htmlFor="orcid">ORCID iD</Label>
+                     <div className="flex gap-2">
+                       <Input
+                         id="orcid"
+                         value={formData.orcid}
+                         onChange={(e) => setFormData(prev => ({ ...prev, orcid: e.target.value }))}
+                         disabled={!isEditing}
+                         placeholder="0000-0000-0000-0000"
+                       />
+                       {profile.orcidVerified ? (
+                         <Badge className="bg-green-100 text-green-800 px-3">
+                           <CheckCircle className="h-3 w-4 mr-1" />
+                           Verified
+                         </Badge>
+                       ) : formData.orcid ? (
+                         <Button size="sm" variant="outline">
+                           <Link className="h-3 w-4 mr-1" />
+                           Verify
+                         </Button>
+                       ) : null}
+                     </div>
+                     <div className="text-xs text-slate-500">
+                       ORCID provides a persistent digital identifier for researchers
+                     </div>
+                   </div>
+
+                   {isEditing && (
+                     <div className="flex justify-end gap-2">
+                       <Button variant="outline" onClick={() => setIsEditing(false)}>
+                         Cancel
+                       </Button>
+                       <Button onClick={handleSaveProfile} disabled={saving}>
+                         {saving ? (
+                           <>
+                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                             Saving...
+                           </>
+                         ) : (
+                           <>
+                             <Save className="h-4 w-4 mr-2" />
+                             Save Changes
+                           </>
+                         )}
+                       </Button>
+                     </div>
+                   )}
                 </CardContent>
               </Card>
             </TabsContent>

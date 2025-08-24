@@ -279,17 +279,17 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
 
   const getValidationIcon = (validation: CitationValidation) => {
     if (validation.isValid && validation.warnings.length === 0) {
-      return <CheckCircle className=\"h-4 w-4 text-green-600\" />
+      return <CheckCircle className="h-4 w-4 text-green-600" />
     }
-    return <AlertTriangle className=\"h-4 w-4 text-yellow-600\" />
+    return <AlertTriangle className="h-4 w-4 text-yellow-600" />
   }
 
   return (
-    <div className=\"space-y-6\">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className=\"flex items-center gap-2\">
-            <BookOpen className=\"h-5 w-5\" />
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
             Citation Manager
           </CardTitle>
           <CardDescription>
@@ -299,15 +299,15 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className=\"grid w-full grid-cols-5\">
-          <TabsTrigger value=\"extract\">Extract</TabsTrigger>
-          <TabsTrigger value=\"manage\">Manage ({citations.length})</TabsTrigger>
-          <TabsTrigger value=\"bibliography\">Bibliography</TabsTrigger>
-          <TabsTrigger value=\"analysis\">Analysis</TabsTrigger>
-          <TabsTrigger value=\"search\">Search</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="extract">Extract</TabsTrigger>
+          <TabsTrigger value="manage">Manage ({citations.length})</TabsTrigger>
+          <TabsTrigger value="bibliography">Bibliography</TabsTrigger>
+          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+          <TabsTrigger value="search">Search</TabsTrigger>
         </TabsList>
 
-        <TabsContent value=\"extract\" className=\"space-y-4\">
+        <TabsContent value="extract" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Extract Citations</CardTitle>
@@ -315,26 +315,26 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                 Paste your article text to automatically extract citations
               </CardDescription>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
+            <CardContent className="space-y-4">
               <Textarea
-                placeholder=\"Paste your article text here...\"
+                placeholder="Paste your article text here..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                className=\"min-h-48\"
+                className="min-h-48"
               />
               <Button 
                 onClick={handleExtractCitations}
                 disabled={isLoading || !inputText.trim()}
-                className=\"w-full\"
+                className="w-full"
               >
                 {isLoading ? (
                   <>
-                    <RefreshCw className=\"mr-2 h-4 w-4 animate-spin\" />
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     Extracting Citations...
                   </>
                 ) : (
                   <>
-                    <Search className=\"mr-2 h-4 w-4\" />
+                    <Search className="mr-2 h-4 w-4" />
                     Extract Citations
                   </>
                 )}
@@ -343,31 +343,31 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
           </Card>
         </TabsContent>
 
-        <TabsContent value=\"manage\" className=\"space-y-4\">
+        <TabsContent value="manage" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className=\"flex items-center justify-between\">
+              <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Manage Citations</CardTitle>
                   <CardDescription>
                     Review and validate extracted citations
                   </CardDescription>
                 </div>
-                <div className=\"flex gap-2\">
+                <div className="flex gap-2">
                   <Button 
-                    variant=\"outline\" 
+                    variant="outline" 
                     onClick={handleValidateCitations}
                     disabled={isLoading || citations.length === 0}
                   >
                     {isLoading ? (
-                      <RefreshCw className=\"mr-2 h-4 w-4 animate-spin\" />
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <CheckCircle className=\"mr-2 h-4 w-4\" />
+                      <CheckCircle className="mr-2 h-4 w-4" />
                     )}
                     Validate
                   </Button>
                   <Select value={selectedStyle} onValueChange={(value: CitationStyle) => setSelectedStyle(value)}>
-                    <SelectTrigger className=\"w-32\">
+                    <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -382,59 +382,59 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                     onClick={handleFormatCitations}
                     disabled={isLoading || citations.length === 0}
                   >
-                    <FileText className=\"mr-2 h-4 w-4\" />
+                    <FileText className="mr-2 h-4 w-4" />
                     Format
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className=\"h-96\">
-                <div className=\"space-y-4\">
+              <ScrollArea className="h-96">
+                <div className="space-y-4">
                   {citations.map((citation, index) => {
                     const validation = validations[index]
                     return (
-                      <Card key={citation.id} className=\"p-4\">
-                        <div className=\"flex items-start justify-between\">
-                          <div className=\"flex-1\">
-                            <div className=\"flex items-center gap-2 mb-2\">
-                              <Badge variant=\"outline\">{citation.type}</Badge>
+                      <Card key={citation.id} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline">{citation.type}</Badge>
                               {validation && getValidationIcon(validation)}
                             </div>
-                            <h4 className=\"font-medium text-sm\">{citation.title}</h4>
+                            <h4 className="font-medium text-sm">{citation.title}</h4>
                             {citation.authors.length > 0 && (
-                              <p className=\"text-xs text-muted-foreground mt-1\">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {citation.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ')}
                               </p>
                             )}
                             {citation.journal && (
-                              <p className=\"text-xs text-muted-foreground\">
+                              <p className="text-xs text-muted-foreground">
                                 {citation.journal} {citation.year && `(${citation.year})`}
                               </p>
                             )}
                             {citation.doi && (
-                              <p className=\"text-xs text-blue-600\">DOI: {citation.doi}</p>
+                              <p className="text-xs text-blue-600">DOI: {citation.doi}</p>
                             )}
                           </div>
                           <Button
-                            variant=\"ghost\"
-                            size=\"sm\"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => removeCitation(citation.id)}
                           >
-                            <Trash2 className=\"h-4 w-4\" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
 
                         {validation && (validation.errors.length > 0 || validation.warnings.length > 0) && (
-                          <div className=\"mt-3 space-y-1\">
+                          <div className="mt-3 space-y-1">
                             {validation.errors.map((error, i) => (
-                              <Alert key={i} variant=\"destructive\" className=\"py-2\">
-                                <AlertDescription className=\"text-xs\">{error}</AlertDescription>
+                              <Alert key={i} variant="destructive" className="py-2">
+                                <AlertDescription className="text-xs">{error}</AlertDescription>
                               </Alert>
                             ))}
                             {validation.warnings.map((warning, i) => (
-                              <Alert key={i} className=\"py-2\">
-                                <AlertDescription className=\"text-xs\">{warning}</AlertDescription>
+                              <Alert key={i} className="py-2">
+                                <AlertDescription className="text-xs">{warning}</AlertDescription>
                               </Alert>
                             ))}
                           </div>
@@ -444,7 +444,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                   })}
 
                   {citations.length === 0 && (
-                    <div className=\"text-center py-8 text-muted-foreground\">
+                    <div className="text-center py-8 text-muted-foreground">
                       No citations found. Use the Extract tab to extract citations from your text.
                     </div>
                   )}
@@ -454,48 +454,48 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
           </Card>
         </TabsContent>
 
-        <TabsContent value=\"bibliography\" className=\"space-y-4\">
+        <TabsContent value="bibliography" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className=\"flex items-center justify-between\">
+              <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Bibliography</CardTitle>
                   <CardDescription>
                     Formatted citations in {selectedStyle.toUpperCase()} style
                   </CardDescription>
                 </div>
-                <div className=\"flex gap-2\">
-                  <Button variant=\"outline\" onClick={handleAnalyzeCitations}>
-                    <Search className=\"mr-2 h-4 w-4\" />
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleAnalyzeCitations}>
+                    <Search className="mr-2 h-4 w-4" />
                     Analyze
                   </Button>
-                  <Button variant=\"outline\">
-                    <Download className=\"mr-2 h-4 w-4\" />
+                  <Button variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
                     Export
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className=\"h-96\">
-                <div className=\"space-y-4\">
+              <ScrollArea className="h-96">
+                <div className="space-y-4">
                   {bibliography.map((entry, index) => (
-                    <Card key={entry.citation.id} className=\"p-4\">
-                      <div className=\"space-y-2\">
-                        <div className=\"flex items-center justify-between\">
-                          <span className=\"text-xs font-medium text-muted-foreground\">
+                    <Card key={entry.citation.id} className="p-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted-foreground">
                             Reference {index + 1}
                           </span>
                           <Button
-                            variant=\"ghost\"
-                            size=\"sm\"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => copyToClipboard(entry.formattedText)}
                           >
-                            <Copy className=\"h-4 w-4\" />
+                            <Copy className="h-4 w-4" />
                           </Button>
                         </div>
-                        <p className=\"text-sm\">{entry.formattedText}</p>
-                        <div className=\"text-xs text-muted-foreground\">
+                        <p className="text-sm">{entry.formattedText}</p>
+                        <div className="text-xs text-muted-foreground">
                           In-text: {entry.inTextCitation}
                         </div>
                       </div>
@@ -503,7 +503,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                   ))}
 
                   {bibliography.length === 0 && (
-                    <div className=\"text-center py-8 text-muted-foreground\">
+                    <div className="text-center py-8 text-muted-foreground">
                       No formatted bibliography available. Use the Format button in the Manage tab.
                     </div>
                   )}
@@ -513,7 +513,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
           </Card>
         </TabsContent>
 
-        <TabsContent value=\"analysis\" className=\"space-y-4\">
+        <TabsContent value="analysis" className="space-y-4">
           {analysis && (
             <Card>
               <CardHeader>
@@ -522,28 +522,28 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                   Quality assessment of your citations
                 </CardDescription>
               </CardHeader>
-              <CardContent className=\"space-y-4\">
-                <div className=\"grid grid-cols-2 md:grid-cols-4 gap-4\">
-                  <div className=\"text-center p-4 border rounded-lg\">
-                    <div className=\"text-2xl font-bold\">{analysis.totalReferences}</div>
-                    <div className=\"text-sm text-muted-foreground\">Total</div>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold">{analysis.totalReferences}</div>
+                    <div className="text-sm text-muted-foreground">Total</div>
                   </div>
-                  <div className=\"text-center p-4 border rounded-lg\">
-                    <div className=\"text-2xl font-bold text-green-600\">{analysis.validReferences}</div>
-                    <div className=\"text-sm text-muted-foreground\">Valid</div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{analysis.validReferences}</div>
+                    <div className="text-sm text-muted-foreground">Valid</div>
                   </div>
-                  <div className=\"text-center p-4 border rounded-lg\">
-                    <div className=\"text-2xl font-bold text-red-600\">{analysis.invalidReferences}</div>
-                    <div className=\"text-sm text-muted-foreground\">Invalid</div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">{analysis.invalidReferences}</div>
+                    <div className="text-sm text-muted-foreground">Invalid</div>
                   </div>
-                  <div className=\"text-center p-4 border rounded-lg\">
-                    <div className=\"text-2xl font-bold text-blue-600\">{analysis.qualityScore}%</div>
-                    <div className=\"text-sm text-muted-foreground\">Quality Score</div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{analysis.qualityScore}%</div>
+                    <div className="text-sm text-muted-foreground">Quality Score</div>
                   </div>
                 </div>
 
-                <div className=\"space-y-2\">
-                  <h4 className=\"font-medium\">Recommendations</h4>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Recommendations</h4>
                   {analysis.recommendations.map((rec, index) => (
                     <Alert key={index}>
                       <AlertDescription>{rec}</AlertDescription>
@@ -555,7 +555,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
           )}
         </TabsContent>
 
-        <TabsContent value=\"search\" className=\"space-y-4\">
+        <TabsContent value="search" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Search Citations</CardTitle>
@@ -563,10 +563,10 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                 Search for citation metadata by DOI, title, or author
               </CardDescription>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
-              <div className=\"flex gap-2\">
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
                 <Input
-                  placeholder=\"Enter DOI, title, or author name...\"
+                  placeholder="Enter DOI, title, or author name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearchCitations()}
@@ -576,48 +576,48 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
                   disabled={isLoading || !searchQuery.trim()}
                 >
                   {isLoading ? (
-                    <RefreshCw className=\"h-4 w-4 animate-spin\" />
+                    <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Search className=\"h-4 w-4\" />
+                    <Search className="h-4 w-4" />
                   )}
                 </Button>
               </div>
 
-              <ScrollArea className=\"h-96\">
-                <div className=\"space-y-4\">
+              <ScrollArea className="h-96">
+                <div className="space-y-4">
                   {searchResults.map((result) => (
-                    <Card key={result.id} className=\"p-4\">
-                      <div className=\"flex items-start justify-between\">
-                        <div className=\"flex-1\">
-                          <h4 className=\"font-medium text-sm\">{result.title}</h4>
+                    <Card key={result.id} className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{result.title}</h4>
                           {result.authors.length > 0 && (
-                            <p className=\"text-xs text-muted-foreground mt-1\">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {result.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ')}
                             </p>
                           )}
                           {result.journal && (
-                            <p className=\"text-xs text-muted-foreground\">
+                            <p className="text-xs text-muted-foreground">
                               {result.journal} {result.year && `(${result.year})`}
                             </p>
                           )}
                           {result.doi && (
-                            <p className=\"text-xs text-blue-600\">DOI: {result.doi}</p>
+                            <p className="text-xs text-blue-600">DOI: {result.doi}</p>
                           )}
                         </div>
                         <Button
-                          variant=\"outline\"
-                          size=\"sm\"
+                          variant="outline"
+                          size="sm"
                           onClick={() => addCitationFromSearch(result)}
                         >
-                          <Plus className=\"h-4 w-4\" />
+                          <Plus className="h-4 w-4" />
                         </Button>
                       </div>
                     </Card>
                   ))}
 
                   {searchResults.length === 0 && searchQuery && !isLoading && (
-                    <div className=\"text-center py-8 text-muted-foreground\">
-                      No results found for \"{searchQuery}\"
+                    <div className="text-center py-8 text-muted-foreground">
+                      No results found for "{searchQuery}"
                     </div>
                   )}
                 </div>

@@ -76,6 +76,11 @@ export function hasRouteAccess(userRole: string | undefined, route: string): boo
     return ["production-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
   }
 
+  // Editorial Assistant routes - initial screening and assignment
+  if (route.startsWith("/editorial-assistant")) {
+    return ["editorial-assistant", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
+  }
+
   // Associate Editor routes
   if (route.startsWith("/editor")) {
     return ["editor", "section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
@@ -108,20 +113,22 @@ export function getRoleDisplayName(role: string | undefined): string {
       return "Managing Editor"
     case "section-editor":
       return "Section Editor"
-    case "guest-editor":
-      return "Guest Editor"
     case "production-editor":
       return "Production Editor"
+    case "guest-editor":
+      return "Guest Editor"
     case "editor":
       return "Associate Editor"
+    case "editorial-assistant":
+      return "Editorial Assistant"
     case "reviewer":
-      return "Peer Reviewer"
+      return "Reviewer"
     case "author":
       return "Author"
     case "user":
       return "User"
     default:
-      return "Guest"
+      return "Unknown Role"
   }
 }
 
@@ -131,24 +138,25 @@ export function getRoleDisplayName(role: string | undefined): string {
 export function getRoleWelcomeMessage(role: string | undefined): string {
   switch (role) {
     case "admin":
-      return "Welcome to the System Administration Dashboard. Manage technical infrastructure and user accounts."
+      return "Welcome to AMHSJ System Administration. You have full system control."
     case "editor-in-chief":
-      return "Welcome, Editor-in-Chief. Lead the journal's scientific direction and make final editorial decisions."
+      return "Welcome to AMHSJ Editorial Leadership. You oversee all editorial decisions."
     case "managing-editor":
-      return "Welcome to the Managing Editor Dashboard. Oversee editorial operations and workflow management."
+      return "Welcome to AMHSJ Editorial Management. You coordinate daily operations."
     case "section-editor":
-      return "Welcome to the Section Editor Dashboard. Manage submissions in your specialized field."
-    case "guest-editor":
-      return "Welcome to the Guest Editor Dashboard. Manage your special issue submissions and reviewers."
+      return "Welcome to AMHSJ Section Editing. You manage specialized content areas."
     case "production-editor":
-      return "Welcome to the Production Dashboard. Handle copyediting, typesetting, and publication workflow."
+      return "Welcome to AMHSJ Production. You handle post-acceptance workflows."
+    case "guest-editor":
+      return "Welcome to AMHSJ Guest Editing. You manage special issue content."
     case "editor":
-      return "Welcome to the Associate Editor Dashboard. Review and manage assigned submissions."
+      return "Welcome to AMHSJ Associate Editing. You handle manuscript review and decisions."
+    case "editorial-assistant":
+      return "Welcome to AMHSJ Editorial Assistance. You perform initial screening and assignments."
     case "reviewer":
-      return "Welcome back! Your expert reviews help maintain the quality of published research."
+      return "Welcome to AMHSJ Peer Review. You evaluate manuscript quality and provide feedback."
     case "author":
-    case "user":
-      return "Welcome to your research dashboard. Track your submissions and explore published articles."
+      return "Welcome to AMHSJ Author Portal. Submit and track your research manuscripts."
     default:
       return "Welcome to AMHSJ Medical Research Journal."
   }
@@ -173,6 +181,8 @@ export function getRoleHierarchy(role: string | undefined): number {
       return 50 // Special issue authority
     case "editor":
       return 40 // Associate editorial authority
+    case "editorial-assistant":
+      return 35 // Initial screening and assignment authority
     case "reviewer":
       return 30 // Review authority
     case "author":

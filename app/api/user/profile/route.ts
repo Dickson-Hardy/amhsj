@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { users, editorProfiles } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { logError } from "@/lib/logger"
+import { ProfileCompletenessService } from "@/lib/profile-completeness"
 
 export async function GET() {
   try {
@@ -65,6 +66,14 @@ export async function GET() {
       }
     }
 
+    // Calculate real-time profile completeness
+    const completenessResult = await ProfileCompletenessService.getUserProfileCompleteness(session.user.id)
+    
+    // Update the profile completeness in the database if it's different
+    if (completenessResult.score !== (user.profileCompleteness || 0)) {
+      await ProfileCompletenessService.updateProfileCompleteness(session.user.id)
+    }
+
     // Determine user's primary section
     let primarySection = "General"
     if (editorProfile?.assignedSections && editorProfile.assignedSections.length > 0) {
@@ -79,9 +88,18 @@ export async function GET() {
       success: true,
       profile: {
         ...user,
+        profileCompleteness: completenessResult.score, // Use real-time calculation
         editorProfile,
         primarySection,
         availableSections: editorProfile?.assignedSections || [primarySection],
+        // Add completeness details
+        completenessDetails: {
+          score: completenessResult.score,
+          missingFields: completenessResult.missingFields,
+          recommendations: completenessResult.recommendations,
+          isComplete: completenessResult.isComplete,
+          canSubmitArticles: completenessResult.isComplete
+        }
       },
     })
   } catch (error) {
@@ -128,7 +146,6 @@ export async function PUT(request: Request) {
         specializations: specializations || [],
         researchInterests: researchInterests || [],
         languagesSpoken: languagesSpoken || [],
-        profileCompleteness: profileCompleteness || 0,
         updatedAt: new Date(),
       })
       .where(eq(users.id, session.user.id))
@@ -151,14 +168,22 @@ export async function PUT(request: Request) {
         updatedAt: users.updatedAt,
       })
 
+    // Update profile completeness after profile changes
+    const newCompleteness = await ProfileCompletenessService.updateProfileCompleteness(session.user.id)
+
     if (!updatedProfile.length) {
       return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      profile: updatedProfile[0],
-      message: "Profile updated successfully"
+      profile: {
+        ...updatedProfile[0],
+        profileCompleteness: newCompleteness
+      },
+      message: "Profile updated successfully",
+      completenessUpdated: true,
+      newScore: newCompleteness
     })
   } catch (error) {
     logError(error as Error, { endpoint: `/api/user/profile`, action: 'update' })

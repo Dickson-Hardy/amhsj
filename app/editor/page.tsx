@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { RouteGuard } from "@/components/route-guard"
 import EditorLayout from "@/components/layouts/editor-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,6 +36,7 @@ import {
   Target,
   Settings,
   Zap,
+  Shield,
 } from "lucide-react"
 
 interface Manuscript {
@@ -73,6 +75,7 @@ interface Reviewer {
 
 export default function EditorDashboard() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [stats, setStats] = useState<EditorStats>({
     totalManuscripts: 0,
     underReview: 0,
@@ -245,13 +248,15 @@ export default function EditorDashboard() {
 
         {/* Main Content */}
         <Tabs defaultValue="workflow" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="workflow">Editorial Workflow</TabsTrigger>
             <TabsTrigger value="enhanced-assignments">Enhanced Assignments</TabsTrigger>
             <TabsTrigger value="assignments">Reviewer Assignment</TabsTrigger>
             <TabsTrigger value="decisions">Decision Making</TabsTrigger>
             <TabsTrigger value="schedule">Publication Schedule</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="coi">COI Management</TabsTrigger>
+            <TabsTrigger value="time-limits">Time Limits</TabsTrigger>
           </TabsList>
 
           <TabsContent value="workflow" className="space-y-6">
@@ -620,6 +625,70 @@ export default function EditorDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="coi" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Conflict of Interest Management</h2>
+              <Button>
+                <Shield className="h-4 w-4 mr-2" />
+                COI Overview
+              </Button>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-800 mb-2">
+                  Conflict of Interest Management
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Monitor and manage conflict of interest declarations from associate editors and reviewers.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button onClick={() => router.push('/editor/coi/overview')}>
+                    <Shield className="h-4 w-4 mr-2" />
+                    View COI Overview
+                  </Button>
+                  <Button variant="outline" onClick={() => router.push('/editor/coi/reports')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    COI Reports
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="time-limits" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Time Limit Enforcement</h2>
+              <Button>
+                <Clock className="h-4 w-4 mr-2" />
+                Configure Limits
+              </Button>
+            </div>
+            
+            <Card>
+              <CardContent className="text-center py-12">
+                <Clock className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-800 mb-2">
+                  Time Limit Management
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Configure and monitor workflow stage deadlines and automated reminders.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button onClick={() => router.push('/editor/time-limits/configure')}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configure Time Limits
+                  </Button>
+                  <Button variant="outline" onClick={() => router.push('/editor/time-limits/monitoring')}>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Monitor Deadlines
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </EditorLayout>

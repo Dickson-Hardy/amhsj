@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { RouteGuard } from "@/components/route-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,8 @@ import {
   TrendingUp,
   Award,
   Target,
+  Shield,
+  Settings,
 } from "lucide-react"
 
 interface ReviewAssignment {
@@ -58,6 +61,7 @@ interface ReviewStats {
 
 export default function ReviewerDashboard() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [stats, setStats] = useState<ReviewStats>({
     totalReviews: 0,
     completedReviews: 0,
@@ -269,12 +273,14 @@ export default function ReviewerDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="assignments" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="assignments">Review Queue</TabsTrigger>
               <TabsTrigger value="in-progress">In Progress</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="expertise">Expertise</TabsTrigger>
               <TabsTrigger value="performance">Performance</TabsTrigger>
+              <TabsTrigger value="coi">COI Declaration</TabsTrigger>
+              <TabsTrigger value="time-limits">Time Limits</TabsTrigger>
             </TabsList>
 
             <TabsContent value="assignments" className="space-y-6">
@@ -482,6 +488,70 @@ export default function ReviewerDashboard() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="coi" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800">Conflict of Interest Declaration</h2>
+                <Button>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Complete COI
+                </Button>
+              </div>
+              
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Shield className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    Conflict of Interest Declaration
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Complete your conflict of interest declaration for assigned manuscripts.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Button onClick={() => router.push('/reviewer/coi/declare')}>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Complete Declaration
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push('/reviewer/coi/history')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      View History
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="time-limits" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800">Time Limit Monitoring</h2>
+                <Button>
+                  <Clock className="h-4 w-4 mr-2" />
+                  View Deadlines
+                </Button>
+              </div>
+              
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Clock className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    Time Limit Management
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Monitor your review deadlines and time limits.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Button onClick={() => router.push('/reviewer/time-limits/overview')}>
+                      <Clock className="h-4 w-4 mr-2" />
+                      View Deadlines
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push('/reviewer/time-limits/settings')}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Time Settings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

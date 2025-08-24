@@ -8,8 +8,7 @@ export const metadata = {
 export default function AboutJournalPage() {
   return (
     <div className="min-h-screen bg-white py-8">
-      <div className="c  )
-}r mx-auto px-4 max-w-4xl">
+      <div className="container mx-auto px-4 max-w-4xl">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-serif font-bold text-blue-900 mb-4">About the Journal</h1>
           <div className="w-16 h-1 bg-blue-800 mx-auto"></div>

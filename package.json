@@ -17,6 +17,7 @@
     "seed": "node scripts/seed-database.js",
     "create-admin": "node scripts/create-admin.js",
     "setup-roles": "node scripts/setup-essential-roles.cjs",
+    "setup-editorial-assistant": "node scripts/setup-editorial-assistant.cjs",
     "backup": "bash scripts/backup-database.sh"
   },
   "dependencies": {

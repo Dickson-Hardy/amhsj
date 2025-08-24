@@ -24,7 +24,10 @@ import {
   UserPlus,
   BookOpen,
   Globe,
-  Zap
+  Zap,
+  Shield,
+  Bell,
+  Settings
 } from "lucide-react"
 
 interface DashboardStats {
@@ -184,13 +187,16 @@ export default function ModernAdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">System Overview</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="content">Content Analytics</TabsTrigger>
             <TabsTrigger value="reviews">Review Process</TabsTrigger>
             <TabsTrigger value="system">System Health</TabsTrigger>
             <TabsTrigger value="backup">Backup Management</TabsTrigger>
+            <TabsTrigger value="coi">COI Management</TabsTrigger>
+            <TabsTrigger value="time-limits">Time Limits</TabsTrigger>
+            <TabsTrigger value="workflow">Workflow Automation</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -582,6 +588,218 @@ export default function ModernAdminDashboard() {
 
           <TabsContent value="backup" className="space-y-6">
             <BackupManagement />
+          </TabsContent>
+
+          <TabsContent value="coi" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Conflict of Interest Management</h2>
+              <Button>
+                <Shield className="h-4 w-4 mr-2" />
+                COI Overview
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="h-5 w-5 mr-2 text-blue-600" />
+                    COI Declarations
+                  </CardTitle>
+                  <CardDescription>Monitor conflict of interest declarations</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Total Declarations</span>
+                    <span className="font-semibold text-xl text-blue-600">156</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Conflicts Detected</span>
+                    <span className="font-semibold text-xl text-red-600">12</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Pending Review</span>
+                    <span className="font-semibold text-xl text-orange-600">8</span>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <Shield className="h-4 w-4 mr-2" />
+                    View All Declarations
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <AlertTriangle className="h-5 w-5 mr-2 text-orange-600" />
+                    COI Alerts
+                  </CardTitle>
+                  <CardDescription>Recent conflict of interest alerts</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">High Conflict Risk</p>
+                        <p className="text-xs text-gray-600">Dr. Smith - MS-2024-0123</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Conflict Confirmed</p>
+                        <p className="text-xs text-gray-600">Dr. Johnson - MS-2024-0118</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    View All Alerts
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="time-limits" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Time Limit Configuration</h2>
+              <Button>
+                <Clock className="h-4 w-4 mr-2" />
+                Configure Limits
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                    Current Time Limits
+                  </CardTitle>
+                  <CardDescription>Configure workflow stage deadlines</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <span className="text-sm font-medium">Editorial Assistant Review</span>
+                      <Badge variant="outline">3 days</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <span className="text-sm font-medium">Associate Editor Review</span>
+                      <Badge variant="outline">7 days</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                      <span className="text-sm font-medium">Reviewer Review</span>
+                      <Badge variant="outline">21 days</Badge>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit Time Limits
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Bell className="h-5 w-5 mr-2 text-green-600" />
+                    Reminder Settings
+                  </CardTitle>
+                  <CardDescription>Automated reminder configuration</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                      <span className="text-sm font-medium">Pre-deadline Reminders</span>
+                      <Badge variant="outline">1, 2, 3 days</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <span className="text-sm font-medium">Escalation Alerts</span>
+                      <Badge variant="outline">1, 2, 3 days</Badge>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <Bell className="h-4 w-4 mr-2" />
+                    Configure Reminders
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="workflow" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Workflow Automation</h2>
+              <Button>
+                <Zap className="h-4 w-4 mr-2" />
+                Configure Automation
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Zap className="h-5 w-5 mr-2 text-blue-600" />
+                    Automated Triggers
+                  </CardTitle>
+                  <CardDescription>Configure automated workflow actions</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <span className="text-sm font-medium">Auto-assign Reviewers</span>
+                      <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <span className="text-sm font-medium">Deadline Reminders</span>
+                      <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                      <span className="text-sm font-medium">Status Updates</span>
+                      <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configure Triggers
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Activity className="h-5 w-5 mr-2 text-green-600" />
+                    Workflow Analytics
+                  </CardTitle>
+                  <CardDescription>Monitor automated workflow performance</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Automation Success Rate</span>
+                      <span className="font-semibold text-xl text-green-600">98.5%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Time Saved</span>
+                      <span className="font-semibold text-xl text-blue-600">45 hrs/month</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Error Rate</span>
+                      <span className="font-semibold text-xl text-red-600">1.5%</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    View Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

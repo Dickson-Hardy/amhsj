@@ -132,12 +132,12 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
   }
 
   return (
-    <div className=\"space-y-6\">
+    <div className="space-y-6">
       {/* Header and Controls */}
       <Card>
         <CardHeader>
-          <CardTitle className=\"flex items-center gap-2\">
-            <Shield className=\"h-5 w-5\" />
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
             Plagiarism Detection
           </CardTitle>
           <CardDescription>
@@ -149,16 +149,16 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
             <Button 
               onClick={handlePlagiarismCheck}
               disabled={isChecking}
-              className=\"w-full\"
+              className="w-full"
             >
               {isChecking ? (
                 <>
-                  <RefreshCw className=\"mr-2 h-4 w-4 animate-spin\" />
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                   Running Plagiarism Check...
                 </>
               ) : (
                 <>
-                  <Search className=\"mr-2 h-4 w-4\" />
+                  <Search className="mr-2 h-4 w-4" />
                   Run Plagiarism Check
                 </>
               )}
@@ -166,8 +166,8 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
           )}
 
           {error && (
-            <Alert variant=\"destructive\">
-              <AlertTriangle className=\"h-4 w-4\" />
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -178,17 +178,17 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
       {report && (
         <Card>
           <CardHeader>
-            <div className=\"flex items-center justify-between\">
-              <CardTitle className=\"flex items-center gap-2\">
-                <FileText className=\"h-5 w-5\" />
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
                 Plagiarism Report
               </CardTitle>
-              <div className=\"flex items-center gap-2\">
+              <div className="flex items-center gap-2">
                 <Badge variant={getSimilarityVariant(report.overallSimilarity)}>
                   {report.overallSimilarity.toFixed(1)}% Similarity
                 </Badge>
-                <Button variant=\"outline\" size=\"sm\">
-                  <Download className=\"mr-2 h-4 w-4\" />
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
                   Export
                 </Button>
               </div>
@@ -198,52 +198,52 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue=\"overview\" className=\"space-y-4\">
+            <Tabs defaultValue="overview" className="space-y-4">
               <TabsList>
-                <TabsTrigger value=\"overview\">Overview</TabsTrigger>
-                <TabsTrigger value=\"sources\">Sources ({report.sources.length})</TabsTrigger>
-                <TabsTrigger value=\"matches\">Text Matches ({report.textMatches.length})</TabsTrigger>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="sources">Sources ({report.sources.length})</TabsTrigger>
+                <TabsTrigger value="matches">Text Matches ({report.textMatches.length})</TabsTrigger>
               </TabsList>
 
-              <TabsContent value=\"overview\" className=\"space-y-4\">
+              <TabsContent value="overview" className="space-y-4">
                 {/* Overall Similarity Score */}
-                <div className=\"space-y-2\">
-                  <div className=\"flex items-center justify-between\">
-                    <span className=\"text-sm font-medium\">Overall Similarity</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Overall Similarity</span>
                     <span className={`text-sm font-semibold ${getSimilarityColor(report.overallSimilarity)}`}>
                       {report.overallSimilarity.toFixed(1)}%
                     </span>
                   </div>
                   <Progress 
                     value={report.overallSimilarity} 
-                    className=\"h-2\"
+                    className="h-2"
                   />
                 </div>
 
                 {/* Summary Cards */}
-                <div className=\"grid grid-cols-1 md:grid-cols-3 gap-4\">
-                  <div className=\"text-center p-4 border rounded-lg\">
-                    <div className=\"text-2xl font-bold text-blue-600\">{report.sources.length}</div>
-                    <div className=\"text-sm text-muted-foreground\">Sources Found</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{report.sources.length}</div>
+                    <div className="text-sm text-muted-foreground">Sources Found</div>
                   </div>
-                  <div className=\"text-center p-4 border rounded-lg\">
-                    <div className=\"text-2xl font-bold text-orange-600\">{report.textMatches.length}</div>
-                    <div className=\"text-sm text-muted-foreground\">Text Matches</div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{report.textMatches.length}</div>
+                    <div className="text-sm text-muted-foreground">Text Matches</div>
                   </div>
-                  <div className=\"text-center p-4 border rounded-lg\">
+                  <div className="text-center p-4 border rounded-lg">
                     <div className={`text-2xl font-bold ${getSimilarityColor(report.overallSimilarity)}`}>
                       {report.overallSimilarity < 10 ? 'Low' : report.overallSimilarity < 25 ? 'Medium' : 'High'}
                     </div>
-                    <div className=\"text-sm text-muted-foreground\">Risk Level</div>
+                    <div className="text-sm text-muted-foreground">Risk Level</div>
                   </div>
                 </div>
 
                 {/* Recommendations */}
                 <Alert>
                   {report.overallSimilarity < 10 ? (
-                    <CheckCircle className=\"h-4 w-4\" />
+                    <CheckCircle className="h-4 w-4" />
                   ) : (
-                    <AlertTriangle className=\"h-4 w-4\" />
+                    <AlertTriangle className="h-4 w-4" />
                   )}
                   <AlertDescription>
                     {report.overallSimilarity < 10 
@@ -256,39 +256,39 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
                 </Alert>
               </TabsContent>
 
-              <TabsContent value=\"sources\" className=\"space-y-4\">
-                <ScrollArea className=\"h-96\">
-                  <div className=\"space-y-4\">
+              <TabsContent value="sources" className="space-y-4">
+                <ScrollArea className="h-96">
+                  <div className="space-y-4">
                     {report.sources.map((source, index) => (
-                      <Card key={source.sourceId} className=\"p-4\">
-                        <div className=\"flex items-start justify-between\">
-                          <div className=\"flex-1\">
-                            <h4 className=\"font-medium text-sm\">{source.title}</h4>
+                      <Card key={source.sourceId} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm">{source.title}</h4>
                             {source.authors.length > 0 && (
-                              <p className=\"text-xs text-muted-foreground mt-1\">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 by {source.authors.join(', ')}
                               </p>
                             )}
                             {source.doi && (
-                              <p className=\"text-xs text-blue-600 mt-1\">
+                              <p className="text-xs text-blue-600 mt-1">
                                 DOI: {source.doi}
                               </p>
                             )}
                           </div>
-                          <div className=\"flex items-center gap-2 ml-4\">
+                          <div className="flex items-center gap-2 ml-4">
                             <Badge variant={getSimilarityVariant(source.similarity * 100)}>
                               {(source.similarity * 100).toFixed(1)}%
                             </Badge>
                             {source.url && (
-                              <Button variant=\"ghost\" size=\"sm\" asChild>
-                                <a href={source.url} target=\"_blank\" rel=\"noopener noreferrer\">
-                                  <ExternalLink className=\"h-4 w-4\" />
+                              <Button variant="ghost" size="sm" asChild>
+                                <a href={source.url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-4 w-4" />
                                 </a>
                               </Button>
                             )}
                           </div>
                         </div>
-                        <div className=\"mt-2 text-xs text-muted-foreground\">
+                        <div className="mt-2 text-xs text-muted-foreground">
                           {source.matchedWords} of {source.totalWords} words matched
                         </div>
                       </Card>
@@ -297,43 +297,43 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value=\"matches\" className=\"space-y-4\">
-                <ScrollArea className=\"h-96\">
-                  <div className=\"space-y-4\">
+              <TabsContent value="matches" className="space-y-4">
+                <ScrollArea className="h-96">
+                  <div className="space-y-4">
                     {report.textMatches.map((match, index) => (
-                      <Card key={index} className=\"p-4\">
-                        <div className=\"space-y-3\">
-                          <div className=\"flex items-center justify-between\">
+                      <Card key={index} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
                             <Badge variant={getSimilarityVariant(match.similarity * 100)}>
                               {(match.similarity * 100).toFixed(1)}% Match
                             </Badge>
                             {match.sourceTitle && (
-                              <span className=\"text-xs text-muted-foreground\">
+                              <span className="text-xs text-muted-foreground">
                                 from {match.sourceTitle}
                               </span>
                             )}
                           </div>
                           
-                          <div className=\"space-y-2\">
+                          <div className="space-y-2">
                             <div>
-                              <div className=\"text-xs font-medium text-muted-foreground mb-1\">Your Text:</div>
-                              <div className=\"text-sm p-2 bg-red-50 border border-red-200 rounded\">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">Your Text:</div>
+                              <div className="text-sm p-2 bg-red-50 border border-red-200 rounded">
                                 {match.originalText}
                               </div>
                             </div>
                             
                             <div>
-                              <div className=\"text-xs font-medium text-muted-foreground mb-1\">Similar Text:</div>
-                              <div className=\"text-sm p-2 bg-yellow-50 border border-yellow-200 rounded\">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">Similar Text:</div>
+                              <div className="text-sm p-2 bg-yellow-50 border border-yellow-200 rounded">
                                 {match.matchedText}
                               </div>
                             </div>
                           </div>
 
                           {match.sourceUrl && (
-                            <Button variant=\"outline\" size=\"sm\" asChild>
-                              <a href={match.sourceUrl} target=\"_blank\" rel=\"noopener noreferrer\">
-                                <Eye className=\"mr-2 h-4 w-4\" />
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={match.sourceUrl} target="_blank" rel="noopener noreferrer">
+                                <Eye className="mr-2 h-4 w-4" />
                                 View Source
                               </a>
                             </Button>

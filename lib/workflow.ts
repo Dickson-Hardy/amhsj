@@ -59,11 +59,14 @@ interface WorkflowHistoryEntry {
   systemGenerated?: boolean
 }
 
-// Workflow status types
+// Workflow status types - Updated to match AMHSJ workflow
 export type WorkflowStatus = 
   | "draft"
   | "submitted" 
-  | "technical_check"
+  | "editorial_assistant_review"  // New stage for initial screening
+  | "associate_editor_assignment" // New stage for associate editor selection
+  | "associate_editor_review"     // New stage for associate editor review
+  | "reviewer_assignment"         // New stage for reviewer selection
   | "under_review"
   | "revision_requested"
   | "revision_submitted"
@@ -86,14 +89,17 @@ export type ReviewRecommendation =
   | "major_revision"
   | "reject"
 
-// Workflow state machine configuration
+// Updated workflow state machine configuration
 export const WORKFLOW_TRANSITIONS: Record<WorkflowStatus, WorkflowStatus[]> = {
   draft: ["submitted", "withdrawn"],
-  submitted: ["technical_check", "rejected", "withdrawn"],
-  technical_check: ["under_review", "rejected", "revision_requested"],
+  submitted: ["editorial_assistant_review", "withdrawn"],
+  editorial_assistant_review: ["associate_editor_assignment", "revision_requested", "withdrawn"],
+  associate_editor_assignment: ["associate_editor_review", "revision_requested"],
+  associate_editor_review: ["reviewer_assignment", "revision_requested", "rejected"],
+  reviewer_assignment: ["under_review", "revision_requested"],
   under_review: ["revision_requested", "accepted", "rejected"],
   revision_requested: ["revision_submitted", "withdrawn"],
-  revision_submitted: ["technical_check", "under_review", "accepted", "rejected"],
+  revision_submitted: ["editorial_assistant_review", "associate_editor_review", "accepted", "rejected"],
   accepted: ["published"],
   rejected: ["withdrawn"], // Allow withdrawal after rejection for appeals
   published: [],
@@ -653,11 +659,11 @@ export class ReviewerAssignmentService {
   }
 
   /**
-   * Assign reviewers to an article with optional recommended reviewers integration
+   * Unified reviewer assignment method
    */
   async assignReviewers(
     articleId: string, 
-    reviewerIds: string[], 
+    reviewerIds: string[] = [], 
     editorId: string,
     deadline: Date = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days default
     useRecommendations: boolean = true
@@ -665,7 +671,7 @@ export class ReviewerAssignmentService {
     
     // If we should use recommendations and no specific reviewers provided, 
     // use the enhanced method
-    if (useRecommendations && (!reviewerIds || reviewerIds.length === 0)) {
+    if (useRecommendations && reviewerIds.length === 0) {
       const result = await this.assignReviewersWithRecommendations(
         articleId, 
         editorId, 
@@ -680,18 +686,18 @@ export class ReviewerAssignmentService {
       }
     }
 
-    // Otherwise use direct assignment
-    return this.assignSpecificReviewers(articleId, reviewerIds, editorId, deadline)
+    // Direct assignment of specific reviewers
+    return this.performDirectAssignment(articleId, reviewerIds, editorId, deadline)
   }
 
   /**
-   * Direct assignment of specific reviewers (legacy method renamed for clarity)
+   * Perform direct assignment of specific reviewers
    */
-  private async assignSpecificReviewers(
+  private async performDirectAssignment(
     articleId: string, 
     reviewerIds: string[], 
     editorId: string,
-    deadline: Date = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000)
+    deadline: Date
   ): Promise<{ success: boolean; assignedReviewers: string[]; errors: string[] }> {
     const errors: string[] = []
     const assignedReviewers: string[] = []
@@ -964,7 +970,7 @@ export class ArticleSubmissionService {
           .update(articles)
           .set({
             editorId: suitableEditor.id,
-            status: "technical_check",
+            status: "editorial_assistant_review",
             updatedAt: new Date()
           })
           .where(eq(articles.id, articleId))
@@ -972,7 +978,7 @@ export class ArticleSubmissionService {
         // Update submission status
         await this.updateSubmissionStatus(
           submissionId,
-          "technical_check",
+          "editorial_assistant_review",
           "system",
           "Automatically assigned to editor"
         )
@@ -1096,7 +1102,7 @@ export class ArticleSubmissionService {
       }
 
       // Validate status transition
-      const validation = validateWorkflowTransition(currentStatus, newStatus)
+      const validation = validateWorkflowTransition(submission.status as WorkflowStatus, newStatus)
       
       if (!validation.valid) {
         return {
@@ -1223,61 +1229,61 @@ export class ReviewManagementService {
         })
         .where(eq(reviewerProfiles.userId, reviewerId))
 
-      // Check if all reviews are complete
-      const allReviews = await db.query.reviews.findMany({
-        where: review.articleId ? eq(reviews.articleId, review.articleId) : undefined
-      })
+              // Check if all reviews are complete
+        const allReviews = await db.query.reviews.findMany({
+          where: review.articleId ? eq(reviews.articleId, review.articleId) : undefined
+        })
 
-      const completedReviews = allReviews.filter(r => r.status === "completed")
-      const allReviewsComplete = allReviews.length > 0 && completedReviews.length === allReviews.length
+        const completedReviews = allReviews.filter(r => r.status === "completed")
+        const allReviewsComplete = allReviews.length > 0 && completedReviews.length === allReviews.length
 
-      if (allReviewsComplete) {
-        // Update article status based on review recommendations
-        const recommendations = completedReviews.map(r => r.recommendation)
-        const newStatus = this.determineArticleStatusFromReviews(recommendations)
+        if (allReviewsComplete) {
+          // Update article status based on review recommendations
+          const recommendations = completedReviews.map(r => r.recommendation)
+          const newStatus = this.determineArticleStatusFromReviews(recommendations)
 
-        if (review.articleId) {
-          await db
-            .update(articles)
-            .set({
-              status: newStatus,
-              updatedAt: new Date()
-            })
-            .where(eq(articles.id, review.articleId))
+          if (review.articleId) {
+            await db
+              .update(articles)
+              .set({
+                status: newStatus,
+                updatedAt: new Date()
+              })
+              .where(eq(articles.id, review.articleId))
+          }
+
+          // Notify editor and author
+          const article = review.article as { editorId?: string; authorId?: string; title?: string; id?: string } | undefined
+          if (article && article.editorId) {
+            await createSystemNotification(
+              article.editorId,
+              "REVIEWS_COMPLETE",
+              "All Reviews Completed",
+              `All reviews completed for: "${article.title ?? ''}"`,
+              article.id ?? ''
+            )
+          }
+
+          if (article && article.authorId) {
+            await createSystemNotification(
+              article.authorId,
+              "REVIEWS_COMPLETE",
+              "Reviews Completed",
+              `Reviews have been completed for your submission: "${article.title ?? ''}"`,
+              article.id ?? ''
+            )
+          }
         }
-
-        // Notify editor and author
-        const article = review.article as { editorId?: string; authorId?: string; title?: string; id?: string } | undefined
-        if (article && article.editorId) {
-          await createSystemNotification(
-            article.editorId,
-            "REVIEWS_COMPLETE",
-            "All Reviews Completed",
-            `All reviews completed for: "${article.title ?? ''}"`,
-            article.id ?? ''
-          )
-        }
-
-        if (article && article.authorId) {
-          await createSystemNotification(
-            article.authorId,
-            "REVIEWS_COMPLETE",
-            "Reviews Completed",
-            `Reviews have been completed for your submission: "${article.title ?? ''}"`,
-            article.id ?? ''
-          )
-        }
-      }
 
       // Notify editor of review completion
-      const article = review.article as { editorId?: string; title?: string; id?: string } | undefined
-      if (article && article.editorId) {
+      const editorArticle = review.article as { editorId?: string; title?: string; id?: string } | undefined
+      if (editorArticle && editorArticle.editorId) {
         await createSystemNotification(
-          article.editorId,
+          editorArticle.editorId,
           "REVIEW_SUBMITTED",
           "Review Submitted",
-          `A review has been submitted for: "${article.title ?? ''}"`,
-          article.id ?? ''
+          `A review has been submitted for: "${editorArticle.title ?? ''}"`,
+          editorArticle.id ?? ''
         )
       }
 
@@ -1293,7 +1299,7 @@ export class ReviewManagementService {
     const validRecommendations = recommendations.filter(r => r) as string[]
     
     if (validRecommendations.length === 0) {
-      return "technical_check" // No valid recommendations yet
+      return "editorial_assistant_review" // No valid recommendations yet
     }
     
     // Count different recommendation types
@@ -1327,7 +1333,7 @@ export class ReviewManagementService {
       return "accepted"
     }
 
-    return "technical_check" // Default fallback
+    return "editorial_assistant_review" // Default fallback
   }
 
   /**
@@ -1386,6 +1392,222 @@ export class ReviewManagementService {
     } catch (error) {
       console.error("Error checking overdue reviews:", error)
     }
+  }
+}
+
+/**
+ * Editorial Assistant Service - Handles initial screening and assignment
+ */
+export class EditorialAssistantService {
+  
+  /**
+   * Perform initial screening of submitted manuscript
+   */
+  async performInitialScreening(
+    submissionId: string,
+    editorialAssistantId: string,
+    screeningData: {
+      fileCompleteness: boolean
+      plagiarismCheck: boolean
+      formatCompliance: boolean
+      ethicalCompliance: boolean
+      notes?: string
+    }
+  ): Promise<{ success: boolean; message: string; nextStatus?: WorkflowStatus }> {
+    try {
+      const submission = await db.query.submissions.findFirst({
+        where: eq(submissions.id, submissionId)
+      })
+
+      if (!submission) {
+        return { success: false, message: "Submission not found" }
+      }
+
+      // Check if all required checks pass
+      const allChecksPass = screeningData.fileCompleteness && 
+                           screeningData.plagiarismCheck && 
+                           screeningData.formatCompliance && 
+                           screeningData.ethicalCompliance
+
+      if (allChecksPass) {
+        // Move to associate editor assignment stage
+        await this.updateSubmissionStatus(
+          submissionId,
+          "associate_editor_assignment",
+          editorialAssistantId,
+          "Initial screening completed - ready for associate editor assignment"
+        )
+
+        // Notify editorial assistant of successful screening
+        await this.createSystemNotification(
+          editorialAssistantId,
+          "SCREENING_COMPLETED",
+          "Screening Completed",
+          `Manuscript ${submission.id} passed initial screening`,
+          submissionId
+        )
+
+        return {
+          success: true,
+          message: "Screening completed successfully",
+          nextStatus: "associate_editor_assignment"
+        }
+      } else {
+        // Return to author for revision
+        await this.updateSubmissionStatus(
+          submissionId,
+          "revision_requested",
+          editorialAssistantId,
+          `Initial screening failed: ${screeningData.notes || "Please address the identified issues"}`
+        )
+
+        // Notify author of required revisions
+        const article = await db.query.articles.findFirst({
+          where: eq(articles.id, submission.articleId!)
+        })
+
+        if (article) {
+          await this.createSystemNotification(
+            article.authorId!,
+            "REVISION_REQUESTED",
+            "Revision Required",
+            `Your manuscript "${article.title}" requires revisions based on initial screening`,
+            submissionId
+          )
+        }
+
+        return {
+          success: true,
+          message: "Manuscript returned to author for revision",
+          nextStatus: "revision_requested"
+        }
+      }
+
+    } catch (error) {
+      console.error("Error in initial screening:", error)
+      return { success: false, message: "Screening failed due to system error" }
+    }
+  }
+
+  /**
+   * Assign manuscript to associate editor
+   */
+  async assignAssociateEditor(
+    submissionId: string,
+    associateEditorId: string,
+    editorialAssistantId: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const submission = await db.query.submissions.findFirst({
+        where: eq(submissions.id, submissionId)
+      })
+
+      if (!submission) {
+        return { success: false, message: "Submission not found" }
+      }
+
+      // Update submission with associate editor assignment
+      // Update the article with the editor assignment
+      if (submission.articleId) {
+        await db
+          .update(articles)
+          .set({
+            editorId: associateEditorId,
+            status: "associate_editor_review",
+            updatedAt: new Date()
+          })
+          .where(eq(articles.id, submission.articleId))
+      }
+
+      // Create editor assignment record
+      await db.insert(editorAssignments).values({
+        articleId: submission.articleId!,
+        editorId: associateEditorId,
+        assignedBy: editorialAssistantId,
+        status: "pending",
+        assignedAt: new Date(),
+        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+        systemGenerated: false
+      })
+
+      // Update submission status
+      await this.updateSubmissionStatus(
+        submissionId,
+        "associate_editor_review",
+        editorialAssistantId,
+        `Assigned to Associate Editor for content review`
+      )
+
+      // Notify associate editor
+      const associateEditor = await db.query.users.findFirst({
+        where: eq(users.id, associateEditorId)
+      })
+
+      if (associateEditor) {
+        await this.createSystemNotification(
+          associateEditorId,
+          "ASSOCIATE_EDITOR_ASSIGNMENT",
+          "New Associate Editor Assignment",
+          `You have been assigned manuscript ${submission.id} for review`,
+          submissionId
+        )
+      }
+
+      return {
+        success: true,
+        message: "Associate editor assigned successfully"
+      }
+
+    } catch (error) {
+      console.error("Error assigning associate editor:", error)
+      return { success: false, message: "Failed to assign associate editor" }
+    }
+  }
+
+  /**
+   * Update submission status with history
+   */
+  private async updateSubmissionStatus(
+    submissionId: string,
+    newStatus: WorkflowStatus,
+    userId: string,
+    notes?: string
+  ): Promise<void> {
+    await db
+      .update(submissions)
+      .set({
+        status: newStatus,
+        statusHistory: sql`${submissions.statusHistory} || ${JSON.stringify([{
+          status: newStatus,
+          timestamp: new Date(),
+          userId: userId,
+          notes: notes,
+          systemGenerated: false
+        }])}::jsonb`,
+        updatedAt: new Date()
+      })
+      .where(eq(submissions.id, submissionId))
+  }
+
+  /**
+   * Create system notification
+   */
+  private async createSystemNotification(
+    userId: string,
+    type: string,
+    title: string,
+    message: string,
+    referenceId?: string
+  ): Promise<void> {
+    await db.insert(notifications).values({
+      userId: userId,
+      type: type,
+      title: title,
+      message: message,
+      relatedId: referenceId,
+      isRead: false,
+      createdAt: new Date()
+    })
   }
 }
 
