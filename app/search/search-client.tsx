@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import AdvancedSearch from '@/components/AdvancedSearch'
+import { AdvancedSearch } from '@/components/advanced-search'
 
 interface SearchFilters {
   query: string

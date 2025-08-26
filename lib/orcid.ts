@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm'
 import { logError, logInfo } from './logger'
 
 // ORCID API configuration
+// test: https://sandbox.orcid.org
 const ORCID_API_BASE = process.env.NODE_ENV === 'production' 
   ? 'https://api.orcid.org' 
   : 'https://api.sandbox.orcid.org'
