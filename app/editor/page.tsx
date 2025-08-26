@@ -37,6 +37,7 @@ import {
   Settings,
   Zap,
   Shield,
+  Bell,
 } from "lucide-react"
 
 interface Manuscript {
