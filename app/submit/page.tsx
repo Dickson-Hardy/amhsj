@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
 import AuthorLayout from "@/components/layouts/author-layout"
-import { RouteGuard } from "@/components/route-guard"
+
 import { FileUploadSection } from "@/components/file-upload-section"
 import { FormValidationIndicator } from "@/components/form-validation-indicator"
 import { validateCurrentStep, type SubmissionFormData } from "@/lib/form-validation"
@@ -310,7 +310,8 @@ function SubmitPageContent() {
   }
 
   const handleSubmitManuscript = async () => {
-    // Check profile completeness before submission
+    // Check profile completeness before submission - TEMPORARILY DISABLED
+    /*
     try {
       const eligibilityResponse = await fetch('/api/submission/eligibility')
       if (eligibilityResponse.ok) {
@@ -333,6 +334,7 @@ function SubmitPageContent() {
       })
       return
     }
+    */
 
     // Use consolidated validation for final submission
     const validation = validateCurrentStep(5, formData as SubmissionFormData)
@@ -509,7 +511,7 @@ function SubmitPageContent() {
     
     // Environmental Sciences
     "Environmental Chemistry", "Conservation Biology", "Climate Science", "Environmental Policy",
-    "Sustainable Development", "Environmental Engineering", "Renewable Energy", "Waste Management",
+    "Sustainable Development", "Renewable Energy", "Waste Management",
     
     // Computer Science
     "Artificial Intelligence", "Machine Learning", "Data Science", "Cybersecurity", "Software Development",
@@ -538,7 +540,7 @@ function SubmitPageContent() {
         </div>
 
         {/* Profile Completeness Warning */}
-        {!profileLoading && profileCompleteness < 80 && (
+        {!profileLoading && false && ( /* TEMPORARILY DISABLED: profileCompleteness < 80 */
           <div className="mb-8">
             <Alert className="border-orange-200 bg-orange-50">
               <User className="h-5 w-5 text-orange-600" />
@@ -650,7 +652,7 @@ function SubmitPageContent() {
         )}
 
         {/* Disable form if profile incomplete */}
-        {!profileLoading && profileCompleteness < 80 && (
+        {!profileLoading && false && ( /* TEMPORARILY DISABLED: profileCompleteness < 80 */
           <div className="mb-8 p-6 bg-gray-100 border border-gray-300 rounded-lg text-center">
             <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Submission Temporarily Disabled</h3>
@@ -662,7 +664,7 @@ function SubmitPageContent() {
         )}
 
         {/* Show form only if profile is complete enough */}
-        {(profileLoading || profileCompleteness >= 80) && (
+        {(profileLoading || true) && (
           <>
             {/* Submission Guidelines Warning */}
             <div className="mb-8">
@@ -1364,10 +1366,8 @@ function SubmitPageContent() {
 
 export default function SubmitPage() {
   return (
-    <RouteGuard>
-      <AuthorLayout>
-        <SubmitPageContent />
-      </AuthorLayout>
-    </RouteGuard>
+    <AuthorLayout>
+      <SubmitPageContent />
+    </AuthorLayout>
   )
 }

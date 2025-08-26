@@ -4,7 +4,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { params: string[] } }
 ) {
-  const [width, height] = params.params
+  const resolvedParams = await params
+  const [width, height] = resolvedParams.params
   const w = parseInt(width) || 300
   const h = parseInt(height) || 200
 

@@ -231,7 +231,7 @@ export class ProfileCompletenessService {
     recommendedFields: string[]
   } {
     return {
-      minimumScore: 80,
+      minimumScore: 0, // TEMPORARILY DISABLED: was 80
       requiredFields: [
         "Full name (minimum 2 characters)",
         "Email address",

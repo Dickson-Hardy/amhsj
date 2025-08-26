@@ -509,6 +509,9 @@ export const userDocuments = pgTable("user_documents", {
   isActive: boolean("is_active").default(true),
   uploadedAt: timestamp("uploaded_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Cloudinary fields
+  cloudinaryPublicId: text("cloudinary_public_id"),
+  cloudinaryUrl: text("cloudinary_url"),
 })
 
 // Review assignments table for tracking reviewer assignments

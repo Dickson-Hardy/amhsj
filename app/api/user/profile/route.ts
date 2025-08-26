@@ -140,8 +140,8 @@ export async function PUT(request: Request) {
       .set({
         name: name.trim(),
         affiliation: affiliation?.trim() || null,
-        bio: bio?.trim() || null,
         orcid: orcid?.trim() || null,
+        bio: bio?.trim() || null,
         expertise: expertise || [],
         specializations: specializations || [],
         researchInterests: researchInterests || [],

@@ -4,11 +4,10 @@ import { authOptions } from "@/lib/auth"
 import { logError } from "@/lib/logger"
 import { z } from "zod"
 import { v4 as uuidv4 } from "uuid"
-import { promises as fs } from "fs"
-import path from "path"
 import { db } from "@/lib/db"
 import { userDocuments } from "@/lib/db/schema"
 import { eq, desc, and } from "drizzle-orm"
+import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 // File upload validation schema
 const fileUploadSchema = z.object({
@@ -93,22 +92,26 @@ export async function POST(request: NextRequest) {
       processed: false
     }
 
-    // Store file to local filesystem or cloud storage
+    // Store file to Cloudinary
     try {
       // Decode base64 file data (handle potential data URL prefix)
       const base64 = fileData.includes(',') ? fileData.split(',')[1] : fileData
       const buffer = Buffer.from(base64, 'base64')
       
-      // Create uploads directory if it doesn't exist
-      const uploadsDir = path.join(process.cwd(), 'uploads', category)
-      await fs.mkdir(uploadsDir, { recursive: true })
+      // Generate unique filename for Cloudinary
+      const uniqueFilename = `${fileId}_${Date.now()}`
+      const folderPath = `manuscript-submissions/${category}/${session.user.id}`
       
-      // Generate unique filename
-      const uniqueFilename = `${fileId}${fileExtension}`
-      const filePath = path.join(uploadsDir, uniqueFilename)
+      // Determine resource type based on file extension
+      const resourceType = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(fileExtension) ? 'image' : 'raw'
       
-      // Write file to filesystem
-      await fs.writeFile(filePath, buffer)
+      // Upload to Cloudinary
+      const cloudinaryResult = await uploadToCloudinary(
+        buffer,
+        uniqueFilename,
+        folderPath,
+        resourceType
+      )
 
       // Infer simple MIME type from extension
       const mimeByExt: Record<string, string> = {
@@ -132,12 +135,15 @@ export async function POST(request: NextRequest) {
         id: fileId,
         userId: session.user.id,
         documentType: category,
-        fileName: uniqueFilename,
+        fileName: `${uniqueFilename}${fileExtension}`,
         originalName: fileName,
-        filePath: filePath,
+        filePath: cloudinaryResult.secure_url, // Store Cloudinary URL
         fileSize: buffer.length,
         mimeType: mimeType,
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
+        // Store additional Cloudinary metadata
+        cloudinaryPublicId: cloudinaryResult.public_id,
+        cloudinaryUrl: cloudinaryResult.secure_url
       })
 
       // Return file upload response
@@ -145,16 +151,18 @@ export async function POST(request: NextRequest) {
         success: true,
         file: {
           ...fileMetadata,
-          url: `/api/files/${fileId}`,
+          url: cloudinaryResult.secure_url,
           downloadUrl: `/api/files/${fileId}/download`,
-          previewUrl: `/api/files/${fileId}/preview`
+          previewUrl: cloudinaryResult.secure_url,
+          cloudinaryPublicId: cloudinaryResult.public_id
         },
-        message: "File uploaded successfully"
+        message: "File uploaded successfully to Cloudinary"
       })
     } catch (storageError) {
-      logError(storageError as Error, { endpoint: "/api/upload", operation: "file_storage" })
+      logError(storageError as Error, { endpoint: "/api/upload", operation: "cloudinary_storage" })
       return NextResponse.json({ 
-        error: "Failed to store file" 
+        error: "Failed to store file to Cloudinary",
+        details: storageError instanceof Error ? storageError.message : String(storageError)
       }, { status: 500 })
     }  } catch (error) {
     logError(error as Error, { endpoint: "/api/upload", operation: "POST" })
