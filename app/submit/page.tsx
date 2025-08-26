@@ -357,31 +357,34 @@ function SubmitPageContent() {
       const keywordArray = formData.keywords.split(',').map(k => k.trim()).filter(Boolean)
       
       const submissionData = {
-        title: formData.title,
-        abstract: formData.abstract,
-        keywords: keywordArray,
-        category: formData.category,
-        authors: formData.authors.map(author => ({
-          firstName: author.firstName,
-          lastName: author.lastName,
-          email: author.email,
-          orcid: author.orcid,
-          institution: author.institution,
-          department: author.department,
-          country: author.country,
-          affiliation: author.affiliation,
-          isCorrespondingAuthor: author.isCorrespondingAuthor,
-        })),
-        recommendedReviewers: formData.recommendedReviewers
-          .filter(reviewer => reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim())
-          .map(reviewer => ({
-            name: reviewer.name.trim(),
-            email: reviewer.email.trim(),
-            affiliation: reviewer.affiliation.trim(),
-            expertise: reviewer.expertise?.trim() || undefined,
+        articleData: {
+          title: formData.title,
+          abstract: formData.abstract,
+          keywords: keywordArray,
+          category: formData.category,
+          authors: formData.authors.map(author => ({
+            firstName: author.firstName,
+            lastName: author.lastName,
+            email: author.email,
+            orcid: author.orcid || undefined,
+            affiliation: author.affiliation || `${author.institution}, ${author.department}, ${author.country}`.replace(/^, |, $|,\s*,/g, '').trim(),
+            isCorrespondingAuthor: author.isCorrespondingAuthor,
           })),
-        funding: formData.funding || undefined,
-        conflicts: formData.conflicts || undefined,
+          files: [], // TODO: Add uploaded files integration with Cloudinary
+          recommendedReviewers: formData.recommendedReviewers
+            .filter(reviewer => reviewer.name.trim() && reviewer.email.trim() && reviewer.affiliation.trim())
+            .map(reviewer => ({
+              name: reviewer.name.trim(),
+              email: reviewer.email.trim(),
+              affiliation: reviewer.affiliation.trim(),
+              expertise: reviewer.expertise?.trim() || "General expertise",
+            })),
+          coverLetter: undefined, // TODO: Add cover letter field to form
+          ethicalApproval: uploadedFiles.ethicsApproval && uploadedFiles.ethicsApproval.length > 0,
+          conflictOfInterest: false, // TODO: Add conflict of interest field to form
+          funding: formData.funding || undefined,
+        },
+        submissionType: "new",
       }
 
       const response = await fetch('/api/workflow/submit', {
