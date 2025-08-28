@@ -14,6 +14,8 @@ export function getRoleBasedDashboard(role: string | undefined): string {
     case "production-editor":
     case "editor":
       return "/editor/dashboard"
+    case "editorial-assistant":
+      return "/editorial-assistant"
     case "reviewer":
       return "/reviewer/dashboard"
     case "author":

@@ -18,7 +18,12 @@
     "create-admin": "node scripts/create-admin.js",
     "setup-roles": "node scripts/setup-essential-roles.cjs",
     "setup-editorial-assistant": "node scripts/setup-editorial-assistant.cjs",
-    "backup": "bash scripts/backup-database.sh"
+    "backup": "bash scripts/backup-database.sh",
+    "db:setup": "node scripts/run-editorial-assistant-setup.js",
+    "db:test": "node scripts/test-editorial-assistant-login.js",
+    "email:test": "node scripts/test-email-notifications.js",
+    "editorial:setup": "npm run db:setup && npm run email:test",
+    "editorial:verify": "npm run db:test"
   },
   "dependencies": {
     "@auth/core": "latest",
