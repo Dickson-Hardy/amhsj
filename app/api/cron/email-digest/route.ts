@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
   try {
     // Verify this is a cron request (optional security check)
     const authHeader = request.headers.get('authorization')
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (process.env.CRON_SECRET && authHeader !== `process.env.AUTH_TOKEN_PREFIX + ' '${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('📧 Starting weekly email digest job...')
+    logger.info('📧 Starting weekly email digest job...')
     const startTime = Date.now()
     
     const now = new Date()
@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
     // Get users who should receive digest emails
     const digestRecipients = await getDigestRecipients()
     
-    console.log(`📊 Weekly stats: ${JSON.stringify(stats, null, 2)}`)
-    console.log(`👥 Sending digests to ${digestRecipients.length} users`)
+    logger.info(`📊 Weekly stats: ${JSON.stringify(stats, null, 2)}`)
+    logger.info(`👥 Sending digests to ${digestRecipients.length} users`)
     
     let successCount = 0
     let failureCount = 0
@@ -41,14 +41,14 @@ export async function GET(request: NextRequest) {
       try {
         await sendDigestEmail(recipient, stats, oneWeekAgo, now)
         successCount++
-        console.log(`✅ Digest sent to ${recipient.email}`)
+        logger.info(`✅ Digest sent to ${recipient.email}`)
         
         // Rate limiting: small delay between emails
         await new Promise(resolve => setTimeout(resolve, 100))
         
       } catch (error) {
         failureCount++
-        console.error(`❌ Failed to send digest to ${recipient.email}:`, error)
+        logger.error(`❌ Failed to send digest to ${recipient.email}:`, error)
       }
     }
     
@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
     
     const duration = Date.now() - startTime
     
-    console.log(`🏁 Email digest job completed in ${duration}ms`)
-    console.log(`📈 Success: ${successCount}, Failures: ${failureCount}`)
+    logger.info(`🏁 Email digest job completed in ${duration}ms`)
+    logger.info(`📈 Success: ${successCount}, Failures: ${failureCount}`)
 
     return NextResponse.json({
       success: true,
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Email digest job failed:', error)
+    logger.error('❌ Email digest job failed:', error)
     logError(error as Error, { context: 'email-digest-cron-job' })
     
     return NextResponse.json({
@@ -151,7 +151,7 @@ async function getWeeklyStats(startDate: Date, endDate: Date) {
       latestArticles: latestArticles || []
     }
   } catch (error) {
-    console.error('Error getting weekly stats:', error)
+    logger.error('Error getting weekly stats:', error)
     return {
       newSubmissions: 0,
       newUsers: 0,
@@ -185,7 +185,7 @@ async function getDigestRecipients() {
 
     return recipients
   } catch (error) {
-    console.error('Error getting digest recipients:', error)
+    logger.error('Error getting digest recipients:', error)
     return []
   }
 }
@@ -193,7 +193,7 @@ async function getDigestRecipients() {
 /**
  * Send digest email to individual user
  */
-async function sendDigestEmail(recipient: any, stats: any, startDate: Date, endDate: Date) {
+async function sendDigestEmail(recipient: unknown, stats: any, startDate: Date, endDate: Date) {
   const weekRange = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
   
   // Create personalized content based on user role
@@ -227,7 +227,7 @@ async function sendDigestEmail(recipient: any, stats: any, startDate: Date, endD
     `
   }
 
-  const latestArticlesList = stats.latestArticles.map((article: any) => 
+  const latestArticlesList = stats.latestArticles.map((article: unknown) => 
     `<li><strong>${article.title}</strong> (${article.category})</li>`
   ).join('')
 
@@ -253,7 +253,7 @@ async function sendDigestEmail(recipient: any, stats: any, startDate: Date, endD
 /**
  * Send admin summary email
  */
-async function sendAdminSummary(stats: any, successCount: number, failureCount: number, startDate: Date, endDate: Date) {
+async function sendAdminSummary(stats: unknown, successCount: number, failureCount: number, startDate: Date, endDate: Date) {
   if (!process.env.ADMIN_EMAIL) return
 
   const weekRange = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
@@ -283,7 +283,7 @@ async function sendAdminSummary(stats: any, successCount: number, failureCount: 
         
         <h3>📚 Latest Publications</h3>
         <ul>
-          ${stats.latestArticles.map((article: any) => 
+          ${stats.latestArticles.map((article: unknown) => 
             `<li><strong>${article.title}</strong> (${article.category}) - ${new Date(article.publishedAt).toLocaleDateString()}</li>`
           ).join('')}
         </ul>
@@ -294,9 +294,9 @@ async function sendAdminSummary(stats: any, successCount: number, failureCount: 
       category: 'system'
     })
     
-    console.log('✅ Admin summary sent')
+    logger.error('✅ Admin summary sent')
   } catch (error) {
-    console.error('❌ Failed to send admin summary:', error)
+    logger.error('❌ Failed to send admin summary:', error)
   }
 }
 

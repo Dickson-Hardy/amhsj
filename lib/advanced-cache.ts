@@ -134,12 +134,12 @@ class AdvancedCacheSystem {
       this.redis = new Redis(CACHE_CONFIG.redis)
       
       this.redis.on('connect', () => {
-        console.log('✅ Redis cache connected')
+        logger.info('✅ Redis cache connected')
         this.stats.redis.connected = true
       })
 
       this.redis.on('error', (err) => {
-        console.warn('⚠️ Redis cache error:', err.message)
+        logger.warn('⚠️ Redis cache error:', err.message)
         this.stats.redis.connected = false
         this.stats.errors++
       })
@@ -148,9 +148,9 @@ class AdvancedCacheSystem {
       await this.redis.ping()
       this.initialized = true
       
-      console.log('🚀 Advanced cache system initialized')
+      logger.error('🚀 Advanced cache system initialized')
     } catch (error) {
-      console.warn('⚠️ Redis unavailable, using memory cache only:', error)
+      logger.warn('⚠️ Redis unavailable, using memory cache only:', error)
       this.initialized = true
     }
   }
@@ -189,7 +189,7 @@ class AdvancedCacheSystem {
       this.stats.misses++
       return null
     } catch (error) {
-      console.error('Cache get error:', error)
+      logger.error('Cache get error:', error)
       this.stats.errors++
       return null
     }
@@ -200,7 +200,7 @@ class AdvancedCacheSystem {
    */
   async set(
     key: string,
-    value: any,
+    value: unknown,
     ttl: number = CacheTTL.MEDIUM,
     level: CacheLevel = CacheLevel.ALL,
     tags?: string[]
@@ -228,7 +228,7 @@ class AdvancedCacheSystem {
       this.updateMemoryStats()
       return true
     } catch (error) {
-      console.error('Cache set error:', error)
+      logger.error('Cache set error:', error)
       this.stats.errors++
       return false
     }
@@ -259,7 +259,7 @@ class AdvancedCacheSystem {
 
       return deleted
     } catch (error) {
-      console.error('Cache delete error:', error)
+      logger.error('Cache delete error:', error)
       this.stats.errors++
       return false
     }
@@ -303,7 +303,7 @@ class AdvancedCacheSystem {
       this.updateMemoryStats()
       return cleared
     } catch (error) {
-      console.error('Cache clear error:', error)
+      logger.error('Cache clear error:', error)
       this.stats.errors++
       return 0
     }
@@ -326,7 +326,7 @@ class AdvancedCacheSystem {
       this.updateMemoryStats()
       return { ...this.stats }
     } catch (error) {
-      console.error('Cache stats error:', error)
+      logger.error('Cache stats error:', error)
       return this.stats
     }
   }
@@ -334,8 +334,8 @@ class AdvancedCacheSystem {
   /**
    * Warm up cache with commonly accessed data
    */
-  async warmup(patterns: Array<{ key: string; fetcher: () => Promise<any>; ttl?: number }>): Promise<void> {
-    console.log('🔄 Warming up cache...')
+  async warmup(patterns: Array<{ key: string; fetcher: () => Promise<unknown>; ttl?: number }>): Promise<void> {
+    logger.info('🔄 Warming up cache...')
     
     const warmupPromises = patterns.map(async ({ key, fetcher, ttl = CacheTTL.LONG }) => {
       try {
@@ -347,12 +347,12 @@ class AdvancedCacheSystem {
           }
         }
       } catch (error) {
-        console.warn(`Cache warmup failed for ${key}:`, error)
+        logger.warn(`Cache warmup failed for ${key}:`, error)
       }
     })
 
     await Promise.allSettled(warmupPromises)
-    console.log('✅ Cache warmup completed')
+    logger.info('✅ Cache warmup completed')
   }
 
   /**
@@ -405,7 +405,7 @@ class AdvancedCacheSystem {
   private async clearByTags(tags: string[]): Promise<void> {
     // This would require scanning all cache entries
     // Implementation depends on specific tagging requirements
-    console.warn('Clear by tags not fully implemented')
+    logger.warn('Clear by tags not fully implemented')
   }
 
   private matchesPattern(key: string, pattern: string): boolean {
@@ -435,10 +435,10 @@ export const cacheSystem = new AdvancedCacheSystem()
 
 // Cache decorators for common use cases
 export function Cacheable(ttl: number = CacheTTL.MEDIUM, keyPrefix?: string) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const cacheKey = `${keyPrefix || target.constructor.name}:${propertyKey}:${createHash('md5').update(JSON.stringify(args)).digest('hex')}`
       
       // Try cache first

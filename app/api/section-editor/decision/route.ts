@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     // Send notification emails to authors
     try {
       // This would send appropriate decision emails based on the decision type
-      console.log(`Decision "${decision}" made for submission ${submissionId} - email notifications would be sent to authors`)
+      logger.error(`Decision "${decision}" made for submission ${submissionId} - email notifications would be sent to authors`)
     } catch (emailError) {
       logError(emailError as Error, {
         operation: "decision_notification_email",
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error making editorial decision:", error)
+    logger.error("Error making editorial decision:", error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -43,7 +43,7 @@ export async function DELETE(
     })
     
   } catch (error) {
-    console.error("Error deleting article:", error)
+    logger.error("Error deleting article:", error)
     return NextResponse.json(
       { error: "Failed to delete article" },
       { status: 500 }
@@ -83,7 +83,7 @@ async function getArticleById(articleId: string) {
 
     return article || null
   } catch (error) {
-    console.error('Error fetching article:', error)
+    logger.error('Error fetching article:', error)
     return null
   }
 }
@@ -96,14 +96,14 @@ async function deleteArticleById(articleId: string) {
       .returning()
 
     if (!deletedArticle) {
-      throw new Error('Article not found')
+      throw new NotFoundError('Article not found')
     }
 
-    console.log(`Article ${articleId} deleted from database`)
+    logger.error(`Article ${articleId} deleted from database`)
     return deletedArticle
   } catch (error) {
-    console.error('Error deleting article from database:', error)
-    throw new Error('Failed to delete article from database')
+    logger.error('Error deleting article from database:', error)
+    throw new AppError('Failed to delete article from database')
   }
 }
 
@@ -120,8 +120,8 @@ async function logArticleDeletion(adminEmail: string, articleId: string, article
     //   }
     // })
     
-    console.log(`Article deletion logged by ${adminEmail}: "${articleTitle}" (${articleId})`)
+    logger.error(`Article deletion logged by ${adminEmail}: "${articleTitle}" (${articleId})`)
   } catch (error) {
-    console.error('Error logging article deletion:', error)
+    logger.error('Error logging article deletion:', error)
   }
 }

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: health
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'GET /api/monitoring/health' })
     
     return NextResponse.json({
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         responseTime: health.metrics.responseTime
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'POST /api/monitoring/health' })
     
     return NextResponse.json({
@@ -114,9 +114,9 @@ async function getSystemMetrics() {
     const reviewCount = await db.execute(sql`SELECT COUNT(*) as count FROM reviews`)
     
     return {
-      users: parseInt((userCount[0] as any)?.count || '0'),
-      articles: parseInt((articleCount[0] as any)?.count || '0'),
-      reviews: parseInt((reviewCount[0] as any)?.count || '0'),
+      users: parseInt((userCount[0] as unknown)?.count || '0'),
+      articles: parseInt((articleCount[0] as unknown)?.count || '0'),
+      reviews: parseInt((reviewCount[0] as unknown)?.count || '0'),
       memory: process.memoryUsage(),
       uptime: process.uptime()
     }

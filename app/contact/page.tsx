@@ -180,7 +180,7 @@ export default function ContactPage() {
                       <h3 className="font-semibold text-gray-800 mb-1">{dept.title}</h3>
                       <p className="text-sm text-gray-600 mb-2">{dept.description}</p>
                       <a
-                        href={`mailto:${dept.email}`}
+                        href={`process.env.EMAIL_FROM${dept.email}`}
                         className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
                       >
                         {dept.email}

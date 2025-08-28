@@ -113,7 +113,7 @@ export default function EditorDashboard() {
         if (manuscriptsData.success) setManuscripts(manuscriptsData.manuscripts)
         if (reviewersData.success) setReviewers(reviewersData.reviewers)
       } catch (error) {
-        console.error("Error fetching editor data:", error)
+        logger.error("Error fetching editor data:", error)
       } finally {
         setLoading(false)
       }
@@ -168,7 +168,7 @@ export default function EditorDashboard() {
         window.location.reload()
       }
     } catch (error) {
-      console.error("Error assigning reviewer:", error)
+      logger.error("Error assigning reviewer:", error)
     }
   }
 
@@ -193,7 +193,7 @@ export default function EditorDashboard() {
         window.location.reload()
       }
     } catch (error) {
-      console.error("Error making editorial decision:", error)
+      logger.error("Error making editorial decision:", error)
     }
   }
 
@@ -479,7 +479,7 @@ export default function EditorDashboard() {
                       articleId={manuscript.id}
                       articleTitle={manuscript.title}
                       onAssignmentComplete={(result) => {
-                        console.log('Assignment completed:', result)
+                        logger.info('Assignment completed:', result)
                         // Optionally refresh the data or show success message
                       }}
                     />

@@ -43,7 +43,7 @@ export interface CitationValidation {
   errors: string[]
   warnings: string[]
   suggestions: string[]
-  metadata?: any
+  metadata?: unknown
 }
 
 export interface BibliographyEntry {
@@ -100,7 +100,7 @@ export class CitationService {
 
     } catch (error) {
       logError(error as Error, { context: 'extractCitations' })
-      throw new Error('Failed to extract citations')
+      throw new AppError('Failed to extract citations')
     }
   }
 
@@ -123,7 +123,7 @@ export class CitationService {
 
     } catch (error) {
       logError(error as Error, { context: 'validateCitations' })
-      throw new Error('Failed to validate citations')
+      throw new AppError('Failed to validate citations')
     }
   }
 
@@ -161,7 +161,7 @@ export class CitationService {
           inTextCitation = this.formatIEEEInText(citation)
           break
         default:
-          throw new Error(`Unsupported citation style: ${style}`)
+          throw new AppError(`Unsupported citation style: ${style}`)
       }
 
       return {
@@ -173,7 +173,7 @@ export class CitationService {
 
     } catch (error) {
       logError(error as Error, { context: 'formatCitation', style })
-      throw new Error(`Failed to format citation in ${style} style`)
+      throw new AppError(`Failed to format citation in ${style} style`)
     }
   }
 
@@ -195,7 +195,7 @@ export class CitationService {
 
     } catch (error) {
       logError(error as Error, { context: 'generateBibliography', style })
-      throw new Error('Failed to generate bibliography')
+      throw new AppError('Failed to generate bibliography')
     }
   }
 
@@ -238,7 +238,7 @@ export class CitationService {
 
     } catch (error) {
       logError(error as Error, { context: 'analyzeReferences' })
-      throw new Error('Failed to analyze references')
+      throw new AppError('Failed to analyze references')
     }
   }
 
@@ -267,7 +267,7 @@ export class CitationService {
 
     } catch (error) {
       logError(error as Error, { context: 'searchCitationMetadata', query })
-      throw new Error('Failed to search citation metadata')
+      throw new AppError('Failed to search citation metadata')
     }
   }
 
@@ -416,7 +416,7 @@ export class CitationService {
         id: `crossref-${doi}`,
         type: 'journal',
         title: work.title?.[0] || 'Unknown Title',
-        authors: work.author?.map((a: any) => ({
+        authors: work.author?.map((a: unknown) => ({
           firstName: a.given || '',
           lastName: a.family || ''
         })) || [],
@@ -437,17 +437,17 @@ export class CitationService {
     try {
       const encodedQuery = encodeURIComponent(query.substring(0, 200))
       const response = await fetch(
-        `https://api.crossref.org/works?query=${encodedQuery}&rows=5&mailto=admin@yourjournal.com`
+        `https://api.crossref.org/works?query=${encodedQuery}&rows=5&mailto=process.env.EMAIL_FROMyourjournal.com`
       )
 
       if (!response.ok) return []
 
       const data = await response.json()
-      return data.message?.items?.map((work: any) => ({
+      return data.message?.items?.map((work: unknown) => ({
         id: `crossref-${work.DOI || Date.now()}`,
         type: 'journal' as const,
         title: work.title?.[0] || 'Unknown Title',
-        authors: work.author?.map((a: any) => ({
+        authors: work.author?.map((a: unknown) => ({
           firstName: a.given || '',
           lastName: a.family || ''
         })) || [],
@@ -475,11 +475,11 @@ export class CitationService {
       if (!response.ok) return []
 
       const data = await response.json()
-      return data.data?.map((paper: any) => ({
+      return data.data?.map((paper: unknown) => ({
         id: `semantic-${paper.paperId || Date.now()}`,
         type: 'journal' as const,
         title: paper.title || 'Unknown Title',
-        authors: paper.authors?.map((a: any) => ({
+        authors: paper.authors?.map((a: unknown) => ({
           firstName: a.name?.split(' ').slice(0, -1).join(' ') || '',
           lastName: a.name?.split(' ').slice(-1)[0] || ''
         })) || [],
@@ -552,7 +552,7 @@ export class CitationService {
       const citation = citations[index]
       let citationScore = 0
 
-      // Basic validity (40 points)
+      // process.env.AUTH_TOKEN_PREFIX + ' 'validity (40 points)
       if (validation.isValid) citationScore += 40
 
       // Completeness (30 points)

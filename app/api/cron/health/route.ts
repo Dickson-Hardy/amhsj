@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server"
  */
 export async function GET(request: NextRequest) {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL'
     const cronSecret = process.env.CRON_SECRET
     
     const tests = [
@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
     
     for (const test of tests) {
       try {
-        const headers: any = {
+        const headers: unknown = {
           'User-Agent': 'AMHSJ-Health-Check'
         }
         
         // Add auth header if cron secret is configured
         if (cronSecret) {
-          headers['Authorization'] = `Bearer ${cronSecret}`
+          headers['Authorization'] = `process.env.AUTH_TOKEN_PREFIX + ' '${cronSecret}`
         }
         
         const response = await fetch(test.url, {

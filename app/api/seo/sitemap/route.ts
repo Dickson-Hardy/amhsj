@@ -2,10 +2,11 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { articles } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { logWarn, logError } from '@/lib/logger'
 
 export async function GET() {
   try {
-    let publishedArticles: any[] = []
+    let publishedArticles: unknown[] = []
     
     // Try to fetch articles with a timeout and fallback
     try {
@@ -24,7 +25,7 @@ export async function GET() {
         )
       ]) as any[]
     } catch (dbError) {
-      console.warn("Database connection failed for sitemap generation, generating basic sitemap:", dbError)
+      logWarn(`Database connection failed for sitemap generation, generating basic sitemap: ${dbError}`)
       // Continue with empty articles array to generate basic sitemap
     }
 
@@ -76,7 +77,9 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error("Sitemap generation error:", error)
+    logError(error as Error, {
+      context: 'GET /api/seo/sitemap'
+    })
     return new NextResponse("Error generating sitemap", { status: 500 })
   }
 }

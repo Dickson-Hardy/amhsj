@@ -6,25 +6,20 @@ import { Session } from "next-auth"
 export function getRoleBasedDashboard(role: string | undefined): string {
   switch (role) {
     case "admin":
-      return "/admin"
+      return "/admin/dashboard"
     case "editor-in-chief":
-      return "/editor-in-chief"
     case "managing-editor":
-      return "/managing-editor"
     case "section-editor":
-      return "/section-editor"
     case "guest-editor":
-      return "/guest-editor"
     case "production-editor":
-      return "/production-editor"
     case "editor":
-      return "/editor" // Associate editor
+      return "/editor/dashboard"
     case "reviewer":
-      return "/reviewer"
+      return "/reviewer/dashboard"
     case "author":
     case "user":
     default:
-      return "/dashboard"
+      return "/author/dashboard"
   }
 }
 
@@ -188,7 +183,7 @@ export function getRoleHierarchy(role: string | undefined): number {
     case "author":
       return 20 // Submission authority
     case "user":
-      return 10 // Basic user
+      return 10 // process.env.AUTH_TOKEN_PREFIX + ' 'user
     default:
       return 0 // No authority
   }

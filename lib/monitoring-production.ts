@@ -6,7 +6,7 @@
 import { logError, logInfo } from './logger'
 
 // Lazy Sentry initialization
-let Sentry: any = null
+let Sentry: unknown = null
 let sentryInitialized = false
 
 async function initSentry() {
@@ -19,7 +19,7 @@ async function initSentry() {
       const module = await import('@sentry/nextjs')
       Sentry = module.default || module
     } catch (error) {
-      console.warn('Sentry not available:', error)
+      logger.warn('Sentry not available:', error)
       Sentry = null
     }
   }
@@ -74,7 +74,7 @@ class SentryService {
         dsn: process.env.SENTRY_DSN,
         environment: process.env.NODE_ENV,
         tracesSampleRate: 0.1, // 10% sampling for performance
-        beforeSend(event: any) {
+        beforeSend(event: unknown) {
           // Filter out non-critical errors in production
           if (event.exception) {
             const error = event.exception.values?.[0]
@@ -93,7 +93,7 @@ class SentryService {
   static async captureError(error: Error, context?: Record<string, any>) {
     const sentry = await initSentry()
     if (sentry && process.env.NODE_ENV === 'production') {
-      sentry.withScope((scope: any) => {
+      sentry.withScope((scope: unknown) => {
         if (context) {
           Object.entries(context).forEach(([key, value]) => {
             scope.setTag(key, String(value))
@@ -102,14 +102,14 @@ class SentryService {
         sentry.captureException(error)
       })
     } else {
-      console.error('Development Error:', error, context)
+      logger.error('Development Error:', error, context)
     }
   }
 
   static async captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, any>) {
     const sentry = await initSentry()
     if (sentry && process.env.NODE_ENV === 'production') {
-      sentry.withScope((scope: any) => {
+      sentry.withScope((scope: unknown) => {
         if (context) {
           Object.entries(context).forEach(([key, value]) => {
             scope.setTag(key, String(value))
@@ -118,7 +118,7 @@ class SentryService {
         sentry.captureMessage(message, level)
       })
     } else {
-      console.log(`Development ${level.toUpperCase()}:`, message, context)
+      logger.info(`Development ${level.toUpperCase()}:`, message, context)
     }
   }
 
@@ -159,9 +159,9 @@ class GoogleAnalyticsService {
       document.head.appendChild(script)
 
       // Initialize gtag
-      window.gtag = window.gtag || function(...args: any[]) {
-        (window.gtag as any).q = (window.gtag as any).q || [];
-        (window.gtag as any).q.push(args)
+      window.gtag = window.gtag || function(...args: unknown[]) {
+        (window.gtag as unknown).q = (window.gtag as any).q || [];
+        (window.gtag as unknown).q.push(args)
       }
 
       window.gtag('js', new Date())
@@ -198,7 +198,7 @@ class GoogleAnalyticsService {
   static trackUserAction(action: string, category: string, label?: string, value?: number) {
     this.trackEvent({
       event: action,
-      category: category as any,
+      category: category as unknown,
       properties: {
         label,
         value
@@ -329,7 +329,7 @@ class CustomAnalyticsService {
     }
   }
 
-  private static async sendToBackend(endpoint: string, data: any) {
+  private static async sendToBackend(endpoint: string, data: unknown) {
     try {
       const response = await fetch(`/api/analytics/${endpoint}`, {
         method: 'POST',
@@ -340,7 +340,7 @@ class CustomAnalyticsService {
       })
 
       if (!response.ok) {
-        throw new Error(`Analytics API error: ${response.statusText}`)
+        throw new AppError(`Analytics API error: ${response.statusText}`)
       }
     } catch (error) {
       // Fail silently for analytics to avoid disrupting user experience
@@ -608,7 +608,7 @@ class ProductionMonitoringService {
 // Extend Window interface for gtag
 declare global {
   interface Window {
-    gtag: (...args: any[]) => void
+    gtag: (...args: unknown[]) => void
   }
 }
 

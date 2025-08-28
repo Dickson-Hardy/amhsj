@@ -25,7 +25,7 @@ export async function testConnection() {
     const result = await sql`SELECT 1 as test`
     return result[0].test === 1
   } catch (error) {
-    console.error("Database connection failed:", error)
+    logger.error("Database connection failed:", error)
     return false
   }
 }

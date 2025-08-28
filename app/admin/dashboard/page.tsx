@@ -80,7 +80,7 @@ export default function ModernAdminDashboard() {
           })
         }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error)
+        logger.error("Error fetching dashboard data:", error)
         // Keep default empty state on error
         setStats({
           totalUsers: 0,

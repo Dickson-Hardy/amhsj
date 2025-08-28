@@ -92,7 +92,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
         setNotifications(data.notifications)
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error)
+      logger.error('Failed to fetch notifications:', error)
     }
   }
 
@@ -147,7 +147,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       )
     } catch (error) {
-      console.error('Failed to mark notification as read:', error)
+      logger.error('Failed to mark notification as read:', error)
     }
   }
 
@@ -157,7 +157,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
       toast.success('All notifications marked as read')
     } catch (error) {
-      console.error('Failed to mark all as read:', error)
+      logger.error('Failed to mark all as read:', error)
       toast.error('Failed to mark notifications as read')
     }
   }
@@ -167,7 +167,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' })
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
     } catch (error) {
-      console.error('Failed to delete notification:', error)
+      logger.error('Failed to delete notification:', error)
     }
   }
 

@@ -70,7 +70,7 @@ export class UserService {
       }
       return userObj
     } catch (error) {
-      console.error("Error getting user by email:", error)
+      logger.error("Error getting user by email:", error)
       return null
     }
   }
@@ -153,7 +153,7 @@ export class UserService {
       }
       return userObj
     } catch (error) {
-      console.error("Error getting user by ID:", error)
+      logger.error("Error getting user by ID:", error)
       return null
     }
   }
@@ -176,7 +176,7 @@ export class UserService {
           role,
           isVerified: false,
           isActive: true,
-          profileCompleteness: 20, // Basic profile created
+          profileCompleteness: 20, // process.env.AUTH_TOKEN_PREFIX + ' 'profile created
           lastActiveAt: new Date(),
         })
         .returning({
@@ -195,7 +195,7 @@ export class UserService {
       }
       return null
     } catch (error) {
-      console.error("Error creating user:", error)
+      logger.error("Error creating user:", error)
       return null
     }
   }
@@ -220,7 +220,7 @@ export class UserService {
 
       return true
     } catch (error) {
-      console.error("Error saving verification token:", error)
+      logger.error("Error saving verification token:", error)
       return false
     }
   }
@@ -237,7 +237,7 @@ export class UserService {
         .where(eq(users.email, email))
         .limit(1)
 
-      if (!user[0] || user[0].emailVerificationToken !== token) {
+      if (!user[0] || user[0].emailVerificationprocess.env.AUTH_TOKEN_PREFIX!== token) {
         return false
       }
 
@@ -265,7 +265,7 @@ export class UserService {
 
       return true
     } catch (error) {
-      console.error("Error verifying user:", error)
+      logger.error("Error verifying user:", error)
       return false
     }
   }
@@ -303,7 +303,7 @@ export class UserService {
 
       return true
     } catch (error) {
-      console.error("Error updating user profile:", error)
+      logger.error("Error updating user profile:", error)
       return false
     }
   }
@@ -328,7 +328,7 @@ export class UserService {
 
       return true
     } catch (error) {
-      console.error("Error saving password reset token:", error)
+      logger.error("Error saving password reset token:", error)
       return false
     }
   }
@@ -371,7 +371,7 @@ export class UserService {
 
       return true
     } catch (error) {
-      console.error("Error resetting password:", error)
+      logger.error("Error resetting password:", error)
       return false
     }
   }
@@ -397,7 +397,7 @@ export class UserService {
 
       return true
     } catch (error) {
-      console.error("Error creating notification:", error)
+      logger.error("Error creating notification:", error)
       return false
     }
   }
@@ -414,7 +414,7 @@ export class UserService {
 
       // Don't invalidate cache for this minor update
     } catch (error) {
-      console.error("Error updating last active:", error)
+      logger.error("Error updating last active:", error)
     }
   }
 
@@ -429,7 +429,7 @@ export class UserService {
 
       return result.length > 0
     } catch (error) {
-      console.error("Error checking if user exists:", error)
+      logger.error("Error checking if user exists:", error)
       return false
     }
   }
@@ -486,7 +486,7 @@ export class UserService {
         profileCompleteness,
       }
     } catch (error) {
-      console.error("Error getting user stats:", error)
+      logger.error("Error getting user stats:", error)
       return {
         submissionsCount: 0,
         reviewsCount: 0,
@@ -499,14 +499,14 @@ export class UserService {
 
 // Database service for external integrations
 export class DatabaseService {
-  static async query(sql: string, params?: any[]): Promise<any[]> {
+  static async query(sql: string, params?: unknown[]): Promise<any[]> {
     try {
       // This is a simplified implementation
       // In a real scenario, you would execute the SQL query using the db instance
-      console.log('Executing query:', sql, params)
+      logger.error('Executing query:', sql, params)
       return []
     } catch (error) {
-      console.error('Database query error:', error)
+      logger.error('Database query error:', error)
       throw error
     }
   }
@@ -515,7 +515,7 @@ export class DatabaseService {
     try {
       return await callback()
     } catch (error) {
-      console.error('Database transaction error:', error)
+      logger.error('Database transaction error:', error)
       throw error
     }
   }
@@ -525,7 +525,7 @@ export class DatabaseService {
       const [submission] = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1)
       return submission
     } catch (error) {
-      console.error('Error fetching submission:', error)
+      logger.error('Error fetching submission:', error)
       return null
     }
   }

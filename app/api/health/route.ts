@@ -36,8 +36,8 @@ export async function GET() {
       }
     },
     details: {
-      cacheStatus: null as any,
-      redisDetails: null as any
+      cacheStatus: null as unknown,
+      redisDetails: null as unknown
     }
   }
 
@@ -60,7 +60,7 @@ export async function GET() {
   } catch (error) {
     healthCheck.services.database = "unhealthy"
     healthCheck.status = "degraded"
-    console.error("Database health check failed:", error)
+    logger.error("Database health check failed:", error)
   }
 
   // Check Cache System
@@ -84,7 +84,7 @@ export async function GET() {
   } catch (error) {
     healthCheck.services.cache = "error"
     healthCheck.status = "degraded"
-    console.error("Cache health check failed:", error)
+    logger.error("Cache health check failed:", error)
   }
 
   // Check Redis Connection (non-blocking)
@@ -111,7 +111,7 @@ export async function GET() {
     healthCheck.services.redis = "unhealthy"
     healthCheck.details.redisDetails = error instanceof Error ? error.message : "unknown_error"
     // Don't mark overall status as degraded for Redis failures since we have memory fallback
-    console.debug("Redis health check failed (using memory fallback):", error)
+    logger.debug("Redis health check failed (using memory fallback):", error)
   }
 
   const statusCode = healthCheck.status === "healthy" ? 200 : 503

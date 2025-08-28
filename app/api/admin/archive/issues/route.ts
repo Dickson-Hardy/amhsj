@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching issues:", error)
+    logger.error("Error fetching issues:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error creating issue:", error)
+    logger.error("Error creating issue:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

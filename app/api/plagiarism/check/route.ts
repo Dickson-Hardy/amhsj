@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         }
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'POST /api/plagiarism/check' })
     
     return NextResponse.json({
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
         )
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'GET /api/plagiarism/check' })
     
     return NextResponse.json({

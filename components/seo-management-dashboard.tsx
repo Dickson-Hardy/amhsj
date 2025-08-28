@@ -99,7 +99,7 @@ export default function SEOManagementDashboard() {
         setArticlesSEO(articlesData.articles)
       }
     } catch (error) {
-      console.error("Failed to load dashboard data:", error)
+      logger.error("Failed to load dashboard data:", error)
       toast({
         title: "Error",
         description: "Failed to load SEO dashboard data",

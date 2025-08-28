@@ -76,7 +76,7 @@ export default function EditorialAssistantDashboard() {
         setManuscripts(data.manuscripts || [])
       }
     } catch (error) {
-      console.error("Error fetching manuscripts:", error)
+      logger.error("Error fetching manuscripts:", error)
     } finally {
       setLoading(false)
     }
@@ -90,7 +90,7 @@ export default function EditorialAssistantDashboard() {
         setStats(data.stats || stats)
       }
     } catch (error) {
-      console.error("Error fetching stats:", error)
+      logger.error("Error fetching stats:", error)
     }
   }
 

@@ -104,7 +104,7 @@ export async function GET() {
 
     return NextResponse.json(sortedAlerts.slice(0, 10)) // Limit to 10 most important alerts
   } catch (error) {
-    console.error('Error fetching system alerts:', error)
+    logger.error('Error fetching system alerts:', error)
     return NextResponse.json(
       { error: 'Failed to fetch system alerts' },
       { status: 500 }

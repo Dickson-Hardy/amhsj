@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching performance metrics:", error)
+    logger.error("Error fetching performance metrics:", error)
     return NextResponse.json(
       { error: "Failed to fetch performance metrics" },
       { status: 500 }
@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function generateRecommendations(metrics: any, errorRates: any[]) {
+function generateRecommendations(metrics: unknown, errorRates: any[]) {
   const recommendations = []
 
   if (metrics.requests.errorRate > 5) {

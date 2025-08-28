@@ -108,7 +108,9 @@ export default function MaintenancePage() {
         body: JSON.stringify({ email })
       })
     } catch (error) {
-      console.log('Subscription API not available during maintenance')
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Subscription API not available during maintenance')
+      }
     }
   }
 

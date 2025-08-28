@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { articles, reviews } from "@/lib/db/schema"
-import { eq, desc, sql } from "drizzle-orm"
+import { eq, desc, count } from "drizzle-orm"
 import { logError } from "@/lib/logger"
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
@@ -16,6 +16,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Query user's articles with reviewer counts (avoid broken correlated subquery)
     const userSubmissions = await db
       .select({
         id: articles.id,
@@ -24,26 +25,28 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         status: articles.status,
         submittedDate: articles.submittedDate,
         createdAt: articles.createdAt,
-        reviewerCount: sql<number>`(
-          SELECT COUNT(*) FROM ${reviews} 
-          WHERE ${reviews.articleId} = ${articles.id}
-        )`,
+        reviewerCount: count(reviews.id).as("reviewer_count"),
       })
       .from(articles)
+      .leftJoin(reviews, eq(reviews.articleId, articles.id))
       .where(eq(articles.authorId, id))
+      .groupBy(articles.id)
       .orderBy(desc(articles.submittedDate))
 
     // Format submissions for frontend
-    const formattedSubmissions = userSubmissions.map((submission) => ({
-      ...submission,
-      reviewers: submission.reviewerCount || 0,
-      comments: 0, // Placeholder - would need to implement comments system
-      lastUpdate: submission.createdAt || submission.submittedDate,
-      isMedical:
-        submission.category.toLowerCase().includes("clinical") || 
-        submission.category.toLowerCase().includes("medical") ||
-        submission.category.toLowerCase().includes("healthcare"),
-    }))
+    const formattedSubmissions = userSubmissions.map((submission) => {
+      const category = submission.category || "";
+      return {
+        ...submission,
+        reviewers: Number(submission.reviewerCount) || 0,
+        comments: 0, // Placeholder - implement when comments system ready
+        lastUpdate: submission.createdAt || submission.submittedDate,
+        isMedical:
+          category.toLowerCase().includes("clinical") || 
+          category.toLowerCase().includes("medical") ||
+          category.toLowerCase().includes("healthcare"),
+      }
+    })
 
     return NextResponse.json({
       success: true,

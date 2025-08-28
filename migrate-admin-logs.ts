@@ -3,11 +3,12 @@
  * This migration ensures the admin_logs table has all required columns
  */
 
+import { logger } from "@/lib/logger";
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 
 export async function migrateAdminLogsTable() {
-  console.log('🔄 Starting admin_logs table migration...')
+  logger.info('🔄 Starting admin_logs table migration...')
   
   try {
     // Check if the table exists
@@ -20,7 +21,7 @@ export async function migrateAdminLogsTable() {
     `)
 
     if (!tableExists.rows[0]?.exists) {
-      console.log('Creating admin_logs table...')
+      logger.info('Creating admin_logs table...')
       await db.execute(sql`
         CREATE TABLE admin_logs (
           id TEXT PRIMARY KEY,
@@ -35,7 +36,7 @@ export async function migrateAdminLogsTable() {
           created_at TIMESTAMP DEFAULT NOW()
         );
       `)
-      console.log('✅ Created admin_logs table')
+      logger.info('✅ Created admin_logs table')
       return
     }
 
@@ -60,7 +61,7 @@ export async function migrateAdminLogsTable() {
         `)
 
         if (columnExists.rows.length === 0) {
-          console.log(`Adding missing column: ${column.name}`)
+          logger.info(`Adding missing column: ${column.name}`)
           
           let alterQuery = `ALTER TABLE admin_logs ADD COLUMN ${column.name} ${column.type}`
           if (column.default) {
@@ -71,17 +72,17 @@ export async function migrateAdminLogsTable() {
           }
 
           await db.execute(sql.raw(alterQuery))
-          console.log(`✅ Added column: ${column.name}`)
+          logger.info(`✅ Added column: ${column.name}`)
         }
       } catch (error) {
-        console.warn(`⚠️ Could not add column ${column.name}:`, error)
+        logger.warn(`⚠️ Could not add column ${column.name}:`, error)
       }
     }
 
-    console.log('✅ admin_logs table migration completed successfully')
+    logger.info('✅ admin_logs table migration completed successfully')
 
   } catch (error) {
-    console.error('❌ admin_logs migration failed:', error)
+    logger.error('❌ admin_logs migration failed:', error)
     throw error
   }
 }
@@ -90,11 +91,11 @@ export async function migrateAdminLogsTable() {
 if (require.main === module) {
   migrateAdminLogsTable()
     .then(() => {
-      console.log('Migration completed')
+      logger.info('Migration completed')
       process.exit(0)
     })
     .catch((error) => {
-      console.error('Migration failed:', error)
+      logger.error('Migration failed:', error)
       process.exit(1)
     })
 }

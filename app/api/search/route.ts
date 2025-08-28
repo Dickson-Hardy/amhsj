@@ -76,8 +76,8 @@ async function handleSearch(request: NextRequest): Promise<NextResponse> {
     citationCountMin: searchParams.get("citationCountMin") ? parseInt(searchParams.get("citationCountMin")!) : undefined,
     viewCountMin: searchParams.get("viewCountMin") ? parseInt(searchParams.get("viewCountMin")!) : undefined,
     downloadCountMin: searchParams.get("downloadCountMin") ? parseInt(searchParams.get("downloadCountMin")!) : undefined,
-    sortBy: (searchParams.get("sortBy") as any) || "relevance",
-    sortOrder: (searchParams.get("sortOrder") as any) || "desc",
+    sortBy: (searchParams.get("sortBy") as unknown) || "relevance",
+    sortOrder: (searchParams.get("sortOrder") as unknown) || "desc",
     page: parseInt(searchParams.get("page") || "1"),
     limit: Math.min(parseInt(searchParams.get("limit") || "20"), 100) // Max 100 results per page
   }
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
 
 async function handleSaveSearch(
   request: NextRequest, 
-  body: any, 
+  body: unknown, 
   userId: string
 ): Promise<NextResponse> {
   const { query, filters, name } = body
@@ -261,7 +261,7 @@ async function handleSaveSearch(
 
 async function handleTrackClick(
   request: NextRequest, 
-  body: any, 
+  body: unknown, 
   userId: string
 ): Promise<NextResponse> {
   const { query, articleId, position } = body

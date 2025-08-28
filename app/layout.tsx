@@ -19,7 +19,7 @@ if (typeof window === 'undefined') {
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL'),
   title: {
     default: "AJRS - Academic Journal Research System",
     template: "%s | AJRS",
@@ -108,7 +108,6 @@ export default function RootLayout({
           <Providers>
             <ConditionalLayout>
               {children}
-              <SiteFooter />
             </ConditionalLayout>
             <Toaster />
             <RegisterServiceWorker />

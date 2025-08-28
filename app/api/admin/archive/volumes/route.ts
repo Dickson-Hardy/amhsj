@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching volumes:", error)
+    logger.error("Error fetching volumes:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error creating volume:", error)
+    logger.error("Error creating volume:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

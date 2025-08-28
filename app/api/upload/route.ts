@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
     // Get files from database
     try {
       // Build query conditions
-      const conditions: any[] = []
+      const conditions: unknown[] = []
       
       // Filter by user permissions
       if (session.user.role === "admin") {

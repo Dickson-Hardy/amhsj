@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Event tracked successfully"
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'POST /api/monitoring/analytics/events' })
     
     return NextResponse.json({
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: `Batch of ${events.length} events processed`
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'PUT /api/monitoring/analytics/events' })
     
     return NextResponse.json({

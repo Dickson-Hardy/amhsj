@@ -61,13 +61,15 @@ export default function ReviewerDashboardPage() {
     try {
       const response = await fetch("/api/reviewer/dashboard")
       if (!response.ok) {
-        throw new Error("Failed to fetch dashboard data")
+        throw new AppError("Failed to fetch dashboard data")
       }
       const data = await response.json()
       setAssignments(data.assignments || [])
       setStats(data.stats || { totalAssigned: 0, pending: 0, completed: 0, overdue: 0 })
     } catch (error) {
-      console.error("Error fetching dashboard data:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching dashboard data:", error)
+      }
       setError("Failed to load dashboard data")
     } finally {
       setLoading(false)

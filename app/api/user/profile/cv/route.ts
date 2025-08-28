@@ -93,9 +93,9 @@ export async function POST(request: NextRequest) {
           uploadedAt: userDocuments.uploadedAt
         })
 
-      console.log(`CV uploaded successfully for user ${session.user.id}: ${fileName}`)
+      logger.error(`CV uploaded successfully for user ${session.user.id}: ${fileName}`)
     } catch (dbError) {
-      console.error('Failed to save CV metadata to database:', dbError)
+      logger.error('Failed to save CV metadata to database:', dbError)
       // File was saved but metadata failed - still return success
     }
 
@@ -249,11 +249,11 @@ export async function DELETE(request: NextRequest) {
         const fullPath = path.join(process.cwd(), 'uploads', result[0].filePath);
         await fs.unlink(fullPath).catch(() => {
           // File may not exist, ignore error
-          console.log(`File not found for deletion: ${fullPath}`);
+          logger.error(`File not found for deletion: ${fullPath}`);
         });
       }
     } catch (error) {
-      console.error('Error deleting file:', error);
+      logger.error('Error deleting file:', error);
       // Continue with database deletion even if file deletion fails
     }
     

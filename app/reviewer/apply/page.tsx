@@ -281,7 +281,7 @@ export default function ReviewerApplicationPage() {
                 <User className="h-5 w-5 mr-2 text-blue-600" />
                 Personal Information
               </CardTitle>
-              <CardDescription>Basic contact and identification details</CardDescription>
+              <CardDescription>process.env.AUTH_TOKEN_PREFIX + ' 'contact and identification details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">

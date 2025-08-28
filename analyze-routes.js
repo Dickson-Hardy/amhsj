@@ -71,12 +71,12 @@ function analyzeRoutes() {
   const appApiDir = path.join(process.cwd(), 'app', 'api')
   
   if (!fs.existsSync(appApiDir)) {
-    console.error('❌ app/api directory not found')
+    logger.error('❌ app/api directory not found')
     return
   }
   
   const routeFiles = findRouteFiles(appApiDir)
-  console.log(`🔍 Found ${routeFiles.length} API route files\n`)
+  logger.info(`🔍 Found ${routeFiles.length} API route files\n`)
   
   const results = {
     total: routeFiles.length,
@@ -92,7 +92,7 @@ function analyzeRoutes() {
     const analysis = checkForMockImplementations(filePath)
     
     if (analysis.error) {
-      console.log(`❌ ${relativePath} - Error: ${analysis.error}`)
+      logger.info(`❌ ${relativePath} - Error: ${analysis.error}`)
       return
     }
     
@@ -115,7 +115,7 @@ function analyzeRoutes() {
     
     if (isComplete) {
       results.complete.push(status)
-      console.log(`✅ ${relativePath} - Complete implementation`)
+      logger.info(`✅ ${relativePath} - Complete implementation`)
     } else {
       results.incomplete.push(status)
       const issues = []
@@ -130,27 +130,27 @@ function analyzeRoutes() {
       if (!analysis.hasAuthCheck) issues.push('No auth check')
       if (!analysis.hasErrorHandling) issues.push('No error handling')
       
-      console.log(`🔸 ${relativePath} - Issues: ${issues.join(', ')}`)
+      logger.info(`🔸 ${relativePath} - Issues: ${issues.join(', ')}`)
       
       if (analysis.issues.length > 0) {
         analysis.issues.forEach(issue => {
-          console.log(`   └─ Mock found: "${issue.match}"`)
+          logger.info(`   └─ Mock found: "${issue.match}"`)
         })
       }
     }
   })
   
   // Summary
-  console.log('\n📊 SUMMARY:')
-  console.log(`Total routes: ${results.total}`)
-  console.log(`Complete: ${results.complete.length} (${Math.round(results.complete.length / results.total * 100)}%)`)
-  console.log(`Incomplete: ${results.incomplete.length} (${Math.round(results.incomplete.length / results.total * 100)}%)`)
-  console.log(`With mock implementations: ${results.withMockImplementations}`)
-  console.log(`Without DB integration: ${results.withoutDbIntegration}`)
+  logger.info('\n📊 SUMMARY:')
+  logger.info(`Total routes: ${results.total}`)
+  logger.info(`Complete: ${results.complete.length} (${Math.round(results.complete.length / results.total * 100)}%)`)
+  logger.info(`Incomplete: ${results.incomplete.length} (${Math.round(results.incomplete.length / results.total * 100)}%)`)
+  logger.info(`With mock implementations: ${results.withMockImplementations}`)
+  logger.info(`Without DB integration: ${results.withoutDbIntegration}`)
   
   // Routes that need immediate attention
   if (results.incomplete.length > 0) {
-    console.log('\n🚨 ROUTES NEEDING ATTENTION:')
+    logger.info('\n🚨 ROUTES NEEDING ATTENTION:')
     results.incomplete
       .sort((a, b) => {
         // Prioritize routes with mock implementations
@@ -160,10 +160,10 @@ function analyzeRoutes() {
       })
       .slice(0, 10) // Show top 10
       .forEach(route => {
-        console.log(`• ${route.path}`)
+        logger.info(`• ${route.path}`)
         if (route.hasMockImplementation) {
           route.issues.forEach(issue => {
-            console.log(`  - Mock: "${issue.match}"`)
+            logger.info(`  - Mock: "${issue.match}"`)
           })
         }
       })
@@ -171,7 +171,7 @@ function analyzeRoutes() {
   
   // Save detailed report
   fs.writeFileSync('route-analysis-report.json', JSON.stringify(results, null, 2))
-  console.log('\n📄 Detailed report saved to: route-analysis-report.json')
+  logger.info('\n📄 Detailed report saved to: route-analysis-report.json')
 }
 
 analyzeRoutes()

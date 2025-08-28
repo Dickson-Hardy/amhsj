@@ -76,7 +76,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         createdAt: new Date()
       })
     } catch (notificationError) {
-      console.error("Failed to create reviewer notification:", notificationError)
+      logger.error("Failed to create reviewer notification:", notificationError)
     }
 
     // Send email notification to reviewer using hybrid email service
@@ -96,9 +96,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         priority: true
       })
       
-      console.log(`Review assignment email sent to ${reviewer[0].email}`)
+      logger.error(`Review assignment email sent to ${reviewer[0].email}`)
     } catch (emailError) {
-      console.error("Failed to send reviewer assignment email:", emailError)
+      logger.error("Failed to send reviewer assignment email:", emailError)
       // Don't fail the API call if email fails - reviewer is still assigned
     }
 

@@ -1,6 +1,19 @@
 import cron from 'node-cron'
 import { db } from '@/lib/db'
 import { adminLogs } from '@/lib/db/schema'
+import { logError, logInfo, logWarn } from '@/lib/logger'
+
+// Simple error classes since @/lib/errors doesn't exist
+class AppError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AppError'
+  }
+}
+
+function isAppError(error: unknown): error is AppError {
+  return error instanceof AppError
+}
 
 interface BackupSchedule {
   id: string
@@ -48,7 +61,7 @@ class BackupScheduler {
 
   addSchedule(schedule: BackupSchedule) {
     if (!schedule.enabled) {
-      console.log(`Schedule ${schedule.name} is disabled, skipping...`)
+      logInfo(`Schedule ${schedule.name} is disabled, skipping...`)
       return
     }
 
@@ -61,13 +74,17 @@ class BackupScheduler {
       })
 
       this.scheduledJobs.set(schedule.id, task)
-      console.log(`✅ Scheduled: ${schedule.name} - ${schedule.cronExpression}`)
+      logInfo(`✅ Scheduled: ${schedule.name} - ${schedule.cronExpression}`)
 
       // Log schedule creation
       this.logActivity('Backup Schedule Created', `Scheduled ${schedule.name} with cron: ${schedule.cronExpression}`)
 
     } catch (error) {
-      console.error(`❌ Failed to schedule ${schedule.name}:`, error)
+      logError(error as Error, {
+        context: 'addSchedule',
+        scheduleName: schedule.name,
+        cronExpression: schedule.cronExpression
+      })
       this.logActivity('Backup Schedule Failed', `Failed to schedule ${schedule.name}: ${error}`)
     }
   }
@@ -78,20 +95,20 @@ class BackupScheduler {
       task.stop()
       task.destroy()
       this.scheduledJobs.delete(scheduleId)
-      console.log(`🗑️ Removed schedule: ${scheduleId}`)
+      logInfo(`🗑️ Removed schedule: ${scheduleId}`)
       this.logActivity('Backup Schedule Removed', `Removed backup schedule: ${scheduleId}`)
     }
   }
 
   private async executeBackup(schedule: BackupSchedule) {
     try {
-      console.log(`🔄 Starting scheduled backup: ${schedule.name}`)
+      logInfo(`🔄 Starting scheduled backup: ${schedule.name}`)
       
       // Log backup start
       await this.logActivity('Scheduled Backup Started', `Starting ${schedule.backupType} backup to ${schedule.storage}`)
 
       // Make API call to create backup
-      const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/admin/backup/create`, {
+      const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL'}/api/admin/backup/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,9 +124,9 @@ class BackupScheduler {
       const result = await response.json()
 
       if (response.ok) {
-        console.log(`✅ Scheduled backup completed: ${schedule.name}`)
-        console.log(`   Size: ${result.size}`)
-        console.log(`   Location: ${result.location}`)
+        logInfo(`✅ Scheduled backup completed: ${schedule.name}`)
+        logInfo(`   Size: ${result.size}`)
+        logInfo(`   Location: ${result.location}`)
         
         await this.logActivity('Scheduled Backup Completed', 
           `${schedule.name} completed successfully. Size: ${result.size}, Location: ${result.location}`)
@@ -117,11 +134,15 @@ class BackupScheduler {
         // Send success notification if configured
         await this.sendNotification('success', schedule, result)
       } else {
-        throw new Error(result.error || 'Unknown backup error')
+        throw new AppError(result.error || 'Unknown backup error')
       }
 
     } catch (error) {
-      console.error(`❌ Scheduled backup failed: ${schedule.name}`, error)
+      logError(error as Error, {
+        context: 'executeBackup',
+        scheduleName: schedule.name,
+        backupType: schedule.backupType
+      })
       await this.logActivity('Scheduled Backup Failed', `${schedule.name} failed: ${error}`)
       
       // Send failure notification
@@ -147,11 +168,11 @@ class BackupScheduler {
     } catch (error) {
       // If the insert fails due to missing columns, just log it and continue
       // This prevents backup operations from failing due to logging issues
-      console.warn('Failed to log backup activity (continuing without logging):', error instanceof Error ? error.message : String(error))
+      logWarn(`Failed to log backup activity (continuing without logging): ${isAppError(error) ? error.message : (error instanceof Error ? error.message : String(error))}`)
     }
   }
 
-  private async sendNotification(type: 'success' | 'failure', schedule: BackupSchedule, result: any) {
+  private async sendNotification(type: 'success' | 'failure', schedule: BackupSchedule, result: unknown) {
     // Only send notifications if email settings are configured
     if (!process.env.SMTP_HOST || !process.env.BACKUP_NOTIFICATION_EMAIL) {
       return
@@ -185,9 +206,13 @@ class BackupScheduler {
         text
       })
 
-      console.log(`📧 Notification sent for ${schedule.name}`)
+      logInfo(`📧 Notification sent for ${schedule.name}`)
     } catch (error) {
-      console.error('Failed to send backup notification:', error)
+      logError(error as Error, {
+        context: 'sendNotification',
+        scheduleName: schedule.name,
+        notificationType: type
+      })
     }
   }
 
@@ -204,13 +229,13 @@ class BackupScheduler {
   }
 
   stopAllSchedules() {
-    console.log('🛑 Stopping all backup schedules...')
+    logInfo('🛑 Stopping all backup schedules...')
     for (const [id, task] of this.scheduledJobs) {
       task.stop()
       task.destroy()
     }
     this.scheduledJobs.clear()
-    console.log('✅ All backup schedules stopped')
+    logInfo('✅ All backup schedules stopped')
   }
 }
 
@@ -219,13 +244,13 @@ export const backupScheduler = new BackupScheduler()
 
 // Graceful shutdown handling
 process.on('SIGINT', () => {
-  console.log('📝 Gracefully shutting down backup scheduler...')
+  logInfo('📝 Gracefully shutting down backup scheduler...')
   backupScheduler.stopAllSchedules()
   process.exit(0)
 })
 
 process.on('SIGTERM', () => {
-  console.log('📝 Gracefully shutting down backup scheduler...')
+  logInfo('📝 Gracefully shutting down backup scheduler...')
   backupScheduler.stopAllSchedules()
   process.exit(0)
 })

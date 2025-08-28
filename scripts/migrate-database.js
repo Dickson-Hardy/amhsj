@@ -1,10 +1,11 @@
 // Database migration script for production deployment
+import { logger } from "@/lib/logger";
 import { db } from "../lib/db/index.js"
 import { sql } from "drizzle-orm"
 
 async function runMigrations() {
   try {
-    console.log("🔄 Running database migrations...")
+    logger.info("🔄 Running database migrations...")
 
     // Create indexes for better performance
     await db.execute(sql`
@@ -48,9 +49,9 @@ async function runMigrations() {
       ON articles USING gin(to_tsvector('english', title || ' ' || abstract));
     `)
 
-    console.log("✅ Database migrations completed successfully!")
+    logger.info("✅ Database migrations completed successfully!")
   } catch (error) {
-    console.error("❌ Migration failed:", error)
+    logger.error("❌ Migration failed:", error)
     throw error
   }
 }

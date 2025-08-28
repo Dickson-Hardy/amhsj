@@ -13,7 +13,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, User, Search, Wifi, LogOut, Settings } from "lucide-react"
+import { Menu, User, Search, Wifi, LogOut, Settings, FileText } from "lucide-react"
 import { NotificationCenter } from "@/components/notifications"
 import ModernNotificationSystem from "@/components/modern-notification-system"
 import { getRoleBasedDashboard, getRoleDisplayName } from "@/lib/role-utils"
@@ -165,6 +165,12 @@ export function Header() {
                     <Link href="/submit">
                       <Search className="mr-2 h-4 w-4" />
                       Submit Research
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/submissions">
+                      <FileText className="mr-2 h-4 w-4" />
+                      My Submissions
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

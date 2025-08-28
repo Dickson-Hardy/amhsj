@@ -38,7 +38,7 @@ interface Application {
     requestedRole: string
     currentRole: string
     status: string
-    applicationData: any
+    applicationData: unknown
     submittedAt: string
   }
   user: {
@@ -50,9 +50,9 @@ interface Application {
     bio: string
     profileCompleteness: number
   }
-  qualifications: any[]
-  publications: any[]
-  references: any[]
+  qualifications: unknown[]
+  publications: unknown[]
+  references: unknown[]
 }
 
 export default function ApplicationsManager() {

@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error("Error generating DOI report:", error)
+    logger.error("Error generating DOI report:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

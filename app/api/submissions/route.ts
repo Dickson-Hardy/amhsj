@@ -1,12 +1,26 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest } from "next/server"
+import { z } from "zod"
+import * as crypto from "crypto"
+import { requireAuth, ROLES } from "@/lib/api-utils"
+import {
+  createApiResponse,
+  createErrorResponse,
+  createPaginatedResponse,
+  validateRequest,
+  withErrorHandler
+} from "@/lib/api-utils"
+import { logger } from "@/lib/logger"
 import { db } from "@/lib/db"
 import { submissions } from "@/lib/db/schema"
 import { eq, and, sql, desc } from "drizzle-orm"
 import { workflowManager } from "@/lib/workflow"
-import { logError } from "@/lib/logger"
-import { z } from "zod"
+
+// Validation schemas
+const querySchema = z.object({
+  status: z.string().optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
+})
 
 // Validation schema for submission
 const submissionSchema = z.object({
@@ -40,24 +54,21 @@ const submissionSchema = z.object({
   funding: z.string().optional()
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Require authentication for submission creation
+    const session = await requireAuth(request, [ROLES.AUTHOR, ROLES.ASSOCIATE_EDITOR, ROLES.ADMIN])
+    
+    logger.api("Creating new submission", { 
+      requestId, 
+      userId: session.user.id, 
+      userRole: session.user.role 
+    })
 
     const body = await request.json()
-    const validation = submissionSchema.safeParse(body)
-    
-    if (!validation.success) {
-      return NextResponse.json({ 
-        error: "Validation failed", 
-        details: validation.error.errors 
-      }, { status: 400 })
-    }
-
-    const submissionData = validation.data
+    const validatedData = validateRequest(submissionSchema, body)
     const authorId = session.user.id
 
     // Check if user has active draft submissions limit
@@ -70,46 +81,68 @@ export async function POST(request: NextRequest) {
       ))
 
     if (activeDrafts.length >= 5) {
-      return NextResponse.json({ 
-        error: "Maximum 5 active drafts allowed" 
-      }, { status: 429 })
+      logger.api("Draft submission limit exceeded", { 
+        requestId, 
+        userId: authorId, 
+        activeDrafts: activeDrafts.length 
+      })
+      throw new Error("Maximum 5 active drafts allowed")
     }
 
     // Submit article through workflow manager
-    const result = await workflowManager.submitArticle(submissionData, authorId)
+    const result = await workflowManager.submitArticle(validatedData, authorId)
 
     if (!result.success) {
-      return NextResponse.json({ 
-        error: result.message || "Submission failed" 
-      }, { status: 500 })
+      logger.error("Workflow submission failed", { 
+        requestId, 
+        userId: authorId, 
+        message: result.message 
+      })
+      throw new Error(result.message || "Submission failed")
     }
 
-    return NextResponse.json({
-      success: true,
-      submissionId: result.submissionId,
-      articleId: result.article?.id,
-      message: "Submission created successfully"
+    logger.api("Submission created successfully", { 
+      requestId, 
+      submissionId: result.submissionId, 
+      articleId: result.article?.id 
     })
 
+    return createApiResponse(
+      {
+        submissionId: result.submissionId,
+        articleId: result.article?.id
+      },
+      "Submission created successfully",
+      requestId
+    )
   } catch (error) {
-    logError(error as Error, { endpoint: "/api/submissions", operation: "POST" })
-    return NextResponse.json({ 
-      error: "Internal server error" 
-    }, { status: 500 })
+    logger.error("Failed to create submission", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
   }
-}
+})
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Require authentication for viewing submissions
+    const session = await requireAuth(request)
+    
+    logger.api("Fetching submissions", { 
+      requestId, 
+      userId: session.user.id, 
+      userRole: session.user.role 
+    })
 
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get("status")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "20")
+    const queryData = validateRequest(querySchema, Object.fromEntries(searchParams))
+    
+    const status = queryData.status
+    const page = parseInt(queryData.page || "1")
+    const limit = parseInt(queryData.limit || "20")
     const offset = (page - 1) * limit
 
     let query = db
@@ -124,20 +157,25 @@ export async function GET(request: NextRequest) {
       })
       .from(submissions)
 
+    let countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(submissions)
+
     // Filter by user role
-    if (session.user.role === "author") {
+    if (session.user.role === ROLES.AUTHOR) {
       query = query.where(eq(submissions.authorId, session.user.id))
+      countQuery = countQuery.where(eq(submissions.authorId, session.user.id))
     }
 
     // Apply filters
     if (status) {
-      query = query.where(eq(submissions.status, status))
+      const statusCondition = eq(submissions.status, status)
+      query = query.where(statusCondition)
+      countQuery = countQuery.where(statusCondition)
     }
 
     // Get total count for pagination
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(submissions)
+    const [{ count }] = await countQuery
 
     // Get paginated results
     const results = await query
@@ -145,21 +183,25 @@ export async function GET(request: NextRequest) {
       .offset(offset)
       .orderBy(desc(submissions.createdAt))
 
-    return NextResponse.json({
-      success: true,
-      submissions: results,
-      pagination: {
-        page,
-        limit,
-        total: count,
-        pages: Math.ceil(count / limit)
-      }
+    logger.api("Submissions fetched successfully", { 
+      requestId, 
+      count: results.length, 
+      total: count 
     })
 
+    return createPaginatedResponse(
+      results,
+      page,
+      limit,
+      count,
+      "Submissions fetched successfully",
+      requestId
+    )
   } catch (error) {
-    logError(error as Error, { endpoint: "/api/submissions", operation: "GET" })
-    return NextResponse.json({ 
-      error: "Internal server error" 
-    }, { status: 500 })
+    logger.error("Failed to fetch submissions", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
   }
-} 
+}) 

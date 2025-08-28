@@ -58,7 +58,7 @@ export default function DOIManagementPage() {
         calculateStats(data.articles)
       }
     } catch (error) {
-      console.error('Failed to fetch articles:', error)
+      logger.error('Failed to fetch articles:', error)
       toast({
         title: "Error",
         description: "Failed to load articles",

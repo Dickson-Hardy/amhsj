@@ -1,4 +1,5 @@
 
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 
@@ -27,24 +28,24 @@ export async function runValidationTests() {
     }
   ]
   
-  console.log('🎯 Validation Results:')
+  logger.info('🎯 Validation Results:')
   tests.forEach(test => {
-    console.log(test.passed ? '✅' : '❌', test.name + ':', test.description)
+    logger.info(test.passed ? '✅' : '❌', test.name + ':', test.description)
   })
   
   const allPassed = tests.every(test => test.passed)
   
   if (allPassed) {
-    console.log('\n🎉 ALL TESTS PASSED! Your application is ready!')
-    console.log('\n📋 Summary of fixes applied:')
-    console.log('• Fixed TypeScript compilation errors')
-    console.log('• Replaced all alert() with toast notifications') 
-    console.log('• Created missing database tables')
-    console.log('• Aligned schema with actual database structure')
-    console.log('• Updated all API routes for Next.js 15+ compatibility')
-    console.log('• Fixed analytics queries with correct column names')
+    logger.info('\n🎉 ALL TESTS PASSED! Your application is ready!')
+    logger.info('\n📋 Summary of fixes applied:')
+    logger.info('• Fixed TypeScript compilation errors')
+    logger.info('• Replaced all alert() with toast notifications') 
+    logger.info('• Created missing database tables')
+    logger.info('• Aligned schema with actual database structure')
+    logger.info('• Updated all API routes for Next.js 15+ compatibility')
+    logger.info('• Fixed analytics queries with correct column names')
   } else {
-    console.log('\n❌ Some tests failed. Please review the issues above.')
+    logger.info('\n❌ Some tests failed. Please review the issues above.')
   }
   
   return allPassed

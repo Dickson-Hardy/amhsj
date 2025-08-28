@@ -147,7 +147,9 @@ export default function ProductionEditorDashboard() {
       }
 
     } catch (error) {
-      console.error('Error fetching production editor dashboard data:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching production editor dashboard data:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -155,28 +157,40 @@ export default function ProductionEditorDashboard() {
 
   const handleStatusUpdate = async (articleId: string, newStatus: string) => {
     try {
-      console.log(`Updating article ${articleId} status to: ${newStatus}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Updating article ${articleId} status to: ${newStatus}`)
+      }
       fetchDashboardData()
     } catch (error) {
-      console.error('Error updating article status:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error updating article status:', error)
+      }
     }
   }
 
   const handleTaskComplete = async (taskId: string) => {
     try {
-      console.log(`Marking task ${taskId} as complete`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Marking task ${taskId} as complete`)
+      }
       fetchDashboardData()
     } catch (error) {
-      console.error('Error completing task:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error completing task:', error)
+      }
     }
   }
 
   const handlePublishArticle = async (articleId: string) => {
     try {
-      console.log(`Publishing article ${articleId}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Publishing article ${articleId}`)
+      }
       fetchDashboardData()
     } catch (error) {
-      console.error('Error publishing article:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error publishing article:', error)
+      }
     }
   }
 

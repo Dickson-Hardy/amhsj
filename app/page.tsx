@@ -44,7 +44,7 @@ export default function HomePage() {
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([])
   const [stats, setStats] = useState({ totalArticles: 0, totalIssues: 0, totalVolumes: 0 })
-  const [currentIssue, setCurrentIssue] = useState<any>(null)
+  const [currentIssue, setCurrentIssue] = useState<unknown>(null)
   const [announcements, setAnnouncements] = useState<any[]>([])
   const [latestNews, setLatestNews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,7 +109,9 @@ export default function HomePage() {
           ])
         }
       } catch (error) {
-        console.error("Error fetching homepage data:", error)
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error fetching homepage data:", error)
+        }
       } finally {
         setLoading(false)
       }

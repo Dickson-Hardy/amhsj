@@ -76,7 +76,7 @@ const ModernUXDemo: React.FC = () => {
   }
 
   const simulateThrowError = () => {
-    throw new Error("This is a simulated error to test the error boundary!")
+    throw new AppError("This is a simulated error to test the error boundary!")
   }
 
   const demoLoadingStates = () => {
@@ -100,7 +100,7 @@ const ModernUXDemo: React.FC = () => {
             Showcasing enhanced notifications, error handling, and loading states
           </p>
           <Badge className="bg-green-100 text-green-800">
-            ✅ All Legacy console.error() & alert() calls replaced
+            ✅ All Legacy logger.error() & alert() calls replaced
           </Badge>
         </div>
 
@@ -306,7 +306,7 @@ const ModernUXDemo: React.FC = () => {
             <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
               <h4 className="font-semibold text-amber-800 mb-2">🔧 Technical Improvements</h4>
               <ul className="text-sm text-amber-700 grid grid-cols-1 md:grid-cols-2 gap-1">
-                <li>• Replaced all console.error() calls</li>
+                <li>• Replaced all logger.error() calls</li>
                 <li>• Enhanced NextAuth error handling</li>
                 <li>• Modernized rate limiting</li>
                 <li>• Improved API error responses</li>

@@ -322,7 +322,7 @@ export class AdvancedSearchService {
     }
   }
 
-  private async getAggregations(conditions: any[]): Promise<SearchResponse['aggregations']> {
+  private async getAggregations(conditions: unknown[]): Promise<SearchResponse['aggregations']> {
     let baseQuery = db.select().from(articles)
     
     if (conditions.length > 0) {
@@ -512,7 +512,7 @@ export class AdvancedSearchService {
     }
   }
 
-  private addHighlighting(results: any[], query?: string): SearchResult[] {
+  private addHighlighting(results: unknown[], query?: string): SearchResult[] {
     if (!query) {
       return results.map(result => ({
         ...result,

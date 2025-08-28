@@ -149,7 +149,7 @@ export default function ApplicationStatusPage() {
       const response = await fetch(url)
       
       if (!response.ok) {
-        throw new Error("Failed to fetch application")
+        throw new AppError("Failed to fetch application")
       }
 
       const data = await response.json()
@@ -167,7 +167,7 @@ export default function ApplicationStatusPage() {
       }
     } catch (err) {
       setError("Failed to load application data")
-      console.error("Fetch application error:", err)
+      logger.error("Fetch application error:", err)
     } finally {
       setLoading(false)
     }

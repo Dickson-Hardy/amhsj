@@ -25,7 +25,9 @@ export default function ReviewerGuidelinesPage() {
   
   const downloadGuideline = (type: string) => {
     // This would trigger a download of the PDF guidelines
-    console.log(`Downloading ${type} guidelines...`)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Downloading ${type} guidelines...`)
+    }
     toast({
       title: "Download Starting",
       description: `${type} guidelines download is starting...`,

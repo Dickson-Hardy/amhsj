@@ -143,7 +143,9 @@ export default function GuestEditorDashboard() {
       setCallForPapers(callForPapersData)
 
     } catch (error) {
-      console.error('Error fetching guest editor dashboard data:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching guest editor dashboard data:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -151,20 +153,20 @@ export default function GuestEditorDashboard() {
 
   const handleGuestDecision = async (submissionId: string, decision: string, comments: string) => {
     try {
-      console.log(`Guest editor decision: ${decision} for submission ${submissionId}`)
-      console.log(`Comments: ${comments}`)
+      logger.info(`Guest editor decision: ${decision} for submission ${submissionId}`)
+      logger.error(`Comments: ${comments}`)
       fetchDashboardData()
     } catch (error) {
-      console.error('Error making guest editor decision:', error)
+      logger.error('Error making guest editor decision:', error)
     }
   }
 
   const handleReviewerInvitation = async (reviewerId: string) => {
     try {
-      console.log(`Inviting reviewer ${reviewerId} to special issue`)
+      logger.error(`Inviting reviewer ${reviewerId} to special issue`)
       fetchDashboardData()
     } catch (error) {
-      console.error('Error inviting reviewer:', error)
+      logger.error('Error inviting reviewer:', error)
     }
   }
 

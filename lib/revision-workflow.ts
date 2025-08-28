@@ -61,11 +61,11 @@ export class RevisionWorkflowManager {
         .limit(1)
 
       if (!article.length) {
-        throw new Error("Article not found")
+        throw new NotFoundError("Article not found")
       }
 
       if (article[0].authorId !== authorId) {
-        throw new Error("Unauthorized: You can only submit revisions for your own articles")
+        throw new AuthenticationError("Unauthorized: You can only submit revisions for your own articles")
       }
 
       // Get latest version number
@@ -112,8 +112,8 @@ export class RevisionWorkflowManager {
         message: `Revision v${newVersionNumber} submitted successfully with comprehensive change tracking`
       }
 
-    } catch (error: any) {
-      console.error("Error submitting revision:", error)
+    } catch (error: unknown) {
+      logger.error("Error submitting revision:", error)
       return {
         success: false,
         versionNumber: 0,
@@ -127,7 +127,7 @@ export class RevisionWorkflowManager {
    * Process revision files including clean copy generation
    */
   private async processRevisionFiles(revisionData: RevisionSubmission): Promise<any[]> {
-    const processedFiles: any[] = []
+    const processedFiles: unknown[] = []
 
     // Main revised manuscript
     if (revisionData.revisedManuscript.file) {
@@ -269,7 +269,7 @@ export class RevisionWorkflowManager {
     versions: Array<{
       versionNumber: number
       changeLog: string
-      files: any[]
+      files: unknown[]
       createdAt: string
       createdBy: string
       authorName: string
@@ -301,8 +301,8 @@ export class RevisionWorkflowManager {
           authorName: v.authorName || 'Unknown'
         }))
       }
-    } catch (error: any) {
-      console.error("Error getting revision history:", error)
+    } catch (error: unknown) {
+      logger.error("Error getting revision history:", error)
       return {
         success: false,
         versions: []

@@ -124,7 +124,7 @@ export interface ConflictResolution {
 // WebSocket message types
 export interface WSMessage {
   type: 'join' | 'leave' | 'edit' | 'comment' | 'cursor' | 'presence' | 'conflict' | 'sync'
-  payload: any
+  payload: unknown
   sessionId: string
   userId: string
   timestamp: Date
@@ -177,7 +177,7 @@ export class RealTimeCollaborationService {
   /**
    * Initialize WebSocket server for real-time collaboration
    */
-  initializeWebSocketServer(server: any) {
+  initializeWebSocketServer(server: unknown) {
     this.wss = new WebSocketServer({ 
       server,
       path: '/ws/collaboration'
@@ -250,7 +250,7 @@ export class RealTimeCollaborationService {
       return session
     } catch (error) {
       logger.error("Failed to create collaboration session", { error, manuscriptId, userId })
-      throw new Error("Failed to create collaboration session")
+      throw new AppError("Failed to create collaboration session")
     }
   }
 
@@ -323,7 +323,7 @@ export class RealTimeCollaborationService {
     try {
       const session = this.sessions.get(sessionId)
       if (!session || !session.isActive) {
-        throw new Error("Invalid or inactive session")
+        throw new ValidationError("Invalid or inactive session")
       }
 
       // Validate operation
@@ -425,7 +425,7 @@ export class RealTimeCollaborationService {
     try {
       const session = this.sessions.get(sessionId)
       if (!session) {
-        throw new Error("Invalid session")
+        throw new ValidationError("Invalid session")
       }
 
       const validatedComment = CommentSchema.parse(commentData)
@@ -493,7 +493,7 @@ export class RealTimeCollaborationService {
     try {
       const session = this.sessions.get(sessionId)
       if (!session) {
-        throw new Error("Invalid session")
+        throw new ValidationError("Invalid session")
       }
 
       const replyId = `reply_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -544,7 +544,7 @@ export class RealTimeCollaborationService {
     try {
       const session = this.sessions.get(sessionId)
       if (!session) {
-        throw new Error("Invalid session")
+        throw new ValidationError("Invalid session")
       }
 
       await DatabaseService.query(`
@@ -590,7 +590,7 @@ export class RealTimeCollaborationService {
       `, [manuscriptId])
 
       if (manuscript.length === 0) {
-        throw new Error("Manuscript not found")
+        throw new NotFoundError("Manuscript not found")
       }
 
       const currentContent = manuscript[0].content
@@ -681,7 +681,7 @@ export class RealTimeCollaborationService {
       `, [manuscriptId, version1, version2])
 
       if (versions.length !== 2) {
-        throw new Error("One or both versions not found")
+        throw new NotFoundError("One or both versions not found")
       }
 
       const content1 = versions[0].content
@@ -944,7 +944,7 @@ export class RealTimeCollaborationService {
     `, [manuscriptId])
 
     if (manuscript.length === 0) {
-      throw new Error("Manuscript not found")
+      throw new NotFoundError("Manuscript not found")
     }
 
     let content = manuscript[0].content

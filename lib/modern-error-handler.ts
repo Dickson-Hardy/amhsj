@@ -139,7 +139,7 @@ class ModernErrorHandler {
    * Handle promise rejections
    */
   public handlePromiseRejection(
-    reason: any,
+    reason: unknown,
     context: ErrorContext = {}
   ): void {
     const error = reason instanceof Error ? reason : new Error(String(reason))
@@ -205,7 +205,7 @@ class ModernErrorHandler {
     }
     
     if (error && typeof error === 'object' && 'message' in error) {
-      return new Error((error as any).message)
+      return new Error((error as unknown).message)
     }
     
     return new Error('Unknown error occurred')
@@ -318,7 +318,7 @@ class ModernErrorHandler {
       })
     } catch (reportError) {
       // Silent fail for error reporting
-      console.error('Failed to report error:', reportError)
+      logger.error('Failed to report error:', reportError)
     }
   }
 
@@ -334,7 +334,7 @@ class ModernErrorHandler {
       `Additional context:\n`
     )
     
-    window.open(`mailto:support@amhsj.com?subject=${subject}&body=${body}`)
+    window.open(`process.env.EMAIL_FROMsupport@amhsj.com?subject=${subject}&body=${body}`)
   }
 
   /**

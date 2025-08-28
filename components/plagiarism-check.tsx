@@ -91,7 +91,7 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
       })
 
       if (!response.ok) {
-        throw new Error('Failed to run plagiarism check')
+        throw new AppError('Failed to run plagiarism check')
       }
 
       const data = await response.json()
@@ -101,7 +101,7 @@ export default function PlagiarismCheck({ articleId, content, onReportGenerated 
       toast.success('Plagiarism check completed')
 
     } catch (error) {
-      console.error('Error running plagiarism check:', error)
+      logger.error('Error running plagiarism check:', error)
       setError('Failed to run plagiarism check')
       toast.error('Failed to run plagiarism check')
     } finally {

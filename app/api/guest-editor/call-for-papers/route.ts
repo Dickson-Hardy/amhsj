@@ -26,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json(callForPapers)
   } catch (error) {
-    console.error('Error fetching call for papers:', error)
+    logger.error('Error fetching call for papers:', error)
     return NextResponse.json(
       { error: 'Failed to fetch call for papers' },
       { status: 500 }

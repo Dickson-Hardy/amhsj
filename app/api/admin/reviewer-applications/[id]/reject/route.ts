@@ -13,7 +13,7 @@ export async function POST(
   try {
     const session = await getServerSession()
     
-    if (!session?.user || (session.user as any).role !== "admin") {
+    if (!session?.user || (session.user as unknown).role !== "admin") {
       return NextResponse.json({ message: "Admin access required" }, { status: 403 })
     }
 
@@ -32,7 +32,7 @@ export async function POST(
     // 3. Log the rejection for record keeping
     await logApplicationAction(applicationId, 'rejected', session.user?.email, reason)
     
-    console.log(`Reviewer application ${applicationId} rejected by ${session.user?.email}`)
+    logger.info(`Reviewer application ${applicationId} rejected by ${session.user?.email}`)
     
     return NextResponse.json({ 
       success: true, 
@@ -40,7 +40,7 @@ export async function POST(
     })
     
   } catch (error) {
-    console.error("Error rejecting reviewer application:", error)
+    logger.error("Error rejecting reviewer application:", error)
     return NextResponse.json({ 
       message: "Failed to reject application" 
     }, { status: 500 })
@@ -84,7 +84,7 @@ async function updateApplicationStatus(applicationId: string, status: string, re
       }
     }
   } catch (error) {
-    console.error('Error updating application status:', error)
+    logger.error('Error updating application status:', error)
     return { success: false, error: 'Failed to update application status' }
   }
 }
@@ -103,14 +103,14 @@ async function logApplicationAction(applicationId: string, action: string, admin
     //   }
     // })
     
-    console.log(`Action logged: ${action} on application ${applicationId} by ${adminEmail}`)
-    if (notes) console.log(`Notes: ${notes}`)
+    logger.error(`Action logged: ${action} on application ${applicationId} by ${adminEmail}`)
+    if (notes) logger.error(`Notes: ${notes}`)
   } catch (error) {
-    console.error('Error logging application action:', error)
+    logger.error('Error logging application action:', error)
   }
 }
 
-async function sendRejectionEmail(application: any, reason?: string) {
+async function sendRejectionEmail(application: unknown, reason?: string) {
   try {
     const emailContent = {
       to: application.email,
@@ -168,9 +168,9 @@ African Medical and Health Sciences Journal`
     }
     
     await sendEmail(emailContent)
-    console.log('Rejection email sent successfully')
+    logger.error('Rejection email sent successfully')
   } catch (error) {
-    console.error('Error sending rejection email:', error)
+    logger.error('Error sending rejection email:', error)
     // Don't throw error - email failure shouldn't stop the rejection process
   }
 }

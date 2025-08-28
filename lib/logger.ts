@@ -1,18 +1,45 @@
-// Enhanced logging utility for production-ready application
-let logger: any = null
+/**
+ * Standardized Logging Utility for AMHSJ
+ * Provides consistent logging across all API routes and services
+ */
+
+interface LogContext {
+  userId?: string
+  endpoint?: string
+  operation?: string
+  requestId?: string
+  ip?: string
+  userAgent?: string
+  duration?: number
+  error?: unknown
+  [key: string]: unknown
+}
+
+interface Logger {
+  error: (message: string, context?: LogContext) => void
+  warn: (message: string, context?: LogContext) => void
+  info: (message: string, context?: LogContext) => void
+  debug: (message: string, context?: LogContext) => void
+  auth: (message: string, userId?: string, action?: string) => void
+  api: (message: string, context?: LogContext) => void
+  security: (message: string, context?: LogContext) => void
+}
+
+let logger: Logger
 
 // Only initialize winston on the server side
 if (typeof window === 'undefined') {
   try {
     const winston = require('winston')
     
-    logger = winston.createLogger({
+    const winstonLogger = winston.createLogger({
       level: process.env.NODE_ENV === "production" ? "info" : "debug",
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
-        winston.format.printf(({ level, message, timestamp, ...meta }: any) => {
-          return `${timestamp} [${level}]: ${message} ${Object.keys(meta).length ? JSON.stringify(meta) : ''}`
+        winston.format.printf(({ level, message, timestamp, ...meta }: unknown) => {
+          const contextStr = Object.keys(meta).length ? ` | ${JSON.stringify(meta)}` : ''
+          return `${timestamp} [${level.toUpperCase()}]: ${message}${contextStr}`
         })
       ),
       defaultMeta: { 
@@ -24,78 +51,142 @@ if (typeof window === 'undefined') {
         new winston.transports.File({ filename: "logs/error.log", level: "error" }),
         new winston.transports.File({ filename: "logs/combined.log" }),
         new winston.transports.File({ filename: "logs/audit.log", level: "info" }),
+        new winston.transports.File({ filename: "logs/auth.log", level: "info" }),
+        new winston.transports.File({ filename: "logs/security.log", level: "warn" }),
       ],
     })
 
     if (process.env.NODE_ENV !== "production") {
-      logger.add(
+      winstonLogger.add(
         new winston.transports.Console({
-          format: winston.format.simple(),
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+          ),
         }),
       )
+    }
+
+    logger = {
+      error: (message: string, context?: LogContext) => {
+        winstonLogger.error(message, context)
+      },
+      warn: (message: string, context?: LogContext) => {
+        winstonLogger.warn(message, context)
+      },
+      info: (message: string, context?: LogContext) => {
+        winstonLogger.info(message, context)
+      },
+      debug: (message: string, context?: LogContext) => {
+        winstonLogger.debug(message, context)
+      },
+      auth: (message: string, userId?: string, action?: string) => {
+        winstonLogger.info(`[AUTH] ${message}`, { userId, action, category: 'authentication' })
+      },
+      api: (message: string, context?: LogContext) => {
+        winstonLogger.info(`[API] ${message}`, { ...context, category: 'api' })
+      },
+      security: (message: string, context?: LogContext) => {
+        winstonLogger.warn(`[SECURITY] ${message}`, { ...context, category: 'security' })
+      }
     }
   } catch (error) {
     // Fallback if winston is not available
     logger = {
-      error: console.error,
-      info: console.log,
-      debug: console.log,
-      warn: console.warn,
+      error: (message: string, context?: LogContext) => console.error(`[ERROR] ${message}`, context),
+      warn: (message: string, context?: LogContext) => console.warn(`[WARN] ${message}`, context),
+      info: (message: string, context?: LogContext) => console.log(`[INFO] ${message}`, context),
+      debug: (message: string, context?: LogContext) => console.log(`[DEBUG] ${message}`, context),
+      auth: (message: string, userId?: string, action?: string) => console.log(`[AUTH] ${message}`, { userId, action }),
+      api: (message: string, context?: LogContext) => console.log(`[API] ${message}`, context),
+      security: (message: string, context?: LogContext) => console.warn(`[SECURITY] ${message}`, context)
     }
   }
 } else {
-  // Client-side fallback to console
+  // Client-side logger - only log in development
+  const isDev = process.env.NODE_ENV === 'development'
+  
   logger = {
-    error: console.error,
-    info: console.log,
-    debug: console.log,
-    warn: console.warn,
+    error: (message: string, context?: LogContext) => {
+      if (isDev) console.error(`[ERROR] ${message}`, context)
+    },
+    warn: (message: string, context?: LogContext) => {
+      if (isDev) console.warn(`[WARN] ${message}`, context)
+    },
+    info: (message: string, context?: LogContext) => {
+      if (isDev) console.log(`[INFO] ${message}`, context)
+    },
+    debug: (message: string, context?: LogContext) => {
+      if (isDev) console.log(`[DEBUG] ${message}`, context)
+    },
+    auth: (message: string, userId?: string, action?: string) => {
+      if (isDev) console.log(`[AUTH] ${message}`, { userId, action })
+    },
+    api: (message: string, context?: LogContext) => {
+      if (isDev) console.log(`[API] ${message}`, context)
+    },
+    security: (message: string, context?: LogContext) => {
+      if (isDev) console.warn(`[SECURITY] ${message}`, context)
+    }
   }
 }
 
 export { logger }
 
-export function logError(error: Error, context?: any) {
-  const logData = {
-    error: error.message,
+// Backward compatibility functions
+export function logError(error: Error, context?: unknown) {
+  logger.error(error.message, {
     stack: error.stack,
-    context,
+    ...context,
     timestamp: new Date().toISOString(),
-  }
-  
-  if (typeof window === 'undefined') {
-    // Server-side logging
-    logger.error("Application error", logData)
-  } else {
-    // Client-side logging
-    console.error("Application error", logData)
-  }
+  })
 }
 
-export function logInfo(message: string, data?: any) {
-  const logData = { data, timestamp: new Date().toISOString() }
-  
-  if (typeof window === 'undefined') {
-    // Server-side logging
-    logger.info(message, logData)
-  } else {
-    // Client-side logging
-    console.log(message, logData)
-  }
+export function logInfo(message: string, data?: unknown) {
+  logger.info(message, {
+    ...(typeof data === 'object' && data !== null ? data as Record<string, unknown> : { data }),
+    timestamp: new Date().toISOString()
+  })
+}
+
+export function logWarn(message: string, data?: unknown) {
+  logger.warn(message, {
+    ...(typeof data === 'object' && data !== null ? data as Record<string, unknown> : { data }),
+    timestamp: new Date().toISOString()
+  })
 }
 
 // Additional convenience logging functions
 export function logAuth(message: string, userId?: string, action?: string) {
-  logInfo(`AUTH: ${message}`, { userId, action, type: 'authentication' })
+  logger.auth(message, userId, action)
 }
 
 export function logEmail(message: string, recipient?: string, status?: string) {
-  logInfo(`EMAIL: ${message}`, { recipient, status, type: 'email' })
+  logger.info(`EMAIL: ${message}`, { 
+    recipient, 
+    status, 
+    category: 'email' 
+  })
 }
 
-export function logSystem(message: string, metric?: string, value?: any) {
-  logInfo(`SYSTEM: ${message}`, { metric, value, type: 'system' })
+export function logSystem(message: string, metric?: string, value?: unknown) {
+  logger.info(`SYSTEM: ${message}`, { 
+    metric, 
+    value, 
+    category: 'system' 
+  })
 }
+
+export function logSecurity(message: string, context?: LogContext) {
+  logger.security(message, context)
+}
+
+export function logApi(message: string, context?: LogContext) {
+  logger.api(message, context)
+}
+
+// Default export for easy importing
+export default logger
 
 export function logAdmin(message: string, adminId?: string, action?: string, target?: string) {
   logInfo(`ADMIN: ${message}`, { adminId, action, target, type: 'admin_action' })

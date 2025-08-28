@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     // In production, this would store the email in a database
     // or send it to an email service for maintenance notifications
-    console.log(`Maintenance notification signup: ${email}`)
+    logger.info(`Maintenance notification signup: ${email}`)
     
     // Simulate storing the email for notifications
     // await db.maintenanceNotifications.create({ email, createdAt: new Date() })
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       message: "You'll be notified when maintenance is complete" 
     })
   } catch (error) {
-    console.error("Maintenance subscription error:", error)
+    logger.error("Maintenance subscription error:", error)
     return NextResponse.json({ 
       success: false, 
       message: "Failed to subscribe for notifications" 

@@ -136,7 +136,7 @@ export default function ArchiveManagementDashboard() {
         })
       }
     } catch (error) {
-      console.error("Error fetching volumes:", error)
+      logger.error("Error fetching volumes:", error)
       toast({
         title: "Error",
         description: "Failed to fetch volumes",
@@ -165,7 +165,7 @@ export default function ArchiveManagementDashboard() {
         })
       }
     } catch (error) {
-      console.error("Error fetching issues:", error)
+      logger.error("Error fetching issues:", error)
       toast({
         title: "Error",
         description: "Failed to fetch issues",
@@ -183,7 +183,7 @@ export default function ArchiveManagementDashboard() {
         setArticles(data.articles)
       }
     } catch (error) {
-      console.error("Error fetching articles:", error)
+      logger.error("Error fetching articles:", error)
     }
   }
 
@@ -270,7 +270,7 @@ export default function ArchiveManagementDashboard() {
         }
         fetchVolumes() // Refresh to update issue counts
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -301,7 +301,7 @@ export default function ArchiveManagementDashboard() {
         })
         fetchVolumes()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -335,7 +335,7 @@ export default function ArchiveManagementDashboard() {
         }
         fetchVolumes()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -371,7 +371,7 @@ export default function ArchiveManagementDashboard() {
         }
         fetchVolumes()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({

@@ -1,66 +1,96 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import * as crypto from "crypto"
+import { requireAuth, ROLES } from "@/lib/api-utils"
+import { 
+  createApiResponse, 
+  createErrorResponse,
+  validateRequest,
+  withErrorHandler,
+  handleDatabaseError
+} from "@/lib/api-utils"
 import { db } from "@/lib/db"
 import { sql } from "drizzle-orm"
+import { logger } from "@/lib/logger"
+import { z } from "zod"
 
-export async function GET(request: NextRequest) {
+// Validation schema for settings
+const SettingsSchema = z.object({
+  journalName: z.string().min(1, "Journal name is required"),
+  issn: z.string().min(1, "ISSN is required"),
+  description: z.string().min(1, "Description is required"),
+  reviewPeriod: z.number().min(1).max(365).default(21),
+  minimumReviewers: z.number().min(1).max(10).default(2),
+  enableOpenAccess: z.boolean().default(true),
+  enableSubmissions: z.boolean().default(true),
+  requireOrcid: z.boolean().default(false),
+  emailNotifications: z.boolean().default(true)
+})
+
+async function getSettings(request: NextRequest) {
+  const requestId = crypto.randomUUID()
+  
+  const session = await requireAuth(request, [ROLES.ADMIN])
+  
+  logger.api("Admin settings fetch requested", {
+    userId: session.user.id,
+    requestId,
+    endpoint: "/api/admin/settings"
+  })
+
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user?.role !== "admin") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
     const settings = await loadJournalSettings()
     
-    return NextResponse.json({
-      success: true,
-      data: settings
+    logger.api("Admin settings fetch completed", {
+      userId: session.user.id,
+      requestId
     })
     
-  } catch (error) {
-    console.error("Error loading settings:", error)
-    return NextResponse.json(
-      { error: "Failed to load settings" },
-      { status: 500 }
+    return createApiResponse(
+      settings,
+      "Settings retrieved successfully",
+      requestId
     )
+    
+  } catch (error) {
+    return handleDatabaseError(error)
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user?.role !== "admin") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
+async function updateSettings(request: NextRequest) {
+  const requestId = crypto.randomUUID()
+  
+  const session = await requireAuth(request, [ROLES.ADMIN])
+  
+  logger.api("Admin settings update requested", {
+    userId: session.user.id,
+    requestId,
+    endpoint: "/api/admin/settings"
+  })
 
-    const settings = await request.json()
+  try {
+    const body = await request.json()
+    const validatedSettings = validateRequest(SettingsSchema, body)
     
     // Save settings to database
-    await saveJournalSettings(settings)
+    await saveJournalSettings(validatedSettings)
     
     // Log the settings change
-    await logSettingsChange(session.user?.email || '', settings)
+    await logSettingsChange(session.user.email, validatedSettings, requestId)
     
-    return NextResponse.json({
-      success: true,
-      message: "Settings saved successfully"
+    logger.api("Admin settings updated successfully", {
+      userId: session.user.id,
+      settingsChanged: Object.keys(validatedSettings),
+      requestId
     })
     
-  } catch (error) {
-    console.error("Error saving settings:", error)
-    return NextResponse.json(
-      { error: "Failed to save settings" },
-      { status: 500 }
+    return createApiResponse(
+      { settings: validatedSettings },
+      "Settings saved successfully",
+      requestId
     )
+    
+  } catch (error) {
+    return handleDatabaseError(error)
   }
 }
 
@@ -87,7 +117,10 @@ async function loadJournalSettings() {
       emailNotifications: true
     }
   } catch (error) {
-    console.error('Error loading journal settings:', error)
+    logger.error("Error loading journal settings", {
+      error: error instanceof Error ? error.message : String(error)
+    })
+    
     // Return default settings on error
     return {
       journalName: "Academic Medical Journal of Health Sciences", 
@@ -117,14 +150,18 @@ async function saveJournalSettings(settings: any) {
         updated_at = NOW()
     `)
     
-    console.log("Settings saved to database:", settings)
+    logger.info("Settings saved to database successfully", { 
+      settingsKeys: Object.keys(settings) 
+    })
   } catch (error) {
-    console.error('Error saving journal settings:', error)
+    logger.error("Error saving journal settings", {
+      error: error instanceof Error ? error.message : String(error)
+    })
     throw new Error('Failed to save settings to database')
   }
 }
 
-async function logSettingsChange(adminEmail: string, settings: any) {
+async function logSettingsChange(adminEmail: string, settings: any, requestId: string) {
   try {
     // Log to database - create admin_logs table if needed
     await db.execute(sql`
@@ -132,9 +169,20 @@ async function logSettingsChange(adminEmail: string, settings: any) {
       VALUES ('SETTINGS_UPDATED', ${adminEmail}, ${JSON.stringify(settings)}, NOW())
     `)
     
-    console.log(`Settings change logged by ${adminEmail}:`, settings)
+    logger.api("Settings change logged successfully", {
+      adminEmail,
+      requestId,
+      settingsKeys: Object.keys(settings)
+    })
   } catch (error) {
-    console.error('Error logging settings change:', error)
+    logger.error("Error logging settings change", {
+      adminEmail,
+      requestId,
+      error: error instanceof Error ? error.message : String(error)
+    })
     // Don't fail the request if logging fails
   }
 }
+
+export const GET = withErrorHandler(getSettings)
+export const POST = withErrorHandler(updateSettings)

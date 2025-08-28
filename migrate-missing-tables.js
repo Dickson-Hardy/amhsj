@@ -6,7 +6,7 @@ const { advertisements, userApplications } = require('./lib/db/schema')
 
 async function createMissingTables() {
   try {
-    console.log('Creating missing database tables...')
+    logger.info('Creating missing database tables...')
     
     const connectionString = process.env.DATABASE_URL
     if (!connectionString) {
@@ -34,7 +34,7 @@ async function createMissingTables() {
       )
     `
 
-    console.log('✅ Advertisements table created/verified')
+    logger.info('✅ Advertisements table created/verified')
 
     // Verify user_applications table exists with correct schema
     await sql`
@@ -53,7 +53,7 @@ async function createMissingTables() {
       )
     `
 
-    console.log('✅ User applications table created/verified')
+    logger.info('✅ User applications table created/verified')
 
     // Create reviewer_profiles table if it doesn't exist
     await sql`
@@ -73,7 +73,7 @@ async function createMissingTables() {
       )
     `
 
-    console.log('✅ Reviewer profiles table created/verified')
+    logger.info('✅ Reviewer profiles table created/verified')
 
     // Create editor_profiles table if it doesn't exist
     await sql`
@@ -93,7 +93,7 @@ async function createMissingTables() {
       )
     `
 
-    console.log('✅ Editor profiles table created/verified')
+    logger.info('✅ Editor profiles table created/verified')
 
     // Create missing columns if needed
     try {
@@ -103,16 +103,16 @@ async function createMissingTables() {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS specializations JSONB`
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS languages_spoken JSONB`
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS research_interests JSONB`
-      console.log('✅ User table columns updated')
+      logger.info('✅ User table columns updated')
     } catch (error) {
-      console.log('⚠️  Some user columns may already exist')
+      logger.info('⚠️  Some user columns may already exist')
     }
 
     await sql.end()
-    console.log('🎉 Database migration completed successfully!')
+    logger.info('🎉 Database migration completed successfully!')
     
   } catch (error) {
-    console.error('❌ Migration failed:', error)
+    logger.error('❌ Migration failed:', error)
     process.exit(1)
   }
 }

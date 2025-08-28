@@ -15,8 +15,8 @@ export default function FloatingSupportButton() {
       title: "Live Chat",
       description: "Chat with our support team",
       action: () => {
-        if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-          (window as any).Tawk_API.maximize()
+        if (typeof window !== 'undefined' && (window as unknown).Tawk_API) {
+          (window as unknown).Tawk_API.maximize()
         }
         setIsOpen(false)
       },
@@ -37,7 +37,7 @@ export default function FloatingSupportButton() {
       title: "Email",
       description: "support@amhsj.org",
       action: () => {
-        window.location.href = "mailto:support@amhsj.org"
+        window.location.href = "process.env.EMAIL_FROMsupport@amhsj.org"
         setIsOpen(false)
       },
       color: "text-purple-600 hover:bg-purple-50"

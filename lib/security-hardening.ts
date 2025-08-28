@@ -145,7 +145,7 @@ class EnterpriseSecuritySystem {
       })
       // Security Redis initialized
     } catch (error) {
-      console.warn('⚠️ Security Redis unavailable:', error)
+      logger.warn('⚠️ Security Redis unavailable:', error)
     }
   }
 
@@ -211,7 +211,7 @@ class EnterpriseSecuritySystem {
 
       return null // Continue processing
     } catch (error) {
-      console.error('Security middleware error:', error)
+      logger.error('Security middleware error:', error)
       return NextResponse.json(
         { error: 'Security validation failed' },
         { status: 500 }
@@ -242,7 +242,7 @@ class EnterpriseSecuritySystem {
       // Combine salt, iv, tag, and encrypted data
       return Buffer.concat([salt, iv, tag, Buffer.from(encrypted, 'hex')]).toString('base64')
     } catch (error) {
-      throw new Error(`Encryption failed: ${error}`)
+      throw new AppError(`Encryption failed: ${error}`)
     }
   }
 
@@ -277,7 +277,7 @@ class EnterpriseSecuritySystem {
 
       return decrypted
     } catch (error) {
-      throw new Error(`Decryption failed: ${error}`)
+      throw new AppError(`Decryption failed: ${error}`)
     }
   }
 
@@ -322,7 +322,7 @@ class EnterpriseSecuritySystem {
         backupCodes,
       }
     } catch (error) {
-      throw new Error(`MFA setup failed: ${error}`)
+      throw new AppError(`MFA setup failed: ${error}`)
     }
   }
 
@@ -360,7 +360,7 @@ class EnterpriseSecuritySystem {
         })
       }
     } catch (error) {
-      console.error('MFA verification error:', error)
+      logger.error('MFA verification error:', error)
       return false
     }
   }
@@ -382,7 +382,7 @@ class EnterpriseSecuritySystem {
 
       return true
     } catch (error) {
-      console.error('MFA enable error:', error)
+      logger.error('MFA enable error:', error)
       return false
     }
   }
@@ -390,7 +390,7 @@ class EnterpriseSecuritySystem {
   /**
    * Advanced JWT token management
    */
-  generateTokens(payload: any): { accessToken: string; refreshToken: string } {
+  generateTokens(payload: unknown): { accessToken: string; refreshToken: string } {
     const accessToken = jwt.sign(
       { ...payload, type: 'access' },
       SECURITY_CONFIG.jwt.secret,
@@ -412,15 +412,15 @@ class EnterpriseSecuritySystem {
     return { accessToken, refreshToken }
   }
 
-  verifyToken(token: string, type: 'access' | 'refresh' = 'access'): any {
+  verifyToken(token: string, type: 'access' | 'refresh' = 'access'): unknown {
     try {
-      const decoded = jwt.verify(token, SECURITY_CONFIG.jwt.secret) as any
+      const decoded = jwt.verify(token, SECURITY_CONFIG.jwt.secret) as unknown
       if (decoded.type !== type) {
-        throw new Error('Invalid token type')
+        throw new ValidationError('Invalid token type')
       }
       return decoded
     } catch (error) {
-      throw new Error(`Token verification failed: ${error}`)
+      throw new AuthenticationError(`Token verification failed: ${error}`)
     }
   }
 
@@ -443,20 +443,20 @@ class EnterpriseSecuritySystem {
 
       // Log critical events immediately
       if (event.severity === 'critical') {
-        console.error('🚨 CRITICAL SECURITY EVENT:', auditLog)
+        logger.error('🚨 CRITICAL SECURITY EVENT:', auditLog)
         // In production, this should trigger immediate alerts
       }
 
               // Security Event logged
     } catch (error) {
-      console.error('Security logging error:', error)
+      logger.error('Security logging error:', error)
     }
   }
 
   /**
    * Get security analytics and reports
    */
-  async getSecurityReport(timeframe: '1h' | '24h' | '7d' | '30d' = '24h'): Promise<any> {
+  async getSecurityReport(timeframe: '1h' | '24h' | '7d' | '30d' = '24h'): Promise<unknown> {
     try {
       if (!this.redis) return { error: 'Redis unavailable' }
 
@@ -504,7 +504,7 @@ class EnterpriseSecuritySystem {
         unresolvedEvents: filteredEvents.filter(e => !e.resolved).length,
       }
     } catch (error) {
-      console.error('Security report error:', error)
+      logger.error('Security report error:', error)
       return { error: 'Failed to generate security report' }
     }
   }
@@ -516,7 +516,7 @@ class EnterpriseSecuritySystem {
     })
   }
 
-  private async checkRateLimit(req: NextRequest): Promise<any> {
+  private async checkRateLimit(req: NextRequest): Promise<unknown> {
     const ip = this.getClientIP(req)
     return await rateLimit.check(ip, {
       windowMs: SECURITY_CONFIG.rateLimit.windowMs,
@@ -537,7 +537,7 @@ class EnterpriseSecuritySystem {
   private async scanForThreats(req: NextRequest): Promise<{
     threatDetected: boolean;
     threatType?: SecurityEventType;
-    details?: any;
+    details?: unknown;
   }> {
     try {
       const url = req.nextUrl.toString()
@@ -594,7 +594,7 @@ class EnterpriseSecuritySystem {
 
       return { threatDetected: false }
     } catch (error) {
-      console.error('Threat scanning error:', error)
+      logger.error('Threat scanning error:', error)
       return { threatDetected: false }
     }
   }
@@ -617,10 +617,10 @@ class EnterpriseSecuritySystem {
 export const securitySystem = new EnterpriseSecuritySystem()
 
 // Security decorators
-export function RequireMFA(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function RequireMFA(target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
 
-  descriptor.value = async function (req: NextRequest, ...args: any[]) {
+  descriptor.value = async function (req: NextRequest, ...args: unknown[]) {
     // Check if user has MFA enabled and verified
     const userId = req.headers.get('x-user-id')
     const mfaVerified = req.headers.get('x-mfa-verified')
@@ -639,10 +639,10 @@ export function RequireMFA(target: any, propertyKey: string, descriptor: Propert
 }
 
 export function RequireRole(roles: string[]) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (req: NextRequest, ...args: any[]) {
+    descriptor.value = async function (req: NextRequest, ...args: unknown[]) {
       const userRole = req.headers.get('x-user-role')
 
       if (!userRole || !roles.includes(userRole)) {

@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     }
 
   } catch (error) {
-    console.error("Analytics export error:", error)
+    logger.error("Analytics export error:", error)
     return NextResponse.json(
       { error: "Failed to export analytics data" },
       { status: 500 }
@@ -120,25 +120,25 @@ async function getExportData(range: string) {
 
     return {
       userTrends: userTrendsResult.map(row => ({
-        date: (row as any).date,
-        count: parseInt((row as any).count)
+        date: (row as unknown).date,
+        count: parseInt((row as unknown).count)
       })),
       submissionTrends: submissionTrendsResult.map(row => ({
-        date: (row as any).date,
-        count: parseInt((row as any).count)
+        date: (row as unknown).date,
+        count: parseInt((row as unknown).count)
       })),
       topPageViews: pageViewsResult.map(row => ({
-        articleId: (row as any).article_id,
-        views: parseInt((row as any).views),
-        uniqueVisitors: parseInt((row as any).unique_visitors)
+        articleId: (row as unknown).article_id,
+        views: parseInt((row as unknown).views),
+        uniqueVisitors: parseInt((row as unknown).unique_visitors)
       })),
       reviewStats: {
-        averageReviewTime: parseFloat((reviewStatsResult[0] as any)?.avg_review_time || '0'),
-        completionRate: parseFloat((reviewStatsResult[0] as any)?.completion_rate || '0')
+        averageReviewTime: parseFloat((reviewStatsResult[0] as unknown)?.avg_review_time || '0'),
+        completionRate: parseFloat((reviewStatsResult[0] as unknown)?.completion_rate || '0')
       }
     }
   } catch (error) {
-    console.error("Error getting export data:", error)
+    logger.error("Error getting export data:", error)
     return {
       userTrends: [],
       submissionTrends: [],
@@ -148,7 +148,7 @@ async function getExportData(range: string) {
   }
 }
 
-function generateCSV(data: any): string {
+function generateCSV(data: unknown): string {
   const { journalStats, exportData, range } = data
 
   let csv = `Journal Analytics Export - ${range}\n`
@@ -166,7 +166,7 @@ function generateCSV(data: any): string {
   // User Trends
   csv += "USER REGISTRATION TRENDS\n"
   csv += "Date,New Users\n"
-  exportData.userTrends.forEach((item: any) => {
+  exportData.userTrends.forEach((item: unknown) => {
     csv += `${item.date},${item.count}\n`
   })
   csv += "\n"
@@ -174,7 +174,7 @@ function generateCSV(data: any): string {
   // Submission Trends
   csv += "SUBMISSION TRENDS\n"
   csv += "Date,Submissions\n"
-  exportData.submissionTrends.forEach((item: any) => {
+  exportData.submissionTrends.forEach((item: unknown) => {
     csv += `${item.date},${item.count}\n`
   })
   csv += "\n"
@@ -195,7 +195,7 @@ function generateCSV(data: any): string {
   // Top Page Views
   csv += "TOP PAGE VIEWS\n"
   csv += "Article ID,Views,Unique Visitors\n"
-  exportData.topPageViews.forEach((item: any) => {
+  exportData.topPageViews.forEach((item: unknown) => {
     csv += `${item.articleId},${item.views},${item.uniqueVisitors}\n`
   })
 

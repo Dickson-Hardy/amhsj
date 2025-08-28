@@ -1,5 +1,6 @@
 // scripts/process-review-deadlines.ts
 
+import { logger } from "@/lib/logger";
 import { reviewDeadlineManager } from '../lib/review-deadline-manager'
 
 /**
@@ -7,29 +8,29 @@ import { reviewDeadlineManager } from '../lib/review-deadline-manager'
  * This should be run daily via cron job or similar scheduler
  */
 async function processReviewDeadlines() {
-  console.log('🕒 Starting scheduled review deadline processing...')
-  console.log('Time:', new Date().toISOString())
+  logger.info('🕒 Starting scheduled review deadline processing...')
+  logger.info('Time:', new Date().toISOString())
   
   try {
     const results = await reviewDeadlineManager.processDeadlines()
     
-    console.log('\n📊 Processing Results:')
-    console.log(`✉️  Reminders sent: ${results.remindersProcessed}`)
-    console.log(`🚫 Withdrawals processed: ${results.withdrawalsProcessed}`)
-    console.log(`❌ Errors encountered: ${results.errors.length}`)
+    logger.info('\n📊 Processing Results:')
+    logger.info(`✉️  Reminders sent: ${results.remindersProcessed}`)
+    logger.info(`🚫 Withdrawals processed: ${results.withdrawalsProcessed}`)
+    logger.info(`❌ Errors encountered: ${results.errors.length}`)
     
     if (results.errors.length > 0) {
-      console.log('\n🚨 Errors:')
+      logger.info('\n🚨 Errors:')
       results.errors.forEach((error, index) => {
-        console.log(`   ${index + 1}. ${error}`)
+        logger.info(`   ${index + 1}. ${error}`)
       })
     }
     
-    console.log('\n✅ Scheduled deadline processing completed successfully')
+    logger.info('\n✅ Scheduled deadline processing completed successfully')
     process.exit(0)
     
   } catch (error) {
-    console.error('\n❌ Fatal error during deadline processing:', error)
+    logger.error('\n❌ Fatal error during deadline processing:', error)
     process.exit(1)
   }
 }

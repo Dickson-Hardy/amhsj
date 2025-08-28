@@ -9,7 +9,7 @@ import { logError } from "@/lib/logger"
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !["editor", "admin"].includes((session.user as any).role || "")) {
+    if (!session?.user || !["editor", "admin"].includes((session.user as unknown).role || "")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

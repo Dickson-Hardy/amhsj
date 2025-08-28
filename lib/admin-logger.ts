@@ -37,7 +37,7 @@ export async function logAdminAction({
       createdAt: new Date()
     })
   } catch (error) {
-    console.error('Failed to log admin action:', error)
+    logger.error('Failed to log admin action:', error)
     // Don't throw - logging failures shouldn't break the main operation
   }
 }

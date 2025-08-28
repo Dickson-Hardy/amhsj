@@ -188,7 +188,7 @@ async function handleRegenerateSitemap(request: NextRequest): Promise<NextRespon
   }
 }
 
-async function handleValidateSEO(request: NextRequest, body: any): Promise<NextResponse> {
+async function handleValidateSEO(request: NextRequest, body: unknown): Promise<NextResponse> {
   const { url, type } = body
 
   if (!url || !type) {
@@ -198,7 +198,7 @@ async function handleValidateSEO(request: NextRequest, body: any): Promise<NextR
     )
   }
 
-  // Basic SEO validation (in production, would use external SEO APIs)
+  // process.env.AUTH_TOKEN_PREFIX + ' 'SEO validation (in production, would use external SEO APIs)
   const validation = {
     url,
     type,

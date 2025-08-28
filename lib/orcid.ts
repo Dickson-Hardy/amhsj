@@ -18,7 +18,7 @@ const ORCID_CLIENT_ID = process.env.ORCID_CLIENT_ID
 const ORCID_CLIENT_SECRET = process.env.ORCID_CLIENT_SECRET
 const ORCID_REDIRECT_URI = process.env.ORCID_REDIRECT_URI
 
-// Basic types for ORCID integration
+// process.env.AUTH_TOKEN_PREFIX + ' 'types for ORCID integration
 export interface ORCIDProfile {
   orcidId: string
   name: {
@@ -110,7 +110,7 @@ export class ORCIDService {
       })
 
       if (!response.ok) {
-        throw new Error(`ORCID token exchange failed: ${response.statusText}`)
+        throw new AppError(`ORCID token exchange failed: ${response.statusText}`)
       }
 
       const data = await response.json()
@@ -125,7 +125,7 @@ export class ORCIDService {
       }
     } catch (error) {
       logError(error as Error, { context: 'getAccessToken' })
-      throw new Error('Failed to get ORCID access token')
+      throw new AuthorizationError('Failed to get ORCID access token')
     }
   }
 
@@ -156,7 +156,7 @@ export class ORCIDService {
       return profile
     } catch (error) {
       logError(error as Error, { context: 'getProfile', orcidId })
-      throw new Error('Failed to fetch ORCID profile')
+      throw new AppError('Failed to fetch ORCID profile')
     }
   }
 
@@ -186,14 +186,14 @@ export class ORCIDService {
       logInfo(`ORCID profile synced successfully for user ${userId}`)
     } catch (error) {
       logError(error as Error, { context: 'syncProfile', userId, orcidId })
-      throw new Error('Failed to sync ORCID profile')
+      throw new AppError('Failed to sync ORCID profile')
     }
   }
 
   /**
    * Search ORCID profiles
    */
-  static async searchProfiles(query: string, start = 0, rows = 10): Promise<any> {
+  static async searchProfiles(query: string, start = 0, rows = 10): Promise<unknown> {
     try {
       const response = await fetch(
         `${ORCID_API_BASE}/v3.0/search?q=${encodeURIComponent(query)}&start=${start}&rows=${rows}`,
@@ -205,13 +205,13 @@ export class ORCIDService {
       )
 
       if (!response.ok) {
-        throw new Error(`ORCID search failed: ${response.statusText}`)
+        throw new AppError(`ORCID search failed: ${response.statusText}`)
       }
 
       return await response.json()
     } catch (error) {
       logError(error as Error, { context: 'searchProfiles', query })
-      throw new Error('Failed to search ORCID profiles')
+      throw new AppError('Failed to search ORCID profiles')
     }
   }
 
@@ -236,7 +236,7 @@ export class ORCIDService {
       logInfo(`ORCID disconnected for user ${userId}`)
     } catch (error) {
       logError(error as Error, { context: 'disconnectORCID', userId })
-      throw new Error('Failed to disconnect ORCID')
+      throw new AppError('Failed to disconnect ORCID')
     }
   }
 
@@ -245,22 +245,22 @@ export class ORCIDService {
   private static async makeORCIDRequest(endpoint: string, accessToken: string): Promise<Response> {
     const response = await fetch(`${ORCID_API_BASE}/v3.0/${endpoint}`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${accessToken}`,
         'Accept': 'application/json',
       },
     })
 
     if (!response.ok) {
-      throw new Error(`ORCID API request failed: ${response.statusText}`)
+      throw new AppError(`ORCID API request failed: ${response.statusText}`)
     }
 
     return response
   }
 
-  private static processEmails(emailsData: any): ORCIDEmail[] {
+  private static processEmails(emailsData: unknown): ORCIDEmail[] {
     if (!emailsData?.email) return []
 
-    return emailsData.email.map((email: any) => ({
+    return emailsData.email.map((email: unknown) => ({
       email: email.email,
       primary: email.primary || false,
       verified: email.verified || false,
@@ -268,7 +268,7 @@ export class ORCIDService {
     }))
   }
 
-  private static formatDisplayName(name: any): string {
+  private static formatDisplayName(name: unknown): string {
     const givenNames = name?.['given-names']?.value || ''
     const familyName = name?.['family-name']?.value || ''
     return `${givenNames} ${familyName}`.trim()

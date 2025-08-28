@@ -65,7 +65,7 @@ export class SEOManagementService {
         .limit(1)
 
       if (!article.length) {
-        throw new Error(`Article not found: ${articleId}`)
+        throw new NotFoundError(`Article not found: ${articleId}`)
       }
 
       const articleData = article[0]
@@ -415,7 +415,7 @@ Allow: /about/`
     }
   }
 
-  private generateOGImage(article: any): string {
+  private generateOGImage(article: unknown): string {
     // Generate dynamic OG image URL (would integrate with image generation service)
     const params = new URLSearchParams({
       title: article.title.substring(0, 100),

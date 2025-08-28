@@ -83,7 +83,7 @@ interface SubmissionDetail {
     performedBy: string
     performedByRole: string
     timestamp: string
-    metadata?: any
+    metadata?: unknown
   }>
   reviews: Array<{
     id: string
@@ -101,7 +101,7 @@ interface SubmissionDetail {
     versionNumber: number
     title: string
     abstract: string
-    files: any[]
+    files: unknown[]
     changeLog: string
     createdAt: string
   }>
@@ -176,7 +176,7 @@ export default function AdminSubmissionManagement({ submissionId, onClose }: Adm
         setAvailableReviewers(data.reviewers)
       }
     } catch (error) {
-      console.error("Failed to fetch reviewers:", error)
+      logger.error("Failed to fetch reviewers:", error)
     }
   }
 
@@ -202,7 +202,7 @@ export default function AdminSubmissionManagement({ submissionId, onClose }: Adm
         fetchSubmissionDetails()
         setStatusNotes("")
       } else {
-        throw new Error("Failed to update status")
+        throw new AppError("Failed to update status")
       }
     } catch (error) {
       toast({
@@ -229,7 +229,7 @@ export default function AdminSubmissionManagement({ submissionId, onClose }: Adm
         })
         fetchSubmissionDetails()
       } else {
-        throw new Error("Failed to assign reviewer")
+        throw new AppError("Failed to assign reviewer")
       }
     } catch (error) {
       toast({
@@ -266,7 +266,7 @@ export default function AdminSubmissionManagement({ submissionId, onClose }: Adm
         setEmailContent("")
         fetchSubmissionDetails()
       } else {
-        throw new Error("Failed to send email")
+        throw new AppError("Failed to send email")
       }
     } catch (error) {
       toast({

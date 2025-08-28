@@ -128,7 +128,7 @@ export default function EditorInChiefDashboard() {
           setMetrics(metricsData.metrics)
         }
       } else {
-        console.error('Failed to fetch metrics:', metricsRes.statusText)
+        logger.error('Failed to fetch metrics:', metricsRes.statusText)
       }
 
       // Handle submissions requiring attention
@@ -138,7 +138,7 @@ export default function EditorInChiefDashboard() {
           setSubmissions(submissionsData.submissions)
         }
       } else {
-        console.error('Failed to fetch submissions:', submissionsRes.statusText)
+        logger.error('Failed to fetch submissions:', submissionsRes.statusText)
       }
 
       // Handle editors
@@ -148,7 +148,7 @@ export default function EditorInChiefDashboard() {
           setEditors(editorsData.editors)
         }
       } else {
-        console.error('Failed to fetch editors:', editorsRes.statusText)
+        logger.error('Failed to fetch editors:', editorsRes.statusText)
       }
 
       // Handle appeals
@@ -158,11 +158,11 @@ export default function EditorInChiefDashboard() {
           setAppeals(appealsData.appeals)
         }
       } else {
-        console.error('Failed to fetch appeals:', appealsRes.statusText)
+        logger.error('Failed to fetch appeals:', appealsRes.statusText)
       }
 
     } catch (error) {
-      console.error('Error fetching EIC dashboard data:', error)
+      logger.error('Error fetching EIC dashboard data:', error)
     } finally {
       setLoading(false)
     }
@@ -184,14 +184,14 @@ export default function EditorInChiefDashboard() {
       })
 
       if (response.ok) {
-        console.log(`Final decision made: ${decision} for submission ${submissionId}`)
+        logger.info(`Final decision made: ${decision} for submission ${submissionId}`)
         // Refresh data
         await refreshDashboard()
       } else {
-        console.error('Failed to make decision:', response.statusText)
+        logger.error('Failed to make decision:', response.statusText)
       }
     } catch (error) {
-      console.error('Error making final decision:', error)
+      logger.error('Error making final decision:', error)
     }
   }
 
@@ -210,14 +210,14 @@ export default function EditorInChiefDashboard() {
       })
 
       if (response.ok) {
-        console.log(`Appeal ${decision}: ${appealId}`)
+        logger.info(`Appeal ${decision}: ${appealId}`)
         // Refresh data
         await refreshDashboard()
       } else {
-        console.error('Failed to handle appeal:', response.statusText)
+        logger.error('Failed to handle appeal:', response.statusText)
       }
     } catch (error) {
-      console.error('Error handling appeal:', error)
+      logger.error('Error handling appeal:', error)
     }
   }
 

@@ -51,7 +51,7 @@ export async function GET() {
 
     return NextResponse.json(metrics)
   } catch (error) {
-    console.error('Error fetching managing editor metrics:', error)
+    logger.error('Error fetching managing editor metrics:', error)
     return NextResponse.json(
       { error: 'Failed to fetch metrics' },
       { status: 500 }

@@ -1,3 +1,6 @@
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { sendEmail, sendEmailVerification, sendPasswordReset } from '../lib/email'
 import nodemailer from 'nodemailer'
@@ -44,7 +47,7 @@ describe('Email Service Tests', () => {
     })
   })
 
-  describe('Basic Email Sending', () => {
+  describe('process.env.AUTH_BASIC_PREFIX || "process.env.AUTH_BASIC_PREFIX || "process.env.AUTH_BASIC_PREFIX || "Basic """Email Sending', () => {
     it('should send email successfully', async () => {
       mockTransporter.sendMail.mockResolvedValueOnce({ messageId: 'test-id' })
 

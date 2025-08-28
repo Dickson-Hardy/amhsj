@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { sql } from '@vercel/postgres'
 import { z } from 'zod'
+import { logError } from '@/lib/logger'
 
 // Validation schemas
 const CommentSchema = z.object({
@@ -24,7 +25,7 @@ const ReplySchema = z.object({
 // GET /api/manuscripts/[id]/comments - Get all comments for a manuscript
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -32,6 +33,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Next.js 15+ requires awaiting params if it's a promise
+    const params = await Promise.resolve(context.params)
     const manuscriptId = params.id
 
     // Verify user has access to this manuscript
@@ -127,7 +130,10 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error fetching comments:', error)
+    logError(error as Error, {
+      context: 'GET /api/manuscripts/[id]/comments',
+      manuscriptId
+    })
     return NextResponse.json({ 
       error: 'Failed to fetch comments' 
     }, { status: 500 })
@@ -137,7 +143,7 @@ export async function GET(
 // POST /api/manuscripts/[id]/comments - Add a new comment
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -145,6 +151,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Next.js 15+ requires awaiting params if it's a promise
+    const params = await Promise.resolve(context.params)
     const manuscriptId = params.id
     const body = await request.json()
 
@@ -237,7 +245,10 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Error adding comment:', error)
+    logError(error as Error, {
+      context: 'POST /api/manuscripts/[id]/comments',
+      manuscriptId: params.id
+    })
     return NextResponse.json({ 
       error: error instanceof z.ZodError 
         ? 'Invalid input data' 
@@ -250,7 +261,7 @@ export async function POST(
 async function sendMentionNotifications(
   manuscriptId: string,
   mentions: string[],
-  comment: any,
+  comment: unknown,
   senderId: string
 ) {
   try {
@@ -285,6 +296,10 @@ async function sendMentionNotifications(
       `
     }
   } catch (error) {
-    console.error('Error sending mention notifications:', error)
+    logError(error as Error, {
+      context: 'sendMentionNotifications',
+      manuscriptId,
+      mentions
+    })
   }
 }

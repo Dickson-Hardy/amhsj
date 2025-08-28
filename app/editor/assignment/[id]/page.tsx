@@ -60,7 +60,7 @@ const conflictTypes: ConflictType[] = [
   {
     id: "institutional",
     label: "Institutional Bias",
-    description: "Same institution as any author"
+    description: "Same institution as unknown author"
   },
   {
     id: "professional",
@@ -98,12 +98,12 @@ export default function EditorAssignmentPage() {
     try {
       const response = await fetch(`/api/editor/assignment/${assignmentId}`)
       if (!response.ok) {
-        throw new Error("Failed to fetch assignment")
+        throw new AppError("Failed to fetch assignment")
       }
       const data = await response.json()
       setAssignment(data.assignment)
     } catch (error) {
-      console.error("Error fetching assignment:", error)
+      logger.error("Error fetching assignment:", error)
       setError("Failed to load assignment details")
     } finally {
       setLoading(false)
@@ -171,7 +171,7 @@ export default function EditorAssignmentPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to submit response")
+        throw new AppError(errorData.error || "Failed to submit response")
       }
 
       toast.success(`Assignment ${action}ed successfully`)
@@ -181,8 +181,8 @@ export default function EditorAssignmentPage() {
         router.push("/editor/dashboard")
       }, 2000)
 
-    } catch (error: any) {
-      console.error("Error submitting response:", error)
+    } catch (error: unknown) {
+      logger.error("Error submitting response:", error)
       setError(error.message || "Failed to submit response")
       toast.error(error.message || "Failed to submit response")
     } finally {

@@ -25,7 +25,7 @@ export async function rateLimit(
       resetTime
     }
   } catch (error) {
-    console.error('Rate limiting error:', error)
+    logger.error('Rate limiting error:', error)
     // Fallback: allow the request if rate limiting fails
     return {
       success: true,

@@ -159,7 +159,7 @@ export default function EnhancedArchivePage() {
         setFilterOptions(data.filters)
       }
     } catch (error) {
-      console.error("Error fetching initial data:", error)
+      logger.error("Error fetching initial data:", error)
     } finally {
       setLoading(false)
     }
@@ -190,7 +190,7 @@ export default function EnhancedArchivePage() {
         setFilterOptions(data.filters)
       }
     } catch (error) {
-      console.error("Error fetching articles:", error)
+      logger.error("Error fetching articles:", error)
     } finally {
       setLoading(false)
     }
@@ -205,7 +205,7 @@ export default function EnhancedArchivePage() {
         setVolumes(data.volumes)
       }
     } catch (error) {
-      console.error("Error fetching volumes:", error)
+      logger.error("Error fetching volumes:", error)
     }
   }
 
@@ -218,7 +218,7 @@ export default function EnhancedArchivePage() {
         setIssues(data.issues)
       }
     } catch (error) {
-      console.error("Error fetching issues:", error)
+      logger.error("Error fetching issues:", error)
     }
   }
 
@@ -231,7 +231,7 @@ export default function EnhancedArchivePage() {
         setStatistics(data.statistics)
       }
     } catch (error) {
-      console.error("Error fetching statistics:", error)
+      logger.error("Error fetching statistics:", error)
     }
   }
 

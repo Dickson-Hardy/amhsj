@@ -278,7 +278,7 @@ export class ExternalIntegrationsService {
       })
 
       if (!tokenResponse.ok) {
-        throw new Error(`ORCID authentication failed: ${tokenResponse.status}`)
+        throw new AuthenticationError(`ORCID authentication failed: ${tokenResponse.status}`)
       }
 
       const tokenData = await tokenResponse.json()
@@ -378,12 +378,12 @@ export class ExternalIntegrationsService {
 
       const response = await fetch(`${this.crossrefApiUrl}/works?${params}`, {
         headers: {
-          'User-Agent': 'Academic Journal Platform (mailto:admin@journal.com)'
+          'User-Agent': 'Academic Journal Platform (process.env.EMAIL_FROMprocess.env.EMAIL_FROMjournal.com)'
         }
       })
 
       if (!response.ok) {
-        throw new Error(`CrossRef API error: ${response.status}`)
+        throw new AppError(`CrossRef API error: ${response.status}`)
       }
 
       const data = await response.json()
@@ -415,7 +415,7 @@ export class ExternalIntegrationsService {
 
       const response = await fetch(`${this.crossrefApiUrl}/works/${validatedDOI}`, {
         headers: {
-          'User-Agent': 'Academic Journal Platform (mailto:admin@journal.com)'
+          'User-Agent': 'Academic Journal Platform (process.env.EMAIL_FROMprocess.env.EMAIL_FROMjournal.com)'
         }
       })
 
@@ -423,7 +423,7 @@ export class ExternalIntegrationsService {
         if (response.status === 404) {
           return null
         }
-        throw new Error(`CrossRef API error: ${response.status}`)
+        throw new AppError(`CrossRef API error: ${response.status}`)
       }
 
       const data = await response.json()
@@ -500,7 +500,7 @@ export class ExternalIntegrationsService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/vnd.api+json',
-          'Authorization': `Basic ${Buffer.from(
+          'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${Buffer.from(
             `${process.env.DATACITE_USERNAME}:${process.env.DATACITE_PASSWORD}`
           ).toString('base64')}`
         },
@@ -543,7 +543,7 @@ export class ExternalIntegrationsService {
       const responseData = await response.json()
 
       if (!response.ok) {
-        throw new Error(`DOI registration failed: ${responseData.errors?.[0]?.detail || response.status}`)
+        throw new AppError(`DOI registration failed: ${responseData.errors?.[0]?.detail || response.status}`)
       }
 
       logger.info("DOI registered successfully", { doi: metadata.doi })
@@ -572,7 +572,7 @@ export class ExternalIntegrationsService {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/vnd.api+json',
-          'Authorization': `Basic ${Buffer.from(
+          'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${Buffer.from(
             `${process.env.DATACITE_USERNAME}:${process.env.DATACITE_PASSWORD}`
           ).toString('base64')}`
         },
@@ -586,7 +586,7 @@ export class ExternalIntegrationsService {
       })
 
       if (!response.ok) {
-        throw new Error(`DOI update failed: ${response.status}`)
+        throw new AppError(`DOI update failed: ${response.status}`)
       }
 
       logger.info("DOI metadata updated", { doi })
@@ -629,7 +629,7 @@ export class ExternalIntegrationsService {
       )
 
       if (!searchResponse.ok) {
-        throw new Error(`PubMed search failed: ${searchResponse.status}`)
+        throw new AppError(`PubMed search failed: ${searchResponse.status}`)
       }
 
       const searchData = await searchResponse.json()
@@ -645,7 +645,7 @@ export class ExternalIntegrationsService {
       )
 
       if (!detailsResponse.ok) {
-        throw new Error(`PubMed details fetch failed: ${detailsResponse.status}`)
+        throw new AppError(`PubMed details fetch failed: ${detailsResponse.status}`)
       }
 
       const xmlData = await detailsResponse.text()
@@ -676,7 +676,7 @@ export class ExternalIntegrationsService {
       )
 
       if (!response.ok) {
-        throw new Error(`PubMed fetch failed: ${response.status}`)
+        throw new AppError(`PubMed fetch failed: ${response.status}`)
       }
 
       const xmlData = await response.text()
@@ -715,7 +715,7 @@ export class ExternalIntegrationsService {
     try {
       const work = await this.getCrossRefWorkByDOI(doi)
       if (!work) {
-        throw new Error("Work not found")
+        throw new NotFoundError("Work not found")
       }
 
       // Get works that reference this work
@@ -811,12 +811,12 @@ export class ExternalIntegrationsService {
     }
   }
 
-  private extractAffiliations(employmentsData: any): Affiliation[] {
+  private extractAffiliations(employmentsData: unknown): Affiliation[] {
     if (!employmentsData?.['affiliation-group']) {
       return []
     }
 
-    return employmentsData['affiliation-group'].map((group: any) => {
+    return employmentsData['affiliation-group'].map((group: unknown) => {
       const summaries = Array.isArray(group.summaries) ? group.summaries : [group.summaries]
       const employment = summaries[0]?.['employment-summary']
       
@@ -832,12 +832,12 @@ export class ExternalIntegrationsService {
     })
   }
 
-  private parseEmployments(employmentsData: any): Employment[] {
+  private parseEmployments(employmentsData: unknown): Employment[] {
     if (!employmentsData?.['affiliation-group']) {
       return []
     }
 
-    return employmentsData['affiliation-group'].map((group: any) => {
+    return employmentsData['affiliation-group'].map((group: unknown) => {
       const summaries = Array.isArray(group.summaries) ? group.summaries : [group.summaries]
       const employment = summaries[0]?.['employment-summary']
       
@@ -853,12 +853,12 @@ export class ExternalIntegrationsService {
     })
   }
 
-  private parseEducations(educationsData: any): Education[] {
+  private parseEducations(educationsData: unknown): Education[] {
     if (!educationsData?.['affiliation-group']) {
       return []
     }
 
-    return educationsData['affiliation-group'].map((group: any) => {
+    return educationsData['affiliation-group'].map((group: unknown) => {
       const summaries = Array.isArray(group.summaries) ? group.summaries : [group.summaries]
       const education = summaries[0]?.['education-summary']
       
@@ -873,12 +873,12 @@ export class ExternalIntegrationsService {
     })
   }
 
-  private parseORCIDWorks(worksData: any): ORCIDWork[] {
+  private parseORCIDWorks(worksData: unknown): ORCIDWork[] {
     if (!worksData?.group) {
       return []
     }
 
-    return worksData.group.map((group: any) => {
+    return worksData.group.map((group: unknown) => {
       const workSummary = group['work-summary'][0]
       
       return {
@@ -895,42 +895,42 @@ export class ExternalIntegrationsService {
     })
   }
 
-  private parseResearcherUrls(urlsData: any): ResearcherUrl[] {
+  private parseResearcherUrls(urlsData: unknown): ResearcherUrl[] {
     if (!urlsData?.['researcher-url']) {
       return []
     }
 
-    return urlsData['researcher-url'].map((url: any) => ({
+    return urlsData['researcher-url'].map((url: unknown) => ({
       name: url['url-name'] || '',
       url: url.url?.value || ''
     }))
   }
 
-  private parseEmails(emailsData: any): EmailAddress[] {
+  private parseEmails(emailsData: unknown): EmailAddress[] {
     if (!emailsData?.email) {
       return []
     }
 
-    return emailsData.email.map((email: any) => ({
+    return emailsData.email.map((email: unknown) => ({
       email: email.email || '',
       verified: email.verified || false,
       primary: email.primary || false
     }))
   }
 
-  private extractDOIFromExternalIds(externalIds: any): string | undefined {
+  private extractDOIFromExternalIds(externalIds: unknown): string | undefined {
     if (!externalIds?.['external-id']) {
       return undefined
     }
 
-    const doiId = externalIds['external-id'].find((id: any) => 
+    const doiId = externalIds['external-id'].find((id: unknown) => 
       id['external-id-type'] === 'doi'
     )
 
     return doiId?.['external-id-value']
   }
 
-  private parseCrossRefWork(item: any): CrossRefWork {
+  private parseCrossRefWork(item: unknown): CrossRefWork {
     return {
       doi: item.DOI,
       title: item.title || [],
@@ -1025,8 +1025,8 @@ export class ExternalIntegrationsService {
     return matrix[str2.length][str1.length]
   }
 
-  private buildDOIUpdateAttributes(updates: Partial<DOIMetadata>): any {
-    const attributes: any = {}
+  private buildDOIUpdateAttributes(updates: Partial<DOIMetadata>): unknown {
+    const attributes: unknown = {}
     
     if (updates.title) {
       attributes.titles = [{ title: updates.title }]

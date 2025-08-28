@@ -196,7 +196,7 @@ export class ReviewerAssignmentService {
       })
 
       if (!article) {
-        throw new Error("Article not found")
+        throw new NotFoundError("Article not found")
       }
 
       // Get reviewers with matching expertise and availability
@@ -344,7 +344,7 @@ export class ReviewerAssignmentService {
       })
 
       if (!article) {
-        throw new Error("Article not found")
+        throw new NotFoundError("Article not found")
       }
 
       const authorRecommendedReviewers = await db
@@ -464,7 +464,7 @@ export class ReviewerAssignmentService {
         try {
           if (reviewer.source === 'recommended_new') {
             // Handle new reviewer invitation
-            const reviewerData = (reviewer as any).recommendedData
+            const reviewerData = (reviewer as unknown).recommendedData
             if (reviewerData) {
               await this.inviteNewReviewer(reviewerData, articleId, editorId, deadline)
               assignedReviewers.push(reviewer.id)
@@ -517,7 +517,7 @@ export class ReviewerAssignmentService {
       }
 
     } catch (error) {
-      console.error("Error assigning reviewers with recommendations:", error)
+      logger.error("Error assigning reviewers with recommendations:", error)
       return {
         success: false,
         assignedReviewers,
@@ -538,7 +538,7 @@ export class ReviewerAssignmentService {
   /**
    * Score a recommended reviewer who exists in the system
    */
-  private async scoreRecommendedReviewer(reviewer: any, article: any): Promise<number> {
+  private async scoreRecommendedReviewer(reviewer: unknown, article: any): Promise<number> {
     const expertiseMatch = this.calculateExpertiseMatch(
       reviewer.expertise as string[] || [],
       article.keywords || []
@@ -567,7 +567,7 @@ export class ReviewerAssignmentService {
   /**
    * Score a new recommended reviewer (not in system)
    */
-  private scoreNewRecommendedReviewer(recommendedData: { name: string; email: string; affiliation: string; expertise?: string }, article: any): Promise<number> {
+  private scoreNewRecommendedReviewer(recommendedData: { name: string; email: string; affiliation: string; expertise?: string }, article: unknown): Promise<number> {
     // Base score for author recommendation
     let score = 0.7
 
@@ -592,7 +592,7 @@ export class ReviewerAssignmentService {
       score += 0.1
     }
 
-    return Promise.resolve(Math.min(score, 1.0))
+    return Math.min(score, 1.0)
   }
 
   /**
@@ -710,7 +710,7 @@ export class ReviewerAssignmentService {
       })
 
       if (!article) {
-        throw new Error("Article not found")
+        throw new NotFoundError("Article not found")
       }
 
       // Validate editor exists and has permission
@@ -719,7 +719,7 @@ export class ReviewerAssignmentService {
       })
 
       if (!editor || !["editor", "admin"].includes(editor.role)) {
-        throw new Error("Invalid editor or insufficient permissions")
+        throw new ValidationError("Invalid editor or insufficient permissions")
       }
 
       for (const reviewerId of reviewerIds) {
@@ -746,9 +746,9 @@ export class ReviewerAssignmentService {
           // Check workload
           const profile = reviewer.reviewerProfile
           // Type guard for reviewerProfile (cast to any to avoid never type)
-          const isReviewerProfile = (p: any): p is { currentReviewLoad: number; maxReviewsPerMonth: number } =>
+          const isReviewerProfile = (p: unknown): p is { currentReviewLoad: number; maxReviewsPerMonth: number } =>
             p && typeof p.currentReviewLoad === 'number' && typeof p.maxReviewsPerMonth === 'number';
-          const profileAny = reviewer.reviewerProfile as any;
+          const profileAny = reviewer.reviewerProfile as unknown;
           if (isReviewerProfile(profileAny) && profileAny.currentReviewLoad >= profileAny.maxReviewsPerMonth) {
             errors.push(`Reviewer ${reviewer.name} has reached maximum workload`)
             continue
@@ -834,7 +834,7 @@ export class ReviewerAssignmentService {
       }
 
     } catch (error) {
-      console.error("Error assigning reviewers:", error)
+      logger.error("Error assigning reviewers:", error)
       throw error
     }
   }
@@ -849,7 +849,7 @@ export class ReviewerAssignmentService {
 
       return recommended
     } catch (error) {
-      console.error('Error getting recommended reviewers:', error, { operation: 'getRecommendedReviewers', articleId })
+      logger.error('Error getting recommended reviewers:', error, { operation: 'getRecommendedReviewers', articleId })
       return []
     }
   }
@@ -865,7 +865,7 @@ export class ArticleSubmissionService {
   async submitArticle(
     articleData: ArticleData,
     authorId: string
-  ): Promise<{ success: boolean; article?: any; submissionId?: string; message: string }> {
+  ): Promise<{ success: boolean; article?: unknown; submissionId?: string; message: string }> {
     try {
       // Validate required fields
       if (!articleData.title?.trim()) {
@@ -884,14 +884,14 @@ export class ArticleSubmissionService {
       }
 
       // Validate that at least one corresponding author is designated
-      const correspondingAuthors = articleData.authors.filter(author => (author as any).isCorrespondingAuthor)
+      const correspondingAuthors = articleData.authors.filter(author => (author as unknown).isCorrespondingAuthor)
       if (correspondingAuthors.length === 0) {
         return { success: false, message: "At least one corresponding author must be designated" }
       }
 
       // Validate all authors have required fields
       for (const author of articleData.authors) {
-        const a = author as any
+        const a = author as unknown
         if (!author.firstName || !author.lastName || !author.email || !author.affiliation) {
           return { success: false, message: "All authors must have complete information (name, email, affiliation)" }
         }
@@ -914,7 +914,7 @@ export class ArticleSubmissionService {
         id: articleId,
         title: articleData.title.trim(),
         abstract: articleData.abstract.trim(),
-        content: (articleData as any).content?.trim() || "",
+        content: (articleData as unknown).content?.trim() || "",
         keywords: articleData.keywords,
         category: articleData.category,
         status: "submitted",
@@ -944,9 +944,9 @@ export class ArticleSubmissionService {
       })
 
       // Save recommended reviewers if provided
-      const recReviewers = (articleData as any).recommendedReviewers
+      const recReviewers = (articleData as unknown).recommendedReviewers
       if (recReviewers && recReviewers.length > 0) {
-        const reviewersToInsert = recReviewers.map((reviewer: any) => ({
+        const reviewersToInsert = recReviewers.map((reviewer: unknown) => ({
           id: uuidv4(),
           articleId,
           name: reviewer.name.trim(),
@@ -1030,7 +1030,7 @@ export class ArticleSubmissionService {
       }
 
     } catch (error) {
-      console.error("Error submitting article:", error)
+      logger.error("Error submitting article:", error)
       return {
         success: false,
         message: "Failed to submit article. Please try again."
@@ -1078,7 +1078,7 @@ export class ArticleSubmissionService {
       return suitableEditors[0] || null
 
     } catch (error) {
-      console.error("Error finding suitable editor:", error)
+      logger.error("Error finding suitable editor:", error)
       return null
     }
   }
@@ -1144,7 +1144,7 @@ export class ArticleSubmissionService {
       return { success: true, message: "Status updated successfully" }
 
     } catch (error) {
-      console.error("Error updating submission status:", error)
+      logger.error("Error updating submission status:", error)
       return { success: false, message: "Failed to update status" }
     }
   }
@@ -1161,7 +1161,7 @@ export class ArticleSubmissionService {
 
       return article
     } catch (error) {
-      console.error('Error getting article details:', error, { operation: 'getArticleDetails', articleId })
+      logger.error('Error getting article details:', error, { operation: 'getArticleDetails', articleId })
       return null
     }
   }
@@ -1290,7 +1290,7 @@ export class ReviewManagementService {
       return { success: true, message: "Review submitted successfully" }
 
     } catch (error) {
-      console.error("Error submitting review:", error)
+      logger.error("Error submitting review:", error)
       return { success: false, message: "Failed to submit review" }
     }
   }
@@ -1390,7 +1390,7 @@ export class ReviewManagementService {
       }
 
     } catch (error) {
-      console.error("Error checking overdue reviews:", error)
+      logger.error("Error checking overdue reviews:", error)
     }
   }
 }
@@ -1484,7 +1484,7 @@ export class EditorialAssistantService {
       }
 
     } catch (error) {
-      console.error("Error in initial screening:", error)
+      logger.error("Error in initial screening:", error)
       return { success: false, message: "Screening failed due to system error" }
     }
   }
@@ -1559,7 +1559,7 @@ export class EditorialAssistantService {
       }
 
     } catch (error) {
-      console.error("Error assigning associate editor:", error)
+      logger.error("Error assigning associate editor:", error)
       return { success: false, message: "Failed to assign associate editor" }
     }
   }
@@ -1634,7 +1634,7 @@ export class EditorialWorkflow {
     })
 
     if (!submission) {
-      throw new Error(`Submission with id ${submissionId} not found.`)
+      throw new NotFoundError(`Submission with id ${submissionId} not found.`)
     }
 
     // Fetch article and deadline for review invitation
@@ -1766,7 +1766,7 @@ export class EditorialWorkflow {
           html: emailContent.html,
         })
       } catch (emailError) {
-        console.error("Failed to send assignment email:", emailError)
+        logger.error("Failed to send assignment email:", emailError)
         // Don't fail the assignment creation for email errors
       }
 
@@ -1786,7 +1786,7 @@ export class EditorialWorkflow {
       }
 
     } catch (error) {
-      console.error("Error creating editor assignment:", error)
+      logger.error("Error creating editor assignment:", error)
       return { success: false, message: "Failed to create editor assignment" }
     }
   }
@@ -1827,7 +1827,7 @@ export class EditorialWorkflow {
       return result
 
     } catch (error) {
-      console.error("Error assigning editor to article:", error)
+      logger.error("Error assigning editor to article:", error)
       return { success: false, message: "Failed to assign editor" }
     }
   }
@@ -1847,7 +1847,7 @@ export class EditorialWorkflow {
 
       return result.length || 0
     } catch (error) {
-      console.error("Error expiring old assignments:", error)
+      logger.error("Error expiring old assignments:", error)
       return 0
     }
   }
@@ -1874,7 +1874,7 @@ export class EditorialWorkflow {
       // If no specialist found, return any available editor
       return editors.length > 0 ? editors[0] : null
     } catch (error) {
-      console.error("Error finding suitable editor:", error)
+      logger.error("Error finding suitable editor:", error)
       return null
     }
   }

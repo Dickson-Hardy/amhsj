@@ -19,7 +19,7 @@ import { emailTemplates } from "@/lib/email-templates"
 export async function GET(request: NextRequest) {
   // Verify cron secret for security
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `process.env.AUTH_TOKEN_PREFIX + ' '${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -31,38 +31,38 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log('🔧 Starting daily maintenance tasks...')
+    logger.info('🔧 Starting daily maintenance tasks...')
 
     // Task 1: Database Cleanup
-    console.log('📊 Running database cleanup...')
+    logger.info('📊 Running database cleanup...')
     const cleanupResult = await performDatabaseCleanup()
     results.tasks.databaseCleanup = cleanupResult
 
     // Task 2: Email Queue Processing
-    console.log('📧 Processing email queue...')
+    logger.info('📧 Processing email queue...')
     const emailResult = await processEmailQueue()
     results.tasks.emailProcessing = emailResult
 
     // Task 3: Review Deadline Management
-    console.log('⏰ Managing review deadlines...')
+    logger.info('⏰ Managing review deadlines...')
     const deadlineResult = await processReviewDeadlines()
     results.tasks.deadlineManagement = deadlineResult
 
     // Task 4: User Activity Cleanup
-    console.log('👤 Cleaning user activity...')
+    logger.info('👤 Cleaning user activity...')
     const activityResult = await cleanupUserActivity()
     results.tasks.activityCleanup = activityResult
 
     // Task 5: Generate Weekly Digest (Mondays only)
     const today = new Date()
     if (today.getDay() === 1) { // Monday
-      console.log('📊 Generating weekly digest...')
+      logger.info('📊 Generating weekly digest...')
       const digestResult = await generateWeeklyDigest()
       results.tasks.weeklyDigest = digestResult
     }
 
     // Task 6: System Health Check
-    console.log('🏥 Performing health check...')
+    logger.info('🏥 Performing health check...')
     const healthResult = await performSystemHealthCheck()
     results.tasks.healthCheck = healthResult
 
@@ -79,15 +79,15 @@ export async function GET(request: NextRequest) {
         resourceType: 'system',
         resourceId: 'cron',
         details: `Maintenance completed in ${executionTime}ms. Tasks: ${Object.keys(results.tasks).join(', ')}`,
-        ipAddress: '127.0.0.1',
+        ipAddress: 'process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL',
         userAgent: 'Vercel-Cron',
         createdAt: new Date()
       })
     } catch (logError) {
-      console.warn('Could not log maintenance activity:', logError)
+      logger.warn('Could not log maintenance activity:', logError)
     }
 
-    console.log(`✅ Daily maintenance completed in ${executionTime}ms`)
+    logger.info(`✅ Daily maintenance completed in ${executionTime}ms`)
 
     return NextResponse.json({
       success: true,
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Maintenance task failed:', error)
+    logger.error('❌ Maintenance task failed:', error)
 
     // Log the error (skip if no system admin exists)
     try {
@@ -109,12 +109,12 @@ export async function GET(request: NextRequest) {
         resourceType: 'system',
         resourceId: 'cron',
         details: `Maintenance failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        ipAddress: '127.0.0.1',
+        ipAddress: 'process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL',
         userAgent: 'Vercel-Cron',
         createdAt: new Date()
       })
     } catch (logError) {
-      console.error('Failed to log maintenance error:', logError)
+      logger.error('Failed to log maintenance error:', logError)
     }
 
     return NextResponse.json({
@@ -250,7 +250,7 @@ async function processReviewDeadlines() {
 
         deadlines.remindersWent++
       } catch (error) {
-        console.error(`Failed to send reminder for invitation ${invitation.id}:`, error)
+        logger.error(`Failed to send reminder for invitation ${invitation.id}:`, error)
       }
     }
 
@@ -389,7 +389,7 @@ async function generateWeeklyDigest() {
         })
         digestsSent++
       } catch (error) {
-        console.error(`Failed to send digest to ${admin.email}:`, error)
+        logger.error(`Failed to send digest to ${admin.email}:`, error)
       }
     }
 

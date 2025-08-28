@@ -173,7 +173,7 @@ export class AIAssessmentService {
 
     } catch (error) {
       logger.error('Error in manuscript assessment:', error)
-      throw new Error('Failed to assess manuscript')
+      throw new AppError('Failed to assess manuscript')
     }
   }
 
@@ -454,33 +454,33 @@ export class AIAssessmentService {
   }
 
   // Score calculation methods
-  private static calculateQualityScore(metrics: any): number {
+  private static calculateQualityScore(metrics: unknown): number {
     const { structureScore, clarityScore, originalityScore, methodologyScore, conclusionScore } = metrics
     return Math.round((structureScore + clarityScore + originalityScore + methodologyScore + conclusionScore) / 5)
   }
 
-  private static calculateSimilarityScore(analysis: any): number {
+  private static calculateSimilarityScore(analysis: unknown): number {
     const { duplicateContent, paraphrasing, properCitations } = analysis
     return Math.max(0, 100 - duplicateContent - paraphrasing + (properCitations / 2))
   }
 
-  private static calculateImpactScore(analysis: any): number {
+  private static calculateImpactScore(analysis: unknown): number {
     const { noveltyScore, relevanceScore, potentialCitations, fieldImpact } = analysis
     return Math.round((noveltyScore + relevanceScore + Math.min(potentialCitations * 10, 100) + fieldImpact) / 4)
   }
 
-  private static calculateWritingScore(quality: any): number {
+  private static calculateWritingScore(quality: unknown): number {
     const { grammarScore, readabilityScore, cohesionScore, vocabularyScore } = quality
     return Math.round((grammarScore + readabilityScore + cohesionScore + vocabularyScore) / 4)
   }
 
-  private static calculateReferenceScore(analysis: any): number {
+  private static calculateReferenceScore(analysis: unknown): number {
     const { qualityScore, recencyScore, relevanceScore, completenessScore } = analysis
     return Math.round((qualityScore + recencyScore + relevanceScore + completenessScore) / 4)
   }
 
-  private static determineRecommendation(scores: any): 'accept' | 'minor_revision' | 'major_revision' | 'reject' {
-    const avgScore = Object.values(scores).reduce((sum: number, score: any) => sum + score, 0) / Object.keys(scores).length
+  private static determineRecommendation(scores: unknown): 'accept' | 'minor_revision' | 'major_revision' | 'reject' {
+    const avgScore = Object.values(scores).reduce((sum: number, score: unknown) => sum + score, 0) / Object.keys(scores).length
     
     if (avgScore >= 85) return 'accept'
     if (avgScore >= 70) return 'minor_revision'
@@ -488,7 +488,7 @@ export class AIAssessmentService {
     return 'reject'
   }
 
-  private static generateRecommendations(assessmentData: any): string[] {
+  private static generateRecommendations(assessmentData: unknown): string[] {
     const recommendations: string[] = []
     
     if (assessmentData.qualityMetrics.structureScore < 80) {
@@ -510,7 +510,7 @@ export class AIAssessmentService {
     return recommendations
   }
 
-  private static generateImprovementSuggestions(assessmentData: any): string[] {
+  private static generateImprovementSuggestions(assessmentData: unknown): string[] {
     const suggestions: string[] = []
     
     if (assessmentData.qualityMetrics.clarityScore < 75) {
@@ -652,7 +652,7 @@ export class AIAssessmentService {
   /**
    * Save assessment to database
    */
-  private static async saveAssessment(assessmentData: any): Promise<ManuscriptAssessment> {
+  private static async saveAssessment(assessmentData: unknown): Promise<ManuscriptAssessment> {
     const { rows } = await sql`
       INSERT INTO manuscript_assessments (
         manuscript_id,

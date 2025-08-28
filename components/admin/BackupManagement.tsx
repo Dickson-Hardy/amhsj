@@ -98,7 +98,7 @@ export default function BackupManagement() {
         setSchedules(schedulesData.schedules || [])
       }
     } catch (error) {
-      console.error('Error fetching backup data:', error)
+      logger.error('Error fetching backup data:', error)
     }
   }
 
@@ -127,7 +127,7 @@ export default function BackupManagement() {
         alert(`Backup failed: ${result.error}`)
       }
     } catch (error) {
-      console.error('Error creating backup:', error)
+      logger.error('Error creating backup:', error)
       alert('Backup creation failed')
     } finally {
       setLoading(false)
@@ -166,7 +166,7 @@ export default function BackupManagement() {
         alert(`Schedule creation failed: ${result.error}`)
       }
     } catch (error) {
-      console.error('Error creating schedule:', error)
+      logger.error('Error creating schedule:', error)
       alert('Schedule creation failed')
     } finally {
       setLoading(false)
@@ -201,7 +201,7 @@ export default function BackupManagement() {
         alert(`Restore failed: ${result.error}`)
       }
     } catch (error) {
-      console.error('Error restoring backup:', error)
+      logger.error('Error restoring backup:', error)
       alert('Restore failed')
     } finally {
       setLoading(false)

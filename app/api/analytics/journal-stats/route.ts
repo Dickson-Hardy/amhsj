@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       stats: result.stats
     })
   } catch (error) {
-    console.error("Analytics API error:", error)
+    logger.error("Analytics API error:", error)
     return NextResponse.json(
       { error: "Failed to fetch journal statistics" },
       { status: 500 }

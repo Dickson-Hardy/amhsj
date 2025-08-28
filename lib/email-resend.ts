@@ -48,7 +48,7 @@ export function getEmailQueueStatus() {
 // Clear email queue (for testing or emergency)
 export function clearEmailQueue() {
   emailQueue.length = 0
-  console.log('Email queue cleared')
+  logger.info('Email queue cleared')
 }
 
 // Process email queue with Resend
@@ -62,7 +62,7 @@ async function processEmailQueue() {
     
     try {
       const response = await resend.emails.send({
-        from: job.from || process.env.FROM_EMAIL || 'AMHSJ <noreply@yourjournal.com>',
+        from: job.from || process.env.FROM_EMAIL || 'AMHSJ <process.env.EMAIL_FROMyourjournal.com>',
         to: job.to,
         subject: job.subject,
         html: job.html,
@@ -74,18 +74,18 @@ async function processEmailQueue() {
         throw new Error(response.error.message)
       }
       
-      console.log(`Email sent successfully to ${job.to} with ID: ${response.data?.id}`)
-    } catch (error: any) {
-      console.error(`Failed to send email to ${job.to}:`, error)
+      logger.error(`Email sent successfully to ${job.to} with ID: ${response.data?.id}`)
+    } catch (error: unknown) {
+      logger.error(`Failed to send email to ${job.to}:`, error)
       
       // Retry logic
       if (job.retries < 3) {
         job.retries++
         job.scheduledAt = new Date(Date.now() + 5000 * job.retries) // Exponential backoff
         emailQueue.push(job)
-        console.log(`Email to ${job.to} queued for retry ${job.retries}/3`)
+        logger.error(`Email to ${job.to} queued for retry ${job.retries}/3`)
       } else {
-        console.error(`Failed to send email to ${job.to} after 3 retries`)
+        logger.error(`Failed to send email to ${job.to} after 3 retries`)
       }
     }
   }
@@ -125,7 +125,7 @@ export async function sendEmail({
   const recipients = Array.isArray(to) ? to : [to]
   for (const email of recipients) {
     if (!isValidEmail(email)) {
-      console.error(`Invalid email address: ${email}`)
+      logger.error(`Invalid email address: ${email}`)
       return { success: false, error: `Invalid email address: ${email}` }
     }
   }
@@ -146,7 +146,7 @@ export async function sendEmail({
     // For high priority emails (like verification), send immediately
     try {
       const response = await resend.emails.send({
-        from: from || process.env.FROM_EMAIL || 'AMHSJ <noreply@yourjournal.com>',
+        from: from || process.env.FROM_EMAIL || 'AMHSJ <process.env.EMAIL_FROMyourjournal.com>',
         to: recipients,
         subject,
         html,
@@ -163,13 +163,13 @@ export async function sendEmail({
         throw new Error(response.error.message)
       }
       
-      console.log(`Priority email sent immediately to ${recipients.join(', ')} with ID: ${response.data?.id}`)
+      logger.info(`Priority email sent immediately to ${recipients.join(', ')} with ID: ${response.data?.id}`)
       return { 
         success: true, 
         messageId: response.data?.id 
       }
-    } catch (error: any) {
-      console.error(`Priority email failed, adding to queue:`, error)
+    } catch (error: unknown) {
+      logger.error(`Priority email failed, adding to queue:`, error)
       emailQueue.push(emailJob)
       return { 
         success: false, 
@@ -179,7 +179,7 @@ export async function sendEmail({
   } else {
     // Add to queue for regular emails
     emailQueue.push(emailJob)
-    console.log(`Email queued for ${recipients.join(', ')}`)
+    logger.info(`Email queued for ${recipients.join(', ')}`)
     return { 
       success: true, 
       messageId: emailJob.id 
@@ -213,7 +213,7 @@ export async function sendTemplateEmail({
   // Get template
   const template = emailTemplates[templateId]
   if (!template) {
-    console.error(`Template not found: ${templateId}`)
+    logger.error(`Template not found: ${templateId}`)
     return { success: false, error: `Template not found: ${templateId}` }
   }
 
@@ -391,7 +391,7 @@ export async function sendPublicationNotification(
 export async function sendNewsletterUpdate(
   email: string,
   subscriberName: string,
-  updates: any[],
+  updates: unknown[],
   unsubscribeUrl: string,
 ) {
   return sendTemplateEmail({
@@ -463,7 +463,7 @@ export async function verifyEmailDelivery(): Promise<boolean> {
     
     return !testResult.error
   } catch (error) {
-    console.error('Email verification failed:', error)
+    logger.error('Email verification failed:', error)
     return false
   }
 }

@@ -142,7 +142,7 @@ export default function EditorialBoardApplicationPage() {
     }
   }, [session, status, router])
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -227,7 +227,7 @@ export default function EditorialBoardApplicationPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to submit application")
+        throw new AppError("Failed to submit application")
       }
 
       const result = await response.json()
@@ -236,7 +236,7 @@ export default function EditorialBoardApplicationPage() {
       router.push(`/editorial-board/application-status?id=${result.applicationId}`)
       
     } catch (error) {
-      console.error("Application submission error:", error)
+      logger.error("Application submission error:", error)
       toast.error("Failed to submit application. Please try again.")
     } finally {
       setIsSubmitting(false)

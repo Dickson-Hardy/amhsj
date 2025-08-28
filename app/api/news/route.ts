@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const includeInternalNews = session?.user?.role === 'admin' || session?.user?.role === 'editor'
 
     // Try to get news from the news table first
-    let newsItems: any[] = []
+    let newsItems: unknown[] = []
     try {
       newsItems = await db.select({
         id: news.id,
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
         newsItems = newsItems.filter(item => item.type === type)
       }
     } catch (dbError) {
-      console.log('News table not available, using fallback data')
+      logger.error('News table not available, using fallback data')
     }
 
     // If no news items or database not available, provide fallback announcements
@@ -105,7 +105,7 @@ export async function GET(request: Request) {
         .limit(5)
 
         // Add published articles as news items
-        const articleNews = recentArticles.map((article: any) => ({
+        const articleNews = recentArticles.map((article: unknown) => ({
           id: `article-${article.id}`,
           type: 'news',
           title: `Published: ${article.title}`,

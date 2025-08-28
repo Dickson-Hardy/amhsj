@@ -1,5 +1,8 @@
 // __tests__/integration/full-workflow.test.ts
 
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createMocks } from 'node-mocks-http'
 
@@ -75,7 +78,7 @@ describe('Full Workflow Integration Tests', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          authorization: 'Bearer valid-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """valid-jwt-token'
         },
         body: {
           title: 'Test Article',
@@ -100,7 +103,7 @@ describe('Full Workflow Integration Tests', () => {
       const { req, res } = createMocks({
         method: 'POST',
         headers: {
-          authorization: 'Bearer editor-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """editor-jwt-token'
         },
         body: {
           articleId: 'test-article-id',
@@ -122,7 +125,7 @@ describe('Full Workflow Integration Tests', () => {
       const { req, res } = createMocks({
         method: 'POST',
         headers: {
-          authorization: 'Bearer reviewer-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """reviewer-jwt-token'
         },
         body: {
           recommendation: 'accept',
@@ -144,7 +147,7 @@ describe('Full Workflow Integration Tests', () => {
       const { req, res } = createMocks({
         method: 'POST',
         headers: {
-          authorization: 'Bearer editor-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """editor-jwt-token'
         },
         body: {
           decision: 'accepted',
@@ -205,7 +208,7 @@ describe('Full Workflow Integration Tests', () => {
         method: 'GET',
         query: { range: '30d' },
         headers: {
-          authorization: 'Bearer admin-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """admin-jwt-token'
         }
       })
 
@@ -287,7 +290,7 @@ describe('Full Workflow Integration Tests', () => {
       const { req, res } = createMocks({
         method: 'GET',
         headers: {
-          authorization: 'Bearer admin-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """admin-jwt-token'
         }
       })
 
@@ -310,7 +313,7 @@ describe('Full Workflow Integration Tests', () => {
       const { req, res } = createMocks({
         method: 'GET',
         headers: {
-          authorization: 'Bearer valid-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """valid-jwt-token'
         }
       })
 
@@ -332,7 +335,7 @@ describe('Full Workflow Integration Tests', () => {
           abstract: 'Test abstract'
         },
         headers: {
-          authorization: 'Bearer valid-jwt-token'
+          authorization: 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """valid-jwt-token'
         }
       })
 

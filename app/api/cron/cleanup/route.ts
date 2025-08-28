@@ -11,11 +11,11 @@ export async function GET(request: NextRequest) {
   try {
     // Verify this is a cron request (optional security check)
     const authHeader = request.headers.get('authorization')
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (process.env.CRON_SECRET && authHeader !== `process.env.AUTH_TOKEN_PREFIX + ' '${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('🧹 Starting scheduled cleanup job...')
+    logger.info('🧹 Starting scheduled cleanup job...')
     const startTime = Date.now()
     const results = {
       sessions: 0,
@@ -39,10 +39,10 @@ export async function GET(request: NextRequest) {
         DELETE FROM sessions 
         WHERE expires < ${now} OR created_at < ${thirtyDaysAgo}
       `)
-      results.sessions = (sessionResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.sessions} expired sessions`)
+      results.sessions = (sessionResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.sessions} expired sessions`)
     } catch (error) {
-      console.error('❌ Session cleanup failed:', error)
+      logger.error('❌ Session cleanup failed:', error)
     }
 
     // 2. Clean up expired verification tokens
@@ -51,10 +51,10 @@ export async function GET(request: NextRequest) {
         DELETE FROM verification_tokens 
         WHERE expires < ${now}
       `)
-      results.verificationTokens = (tokenResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.verificationTokens} expired verification tokens`)
+      results.verificationTokens = (tokenResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.verificationTokens} expired verification tokens`)
     } catch (error) {
-      console.error('❌ Verification token cleanup failed:', error)
+      logger.error('❌ Verification token cleanup failed:', error)
     }
 
     // 3. Clean up expired password reset tokens from users table
@@ -64,10 +64,10 @@ export async function GET(request: NextRequest) {
         SET password_reset_token = NULL, password_reset_expires = NULL
         WHERE password_reset_expires < ${now}
       `)
-      results.passwordResetTokens = (passwordResetResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.passwordResetTokens} expired password reset tokens`)
+      results.passwordResetTokens = (passwordResetResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.passwordResetTokens} expired password reset tokens`)
     } catch (error) {
-      console.error('❌ Password reset token cleanup failed:', error)
+      logger.error('❌ Password reset token cleanup failed:', error)
     }
 
     // 4. Clean up old processed email queue entries (keep 7 days)
@@ -77,10 +77,10 @@ export async function GET(request: NextRequest) {
         WHERE status IN ('sent', 'failed') 
         AND updated_at < ${sevenDaysAgo}
       `)
-      results.emailQueue = (emailResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.emailQueue} old email queue entries`)
+      results.emailQueue = (emailResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.emailQueue} old email queue entries`)
     } catch (error) {
-      console.error('❌ Email queue cleanup failed:', error)
+      logger.error('❌ Email queue cleanup failed:', error)
     }
 
     // 5. Clean up old admin logs (keep 90 days)
@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
         DELETE FROM admin_logs 
         WHERE created_at < ${ninetyDaysAgo}
       `)
-      results.adminLogs = (adminLogsResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.adminLogs} old admin logs`)
+      results.adminLogs = (adminLogsResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.adminLogs} old admin logs`)
     } catch (error) {
-      console.error('❌ Admin logs cleanup failed:', error)
+      logger.error('❌ Admin logs cleanup failed:', error)
     }
 
     // 6. Clean up old page views (keep 30 days for analytics)
@@ -101,10 +101,10 @@ export async function GET(request: NextRequest) {
         DELETE FROM page_views 
         WHERE viewed_at < ${thirtyDaysAgo}
       `)
-      results.pageViews = (pageViewsResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.pageViews} old page views`)
+      results.pageViews = (pageViewsResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.pageViews} old page views`)
     } catch (error) {
-      console.error('❌ Page views cleanup failed:', error)
+      logger.error('❌ Page views cleanup failed:', error)
     }
 
     // 7. Clean up old monitoring events (keep 30 days)
@@ -113,25 +113,25 @@ export async function GET(request: NextRequest) {
         DELETE FROM monitoring_events 
         WHERE created_at < ${thirtyDaysAgo}
       `)
-      results.monitoringEvents = (monitoringResult as any).rowCount || 0
-      console.log(`✅ Cleaned ${results.monitoringEvents} old monitoring events`)
+      results.monitoringEvents = (monitoringResult as unknown).rowCount || 0
+      logger.error(`✅ Cleaned ${results.monitoringEvents} old monitoring events`)
     } catch (error) {
-      console.error('❌ Monitoring events cleanup failed:', error)
+      logger.error('❌ Monitoring events cleanup failed:', error)
     }
 
     // 8. Optimize database tables (PostgreSQL specific)
     try {
       await db.execute(sql`VACUUM ANALYZE`)
-      console.log('✅ Database vacuum and analyze completed')
+      logger.error('✅ Database vacuum and analyze completed')
     } catch (error) {
-      console.error('❌ Database optimization failed:', error)
+      logger.error('❌ Database optimization failed:', error)
     }
 
     const duration = Date.now() - startTime
     const totalCleaned = Object.values(results).reduce((sum, count) => sum + count, 0)
 
-    console.log(`🏁 Cleanup job completed in ${duration}ms`)
-    console.log(`📊 Total records cleaned: ${totalCleaned}`)
+    logger.info(`🏁 Cleanup job completed in ${duration}ms`)
+    logger.info(`📊 Total records cleaned: ${totalCleaned}`)
 
     return NextResponse.json({
       success: true,
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Cleanup job failed:', error)
+    logger.error('❌ Cleanup job failed:', error)
     logError(error as Error, { context: 'cleanup-cron-job' })
     
     return NextResponse.json({

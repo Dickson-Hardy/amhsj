@@ -1,20 +1,21 @@
+import { logger } from "@/lib/logger";
 import { db } from './lib/db/index.js';
 import { conversations, users, messages } from './lib/db/schema.js';
 
 async function testMessages() {
   try {
-    console.log('Testing database connection...');
+    logger.info('Testing database connection...');
     
     // Check for existing conversations
     const existingConversations = await db.select().from(conversations);
-    console.log('Existing conversations:', existingConversations.length);
+    logger.info('Existing conversations:', existingConversations.length);
     
     // Check for users
     const existingUsers = await db.select().from(users).limit(5);
-    console.log('Users found:', existingUsers.length);
+    logger.info('Users found:', existingUsers.length);
     
     if (existingConversations.length === 0 && existingUsers.length > 0) {
-      console.log('Creating a test conversation...');
+      logger.info('Creating a test conversation...');
       const conv = await db.insert(conversations).values({
         subject: 'Test Message Conversation',
         type: 'editorial',
@@ -23,12 +24,12 @@ async function testMessages() {
         ]
       }).returning();
       
-      console.log('Created conversation:', conv[0].id);
+      logger.info('Created conversation:', conv[0].id);
     }
     
-    console.log('Database test completed successfully');
+    logger.info('Database test completed successfully');
   } catch (error) {
-    console.error('Database test failed:', error);
+    logger.error('Database test failed:', error);
   }
   process.exit(0);
 }

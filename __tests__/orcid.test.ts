@@ -3,6 +3,9 @@
  * Comprehensive test suite for ORCID authentication and profile management
  */
 
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { ORCIDService, type ORCIDProfile, type ORCIDToken } from '@/lib/orcid'
 import { sql } from '@vercel/postgres'
@@ -80,7 +83,7 @@ describe('ORCIDService', () => {
     // Set up environment variables
     process.env.ORCID_CLIENT_ID = 'test-client-id'
     process.env.ORCID_CLIENT_SECRET = 'test-client-secret'
-    process.env.ORCID_REDIRECT_URI = 'http://localhost:3000/auth/orcid/callback'
+    process.env.ORCID_REDIRECT_URI = 'http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/auth/orcid/callback'
     
     // Mock successful database operations
     mockSql.mockResolvedValue({
@@ -358,7 +361,7 @@ describe('ORCIDService', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': 'Bearer access-token'
+            'Authorization': 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """access-token'
           })
         })
       )

@@ -102,14 +102,16 @@ export default function SubmissionMessagesPage() {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          const submission = data.submissions.find((s: any) => s.id === params.id)
+          const submission = data.submissions.find((s: unknown) => s.id === params.id)
           if (submission) {
             setSubmissionTitle(submission.title)
           }
         }
       }
     } catch (error) {
-      console.error('Error fetching submission title:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching submission title:', error)
+      }
     }
   }
 
@@ -153,7 +155,7 @@ export default function SubmissionMessagesPage() {
           })
         }
       } else {
-        throw new Error('Failed to send message')
+        throw new AppError('Failed to send message')
       }
     } catch (error) {
       handleError(error, { 
@@ -187,7 +189,9 @@ export default function SubmissionMessagesPage() {
         )
       )
     } catch (error) {
-      console.error('Error marking message as read:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error marking message as read:', error)
+      }
     }
   }
 

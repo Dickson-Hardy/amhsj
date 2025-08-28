@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Log the error (in production, this could go to a monitoring service)
-    console.error('Client Error Report:', {
+    logger.error('Client Error Report:', {
       errorId,
       message,
       stack,

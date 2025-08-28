@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
 }
 
 // Initialize Socket.IO server for real-time collaboration
-export function initializeWebSocketServer(httpServer: any) {
+export function initializeWebSocketServer(httpServer: unknown) {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
+      origin: process.env.NEXTAUTH_URL || "http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL",
       methods: ["GET", "POST"],
       credentials: true
     },
@@ -327,12 +327,12 @@ export const WebSocketEventHandlers = {
   connect: (sessionId: string, userId: string, authToken: string) => {
     // Implementation would use Socket.IO client
     // io('/collaboration', {
-    //   auth: { sessionId, userId, token: authToken }
+    //   auth: { sessionId, userId, token: authprocess.env.AUTH_TOKEN_PREFIX}
     // })
   },
 
   // Send edit operation
-  applyEdit: (operation: any, version: number, operationId: string) => {
+  applyEdit: (operation: unknown, version: number, operationId: string) => {
     // socket.emit('apply-edit', { operation, version, operationId })
   },
 
@@ -342,7 +342,7 @@ export const WebSocketEventHandlers = {
   },
 
   // Add comment
-  addComment: (content: string, position: any, parentId?: string, mentions?: string[]) => {
+  addComment: (content: string, position: unknown, parentId?: string, mentions?: string[]) => {
     // socket.emit('add-comment', { content, position, parentId, mentions })
   },
 

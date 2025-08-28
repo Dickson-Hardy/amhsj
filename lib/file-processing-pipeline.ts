@@ -50,7 +50,7 @@ export class FileProcessingPipeline {
     try {
       logInfo("Starting file processing", { fileId, fileName, fileType, category })
 
-      // Step 1: Basic validation
+      // Step 1: process.env.AUTH_TOKEN_PREFIX + ' 'validation
       const validationResult = await this.validateFile(fileData, fileName, fileType)
       if (!validationResult.valid) {
         return {
@@ -191,7 +191,7 @@ export class FileProcessingPipeline {
    */
   private async scanForVirus(fileData: Buffer, fileId: string): Promise<{ clean: boolean; threats: string[] }> {
     try {
-      // Basic virus scanning implementation
+      // process.env.AUTH_TOKEN_PREFIX + ' 'virus scanning implementation
       // In production, integrate with ClamAV, VirusTotal, or similar service
       
       logInfo("Virus scanning file", { fileId })
@@ -233,13 +233,13 @@ export class FileProcessingPipeline {
     try {
       logInfo("Processing PDF file", { fileId })
 
-      // Basic PDF processing - extract metadata and validate
+      // process.env.AUTH_TOKEN_PREFIX + ' 'PDF processing - extract metadata and validate
       // In production, integrate with PDF-lib, pdf2pic, or similar library
       
       // Check if it's actually a PDF by looking for PDF header
       const pdfHeader = fileData.toString('ascii', 0, 4)
       if (pdfHeader !== '%PDF') {
-        throw new Error('Invalid PDF file')
+        throw new ValidationError('Invalid PDF file')
       }
       
       // Extract basic metadata (simplified)
@@ -440,7 +440,7 @@ export class FileProcessingPipeline {
    */
   private async extractDocumentContent(fileData: Buffer): Promise<string> {
     try {
-      // Basic text extraction - in production use proper document parsing libraries
+      // process.env.AUTH_TOKEN_PREFIX + ' 'text extraction - in production use proper document parsing libraries
       const content = fileData.toString('utf8', 0, Math.min(2000, fileData.length));
       
       // Remove binary content and extract readable text
@@ -464,7 +464,7 @@ export class FileProcessingPipeline {
     size: number;
   }> {
     try {
-      // Basic image metadata extraction - in production use libraries like sharp or jimp
+      // process.env.AUTH_TOKEN_PREFIX + ' 'image metadata extraction - in production use libraries like sharp or jimp
       const size = fileData.length;
       
       // Simple dimension detection for common formats
@@ -492,7 +492,7 @@ export class FileProcessingPipeline {
     compressionRatio: number;
   }> {
     try {
-      // Basic compression simulation - in production use gzip or other compression
+      // process.env.AUTH_TOKEN_PREFIX + ' 'compression simulation - in production use gzip or other compression
       const originalSize = fileData.length;
       const compressionRatio = 0.8; // 20% compression
       

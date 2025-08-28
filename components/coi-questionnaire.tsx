@@ -66,7 +66,7 @@ const COI_QUESTIONS = {
     },
     {
       id: "institutional_affiliation",
-      question: "Are you affiliated with the same institution as any of the authors?",
+      question: "Are you affiliated with the same institution as unknown of the authors?",
       category: "Institutional",
       description: "Same university, hospital, research center, etc."
     },
@@ -110,7 +110,7 @@ const COI_QUESTIONS = {
     },
     {
       id: "institutional_affiliation",
-      question: "Are you affiliated with the same institution as any of the authors?",
+      question: "Are you affiliated with the same institution as unknown of the authors?",
       category: "Institutional",
       description: "Same university, hospital, research center, etc."
     },
@@ -195,10 +195,10 @@ export function COIQuestionnaire({
       if (response.ok) {
         onComplete(coiData)
       } else {
-        throw new Error('Failed to save COI questionnaire')
+        throw new AppError('Failed to save COI questionnaire')
       }
     } catch (error) {
-      console.error('Error saving COI questionnaire:', error)
+      logger.error('Error saving COI questionnaire:', error)
     } finally {
       setIsSubmitting(false)
     }

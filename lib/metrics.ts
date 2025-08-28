@@ -127,7 +127,7 @@ export async function calculateArticleMetrics(
       }))
     }
   } catch (error) {
-    console.error('Error calculating article metrics:', error)
+    logger.error('Error calculating article metrics:', error)
     return {
       views: 0,
       uniqueViews: 0,
@@ -161,7 +161,7 @@ export async function getTopArticles(limit: number = 10): Promise<Array<{
 
     return topArticles
   } catch (error) {
-    console.error('Error getting top articles:', error)
+    logger.error('Error getting top articles:', error)
     return []
   }
 }
@@ -191,7 +191,7 @@ export async function getTotalSiteMetrics(): Promise<{
       avgViewsPerArticle: avgViews
     }
   } catch (error) {
-    console.error('Error getting site metrics:', error)
+    logger.error('Error getting site metrics:', error)
     return {
       totalViews: 0,
       uniqueVisitors: 0,

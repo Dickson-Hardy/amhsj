@@ -95,7 +95,7 @@ class ModernErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBound
         }),
       })
     } catch (logError) {
-      console.error('Failed to log error:', logError)
+      logger.error('Failed to log error:', logError)
     }
   }
 
@@ -138,7 +138,7 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
     const body = encodeURIComponent(
       `Error ID: ${errorId}\n\nError Message: ${error.message}\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected behavior:\n\nActual behavior:\n\nAdditional context:\n`
     )
-    window.open(`mailto:support@amhsj.com?subject=${subject}&body=${body}`)
+    window.open(`process.env.EMAIL_FROMsupport@amhsj.com?subject=${subject}&body=${body}`)
   }
 
   const handleGoHome = () => {
@@ -231,7 +231,7 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
             </Button>
             
             <Button
-              onClick={() => window.open('mailto:support@amhsj.com')}
+              onClick={() => window.open('process.env.EMAIL_FROMsupport@amhsj.com')}
               variant="outline"
               size="sm"
               className="flex-1"
@@ -245,7 +245,7 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
             <p>
               If this problem persists, please contact our support team at{' '}
               <a 
-                href="mailto:support@amhsj.com" 
+                href="process.env.EMAIL_FROMsupport@amhsj.com" 
                 className="text-blue-600 hover:text-blue-800 underline"
               >
                 support@amhsj.com

@@ -1,10 +1,11 @@
+import { logger } from "@/lib/logger";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http"
 import { neon } from "@neondatabase/serverless"
 import { migrate } from "drizzle-orm/neon-http/migrator"
 
 async function runMigrations() {
-  console.log("🚀 Starting database migrations...")
+  logger.info("🚀 Starting database migrations...")
   
   try {
     const sql = neon(process.env.DATABASE_URL!)
@@ -12,16 +13,16 @@ async function runMigrations() {
     
     await migrate(db, { migrationsFolder: "./drizzle" })
     
-    console.log("✅ Database migrations completed successfully!")
+    logger.info("✅ Database migrations completed successfully!")
   } catch (error) {
-    console.error("❌ Migration failed:", error)
+    logger.error("❌ Migration failed:", error)
     process.exit(1)
   }
 }
 
 // Seed initial data
 async function seedDatabase() {
-  console.log("🌱 Seeding database with initial data...")
+  logger.info("🌱 Seeding database with initial data...")
   
   try {
     const sql = neon(process.env.DATABASE_URL!)
@@ -57,21 +58,21 @@ async function seedDatabase() {
         lastActiveAt: new Date(),
       })
       
-      console.log(`✅ Admin user created: ${adminEmail}`)
+      logger.info(`✅ Admin user created: ${adminEmail}`)
     } else {
-      console.log("ℹ️ Admin user already exists")
+      logger.info("ℹ️ Admin user already exists")
     }
     
-    console.log("✅ Database seeding completed!")
+    logger.info("✅ Database seeding completed!")
   } catch (error) {
-    console.error("❌ Seeding failed:", error)
+    logger.error("❌ Seeding failed:", error)
     process.exit(1)
   }
 }
 
 // Database health check
 async function healthCheck() {
-  console.log("🔍 Performing database health check...")
+  logger.info("🔍 Performing database health check...")
   
   try {
     const sql = neon(process.env.DATABASE_URL!)
@@ -79,16 +80,16 @@ async function healthCheck() {
     
     // Test basic query
     const result = await sql`SELECT NOW() as current_time`
-    console.log(`✅ Database connected successfully at ${result[0].current_time}`)
+    logger.info(`✅ Database connected successfully at ${result[0].current_time}`)
     
     // Test schema access
     const { users } = await import("../lib/db/schema")
     const userCount = await db.select().from(users).limit(1)
-    console.log("✅ Schema access verified")
+    logger.info("✅ Schema access verified")
     
     return true
   } catch (error) {
-    console.error("❌ Health check failed:", error)
+    logger.error("❌ Health check failed:", error)
     return false
   }
 }
@@ -113,7 +114,7 @@ async function main() {
       await healthCheck()
       break
     default:
-      console.log(`
+      logger.info(`
 Usage: node migrate-database.js <command>
 
 Commands:

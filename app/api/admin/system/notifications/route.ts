@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching notifications:", error)
+    logger.error("Error fetching notifications:", error)
     return NextResponse.json(
       { error: "Failed to fetch notifications" },
       { status: 500 }
@@ -238,7 +238,7 @@ async function generateCriticalAlerts(since: Date) {
     }
 
   } catch (error) {
-    console.error("Error generating critical alerts:", error)
+    logger.error("Error generating critical alerts:", error)
   }
 
   return alerts
@@ -290,7 +290,7 @@ async function generateReviewAlerts() {
     }
 
   } catch (error) {
-    console.error("Error generating review alerts:", error)
+    logger.error("Error generating review alerts:", error)
   }
 
   return alerts
@@ -342,7 +342,7 @@ async function generateUserAlerts(since: Date) {
     }
 
   } catch (error) {
-    console.error("Error generating user alerts:", error)
+    logger.error("Error generating user alerts:", error)
   }
 
   return alerts
@@ -371,7 +371,7 @@ async function generatePerformanceAlerts(since: Date) {
     }
 
   } catch (error) {
-    console.error("Error generating performance alerts:", error)
+    logger.error("Error generating performance alerts:", error)
   }
 
   return alerts
@@ -400,7 +400,7 @@ export async function PATCH(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error updating notification:", error)
+    logger.error("Error updating notification:", error)
     return NextResponse.json(
       { error: "Failed to update notification" },
       { status: 500 }

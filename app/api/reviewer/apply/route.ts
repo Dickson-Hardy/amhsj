@@ -33,14 +33,14 @@ export async function POST(req: NextRequest) {
     })
     
   } catch (error) {
-    console.error("Error submitting reviewer application:", error)
+    logger.error("Error submitting reviewer application:", error)
     return NextResponse.json({ 
       message: "Failed to submit application" 
     }, { status: 500 })
   }
 }
 
-async function sendNotificationToEditorialTeam(application: any) {
+async function sendNotificationToEditorialTeam(application: unknown) {
   // This function would send emails to:
   // 1. All users with 'admin' role
   // 2. All users with 'editor' role
@@ -49,7 +49,7 @@ async function sendNotificationToEditorialTeam(application: any) {
   const recipients = [
     // These would come from your database
     'editor@journal.com',
-    'admin@journal.com',
+    'process.env.EMAIL_FROMjournal.com',
     'editorial.coordinator@journal.com'
   ]
   
@@ -77,22 +77,22 @@ async function sendNotificationToEditorialTeam(application: any) {
   }
   
   // Integrate with your email service
-  console.log('Email notification would be sent to:', recipients)
-  console.log('Email content:', emailContent)
+  logger.info('Email notification would be sent to:', recipients)
+  logger.info('Email content:', emailContent)
   
   // In production, use your email service:
   // await emailService.send({
   //   to: recipients,
   //   subject: emailContent.subject,
   //   html: generateReviewerApplicationEmailHTML(emailContent.body),
-  //   from: process.env.EMAIL_FROM || 'noreply@journal.com'
+  //   from: process.env.EMAIL_FROM || 'process.env.EMAIL_FROMjournal.com'
   // })
   
   // Simulate email sending delay
   await new Promise(resolve => setTimeout(resolve, 100))
 }
 
-async function saveReviewerApplication(userEmail: string, formData: any) {
+async function saveReviewerApplication(userEmail: string, formData: unknown) {
   try {
     // In a real implementation, save to your database:
     // const application = await prisma.reviewerApplication.create({
@@ -117,7 +117,7 @@ async function saveReviewerApplication(userEmail: string, formData: any) {
     
     // Save application to database
     const [application] = await db.insert(userApplications).values({
-      userId: (session.user as any).id || userEmail,
+      userId: (session.user as unknown).id || userEmail,
       requestedRole: 'reviewer',
       currentRole: 'author',
       status: 'pending',
@@ -133,12 +133,12 @@ async function saveReviewerApplication(userEmail: string, formData: any) {
       ...formData
     }
   } catch (error) {
-    console.error('Error saving reviewer application:', error)
-    throw new Error('Failed to save application to database')
+    logger.error('Error saving reviewer application:', error)
+    throw new AppError('Failed to save application to database')
   }
 }
 
-async function createAdminNotification(application: any) {
+async function createAdminNotification(application: unknown) {
   try {
     // In a real implementation, create admin notification:
     // await prisma.adminNotification.create({
@@ -153,13 +153,13 @@ async function createAdminNotification(application: any) {
     //   }
     // })
     
-    console.log(`Admin notification created for application ${application.id}`)
+    logger.error(`Admin notification created for application ${application.id}`)
   } catch (error) {
-    console.error('Error creating admin notification:', error)
+    logger.error('Error creating admin notification:', error)
   }
 }
 
-async function logApplicationSubmission(application: any) {
+async function logApplicationSubmission(application: unknown) {
   try {
     // In a real implementation, log the action:
     // await prisma.applicationLog.create({
@@ -172,8 +172,8 @@ async function logApplicationSubmission(application: any) {
     //   }
     // })
     
-    console.log(`Application submission logged for ${application.id}`)
+    logger.error(`Application submission logged for ${application.id}`)
   } catch (error) {
-    console.error('Error logging application submission:', error)
+    logger.error('Error logging application submission:', error)
   }
 }

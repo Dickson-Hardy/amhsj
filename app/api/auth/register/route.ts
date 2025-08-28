@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server"
+import { APP_CONFIG } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import { NextRequest } from "next/server"
 import bcrypt from "bcryptjs"
 import { db, sql } from "@/lib/db"
 import { users, userApplications, userQualifications, userPublications, userReferences, reviewerProfiles, editorProfiles } from "@/lib/db/schema"
@@ -6,38 +8,141 @@ import { eq } from "drizzle-orm"
 import { sendEmailVerification } from "@/lib/email-hybrid"
 import crypto from "crypto"
 import { 
+  createApiResponse, 
+  createErrorResponse, 
+  validateRequest,
+  withErrorHandler,
+  handleDatabaseError,
+  ROLES
+} from "@/lib/api-utils"
+import { z } from "zod"
+import { 
   RegistrationData
 } from "@/types/registration"
 
-export async function POST(request: NextRequest) {
-  try {
-    const rawData: RegistrationData = await request.json()
+// Validation schemas
+const QualificationSchema = z.object({
+  degree: z.string().min(1, "Degree is required"),
+  institution: z.string().min(1, "Institution is required"), 
+  year: z.number().int().min(1950).max(new Date().getFullYear() + 10),
+  field: z.string().min(1, "Field is required")
+}).optional()
 
+const PublicationSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  journal: z.string().min(1, "Journal is required"),
+  year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
+  doi: z.string().optional(),
+  role: z.string().optional()
+}).optional()
+
+const ReferenceSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email required"),
+  affiliation: z.string().min(1, "Affiliation is required"),
+  relationship: z.string().min(1, "Relationship is required")
+}).optional()
+
+const RegistrationSchema = z.object({
+  // process.env.AUTH_BASIC_PREFIX || "process.env.AUTH_BASIC_PREFIX || "Basic ""info (can be nested or flat)
+  basicInfo: z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Valid email required"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    affiliation: z.string().min(1, "Affiliation is required"),
+    orcid: z.string().optional(),
+    role: z.enum([ROLES.AUTHOR, ROLES.REVIEWER, "editor"]).default(ROLES.AUTHOR),
+    researchInterests: z.array(z.string()).optional()
+  }).optional(),
+  
+  // Flat structure support
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(8).optional(),
+  affiliation: z.string().optional(),
+  orcid: z.string().optional(),
+  role: z.enum([ROLES.AUTHOR, ROLES.REVIEWER, "editor"]).optional(),
+  researchInterests: z.array(z.string()).optional(),
+  
+  // Role-specific data
+  roleSpecificData: z.object({
+    expertise: z.array(z.string()).optional(),
+    specializations: z.array(z.string()).optional(),
+    languagesSpoken: z.array(z.string()).optional(),
+    maxReviewsPerMonth: z.number().int().min(1).max(20).optional(),
+    availabilityStatus: z.enum(["available", "limited", "unavailable"]).optional(),
+    qualifications: z.array(QualificationSchema).optional(),
+    publications: z.array(PublicationSchema).optional(),
+    references: z.array(ReferenceSchema).optional()
+  }).optional(),
+  
+  // Direct fields for backward compatibility
+  expertise: z.array(z.string()).optional(),
+  specializations: z.array(z.string()).optional(),
+  languagesSpoken: z.array(z.string()).optional(),
+  maxReviewsPerMonth: z.number().optional(),
+  availabilityStatus: z.string().optional(),
+  qualifications: z.array(QualificationSchema).optional(),
+  publications: z.array(PublicationSchema).optional(),
+  references: z.array(ReferenceSchema).optional()
+})
+
+async function registerUser(request: NextRequest) {
+  const requestId = crypto.randomUUID()
+  
+  logger.api("User registration attempt started", {
+    requestId,
+    endpoint: "/api/auth/register",
+    ip: request.ip || 'unknown'
+  })
+
+  try {
+    const rawData = await request.json()
+    
+    // Validate input with flexible schema
+    const validatedData = validateRequest(RegistrationSchema, rawData)
+    
     // Normalize data structure - handle both nested and flat formats
     let registrationData: RegistrationData
 
-    if (rawData.basicInfo) {
+    if (validatedData.basicInfo) {
       // Handle nested structure from enhanced signup page
       registrationData = {
-        name: rawData.basicInfo.name,
-        email: rawData.basicInfo.email,
-        password: rawData.basicInfo.password,
-        affiliation: rawData.basicInfo.affiliation,
-        orcid: rawData.basicInfo.orcid,
-        role: rawData.basicInfo.role,
-        researchInterests: rawData.basicInfo.researchInterests,
+        name: validatedData.basicInfo.name,
+        email: validatedData.basicInfo.email,
+        password: validatedData.basicInfo.password,
+        affiliation: validatedData.basicInfo.affiliation,
+        orcid: validatedData.basicInfo.orcid,
+        role: validatedData.basicInfo.role,
+        researchInterests: validatedData.basicInfo.researchInterests,
         // Merge role-specific data
-        ...rawData.roleSpecificData
+        ...validatedData.roleSpecificData
       }
     } else {
       // Handle flat structure from simple signup page
-      registrationData = rawData
+      registrationData = {
+        name: validatedData.name!,
+        email: validatedData.email!,
+        password: validatedData.password!,
+        affiliation: validatedData.affiliation!,
+        orcid: validatedData.orcid,
+        role: validatedData.role || ROLES.AUTHOR,
+        researchInterests: validatedData.researchInterests,
+        expertise: validatedData.expertise,
+        specializations: validatedData.specializations,
+        languagesSpoken: validatedData.languagesSpoken,
+        maxReviewsPerMonth: validatedData.maxReviewsPerMonth,
+        availabilityStatus: validatedData.availabilityStatus,
+        qualifications: validatedData.qualifications,
+        publications: validatedData.publications,
+        references: validatedData.references
+      }
     }
 
-    // Basic sanitization and normalization
-    const role = (registrationData.role || "author").toLowerCase()
+    // process.env.AUTH_BASIC_PREFIX || "process.env.AUTH_BASIC_PREFIX || "Basic ""sanitization and normalization
+    const role = (registrationData.role || ROLES.AUTHOR).toLowerCase()
     if (!['author', 'reviewer', 'editor'].includes(role)) {
-      return NextResponse.json({ error: "Invalid role" }, { status: 400 })
+      throw new Error("Invalid role specified")
     }
 
     const toStringArray = (val: unknown): string[] | undefined => {
@@ -86,13 +191,17 @@ export async function POST(request: NextRequest) {
       references: safeReferences,
     }
 
-    // Validate required fields
-    if (!normalized.email || !normalized.password || !normalized.name || !normalized.role) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
+    // Validate required fields after normalization
+    if (!normalized.email || !normalized.password || !normalized.name) {
+      throw new Error("Missing required fields: name, email, and password are required")
     }
+
+    logger.api("Registration data validated", {
+      requestId,
+      email: normalized.email,
+      role: normalized.role,
+      hasOrcid: !!normalized.orcid
+    })
 
     // Check if user already exists
     const existingUser = await db
@@ -102,6 +211,12 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (existingUser.length > 0) {
+      logger.security("Registration attempt for existing user", {
+        requestId,
+        email: normalized.email,
+        ip: request.ip
+      })
+
       // If account exists, decide whether to resend verification or return conflict
       const userCols = await getExistingColumns('users')
       const hasIsVerified = userCols.has('is_verified')
@@ -126,28 +241,41 @@ export async function POST(request: NextRequest) {
           await sql`update users set email_verification_token = ${newToken} where email = ${normalized.email}`
           tokenToUse = newToken
         } catch (e) {
-          // If update fails, fallback to existing token if any
-          console.warn('Failed to set new verification token, falling back:', e)
+          logger.error("Failed to update verification token", {
+            requestId,
+            error: e instanceof Error ? e.message : String(e)
+          })
         }
         if (tokenToUse) {
           const baseUrl = process.env.NEXTAUTH_URL || `${request.nextUrl.origin}`
-          const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${tokenToUse}&email=${encodeURIComponent(normalized.email!)}`
+          const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${tokenToUse}&email=${encodeURIComponent(normalized.email)}`
           try {
-            await sendEmailVerification(normalized.email!, normalized.name!, verificationUrl)
+            await sendEmailVerification(normalized.email, normalized.name, verificationUrl)
+            
+            logger.api("Verification email resent for existing account", {
+              requestId,
+              email: normalized.email
+            })
           } catch (e) {
-            console.warn("Resend verification failed (existing account):", e)
+            logger.error("Failed to resend verification email", {
+              requestId,
+              email: normalized.email,
+              error: e instanceof Error ? e.message : String(e)
+            })
           }
-          return NextResponse.json(
-            { message: "Account already exists. Verification email resent if not verified." },
-            { status: 200 }
+          
+          return createApiResponse(
+            { resent: true },
+            "Account already exists. Verification email resent if not verified.",
+            requestId
           )
         }
       }
 
       // Otherwise, return conflict to indicate existing account
-      return NextResponse.json(
-        { error: "User already exists. Please sign in." },
-        { status: 409 }
+      return createErrorResponse(
+        new Error("User already exists. Please sign in."),
+        requestId
       )
     }
 
@@ -156,6 +284,12 @@ export async function POST(request: NextRequest) {
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString("hex")
+
+    logger.api("Starting user creation process", {
+      requestId,
+      email: normalized.email,
+      role: normalized.role
+    })
 
     // Calculate profile completeness
     const profileCompleteness = calculateProfileCompleteness(normalized)
@@ -217,7 +351,7 @@ export async function POST(request: NextRequest) {
           txErr?.message?.includes('transaction') ||
           txErr?.code === 'TRANSACTION_NOT_SUPPORTED') {
         useTransaction = false
-        console.log("Transactions not supported by driver, using sequential writes")
+        logger.info("Transactions not supported by driver, using sequential writes")
       }
     }
 
@@ -234,7 +368,7 @@ export async function POST(request: NextRequest) {
           return inserted
         })
       } catch (txErr) {
-        console.warn("Transaction failed, falling back to sequential writes:", txErr)
+        logger.warn("Transaction failed, falling back to sequential writes:", txErr)
         useTransaction = false
       }
     }
@@ -260,32 +394,35 @@ export async function POST(request: NextRequest) {
       try {
         await sendEmailVerification(normalized.email!, normalized.name!, verificationUrl)
       } catch (e) {
-        console.warn("Email verification send failed, continuing registration:", e)
+        logger.warn("Email verification send failed, continuing registration:", e)
       }
     } else {
-      console.warn("Skipping verification email: email_verification_token column not present in users table")
+      logger.warn("Skipping verification email: email_verification_token column not present in users table")
     }
 
-    return NextResponse.json(
+    return createApiResponse(
       { 
-        message: getRegistrationMessage(normalized.role!),
         userId: newUser.id,
         requiresApproval: normalized.role !== "author"
       },
-      { status: 201 }
+      getRegistrationMessage(normalized.role!),
+      requestId
     )
   } catch (error: any) {
-    const code = (error as any)?.code || (error as any)?.original?.code
-    const msg = (error as any)?.message || "Internal server error"
-    console.error("Registration error:", { message: msg, code, stack: (error as any)?.stack })
+    logger.error("Registration error", {
+      requestId,
+      error: error instanceof Error ? error.message : String(error),
+      code: error?.code || error?.original?.code
+    })
+    
     // Map common Postgres errors to friendly responses
-    if (code === '23505') {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 })
+    if (error?.code === '23505') {
+      throw new Error("User already exists")
     }
-    if (code === '22P02' || code === '22001') {
-      return NextResponse.json({ error: "Invalid data provided" }, { status: 400 })
+    if (error?.code === '22P02' || error?.code === '22001') {
+      throw new Error("Invalid data provided")
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    throw new Error("Internal server error")
   }
 }
 
@@ -639,7 +776,7 @@ function buildApplicationData(data: RegistrationData) {
 function calculateProfileCompleteness(data: RegistrationData): number {
   let score = 0
 
-  // Basic info (40%)
+  // process.env.AUTH_BASIC_PREFIX || "process.env.AUTH_BASIC_PREFIX || "Basic ""info (40%)
   if (data.name) score += 10
   if (data.email) score += 10
   if (data.affiliation) score += 10
@@ -698,3 +835,6 @@ function filterToExistingColumns<T extends Record<string, any>>(obj: T, columns:
   }
   return out
 }
+
+// Export the POST handler with error handling
+export const POST = withErrorHandler(registerUser)

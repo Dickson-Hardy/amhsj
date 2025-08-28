@@ -104,7 +104,9 @@ export default function ReviewerDashboard() {
           setAssignments(assignmentsData.assignments)
         }
       } catch (error) {
-        console.error("Error fetching reviewer data:", error)
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error fetching reviewer data:", error)
+        }
       } finally {
         setLoading(false)
       }
@@ -159,7 +161,9 @@ export default function ReviewerDashboard() {
         window.location.reload()
       }
     } catch (error) {
-      console.error("Error accepting review:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error accepting review:", error)
+      }
     }
   }
 
@@ -175,7 +179,9 @@ export default function ReviewerDashboard() {
         window.location.reload()
       }
     } catch (error) {
-      console.error("Error declining review:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error declining review:", error)
+      }
     }
   }
 
@@ -203,7 +209,9 @@ export default function ReviewerDashboard() {
         window.location.reload()
       }
     } catch (error) {
-      console.error("Error submitting review:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error submitting review:", error)
+      }
     }
   }
 

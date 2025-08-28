@@ -87,7 +87,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         createdAt: new Date()
       })
     } catch (logError) {
-      console.error("Failed to log email:", logError)
+      logger.error("Failed to log email:", logError)
     }
 
     // Integrate with hybrid email service
@@ -117,7 +117,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         })
         .where(eq(emailLogs.submissionId, submissionId))
     } catch (updateError) {
-      console.error("Failed to update email log:", updateError)
+      logger.error("Failed to update email log:", updateError)
     }
 
     return NextResponse.json({
@@ -181,7 +181,7 @@ async function sendEmail({ to, subject, content, from, replyTo }: {
     const failures = results.filter(result => result.status === 'rejected')
     
     if (failures.length > 0) {
-      console.error(`Failed to send ${failures.length}/${to.length} emails`)
+      logger.error(`Failed to send ${failures.length}/${to.length} emails`)
       return { 
         success: false, 
         error: `Failed to send ${failures.length}/${to.length} emails`,
@@ -191,7 +191,7 @@ async function sendEmail({ to, subject, content, from, replyTo }: {
     
     return { success: true, messageId: `hybrid-${Date.now()}` }
   } catch (error) {
-    console.error("Email sending failed:", error)
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
+    logger.error("Email sending failed:", error)
+    return { success: false, error: isAppError(error) ? error.message : (isAppError(error) ? error.message : (error instanceof Error ? error.message : String(error))) }
   }
 }

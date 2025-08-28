@@ -157,7 +157,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const allowedUpdates = ['timeLimitDays', 'reminderDays', 'escalationDays', 'isActive']
-    const validUpdates: any = {}
+    const validUpdates: unknown = {}
 
     for (const [key, value] of Object.entries(updates)) {
       if (allowedUpdates.includes(key)) {

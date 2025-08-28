@@ -42,15 +42,15 @@ interface EditorLayoutProps {
 
 // Removed badge counts (demo) – real counts to be fetched dynamically.
 const editorSidebarItems = [
-  { href: '/dashboard', icon: Home, label: 'Dashboard', description: 'Editorial overview' },
-  { href: '/dashboard?tab=submissions', icon: FileText, label: 'Manuscripts', description: 'Active submissions' },
-  { href: '/dashboard?tab=reviews', icon: Eye, label: 'Reviews', description: 'Peer review status' },
-  { href: '/dashboard?tab=submissions', icon: UserCheck, label: 'Reviewers', description: 'Manage reviewers' },
-  { href: '/dashboard?tab=submissions', icon: Edit3, label: 'Editorial Decisions', description: 'Make decisions' },
-  { href: '/dashboard?tab=overview', icon: Calendar, label: 'Editorial Calendar', description: 'Deadlines & events' },
-  { href: '/dashboard?tab=analytics', icon: BarChart3, label: 'Analytics', description: 'Performance metrics' },
+  { href: '/editor/dashboard', icon: Home, label: 'Dashboard', description: 'Editorial overview' },
+  { href: '/editor/submissions', icon: FileText, label: 'Manuscripts', description: 'Active submissions' },
+  { href: '/editor/reviews', icon: Eye, label: 'Reviews', description: 'Peer review status' },
+  { href: '/editor/assignments', icon: UserCheck, label: 'Reviewers', description: 'Manage reviewers' },
+  { href: '/editor/decisions', icon: Edit3, label: 'Editorial Decisions', description: 'Make decisions' },
+  { href: '/editor/calendar', icon: Calendar, label: 'Editorial Calendar', description: 'Deadlines & events' },
+  { href: '/editor/reports', icon: BarChart3, label: 'Analytics', description: 'Performance metrics' },
   { href: '/archive', icon: Archive, label: 'Published Issues', description: 'Archive management' },
-  { href: '/dashboard', icon: Settings, label: 'Editorial Settings', description: 'Workflow preferences' }
+  { href: '/editor/settings', icon: Settings, label: 'Editorial Settings', description: 'Workflow preferences' }
 ]
 
 export default function EditorLayout({ children }: EditorLayoutProps) {

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import SiteFooter from "@/components/site-footer"
 import TawkToWidget from "@/components/tawk-to-widget"
 import FloatingSupportButton from "@/components/floating-support-button"
 
@@ -17,6 +18,7 @@ export default function ConditionalLayout({
   const isInternalRoute = pathname?.startsWith('/dashboard') || 
                          pathname?.startsWith('/admin') || 
                          pathname?.startsWith('/editor') || 
+                         pathname?.startsWith('/author') ||
                          pathname?.startsWith('/reviewer') ||
                          pathname?.startsWith('/submit')
 
@@ -31,6 +33,7 @@ export default function ConditionalLayout({
       <Header />
       <main>{children}</main>
       <Footer />
+      <SiteFooter />
       <TawkToWidget />
       <FloatingSupportButton />
     </>

@@ -6,7 +6,7 @@ async function testRedisConnection(redis: Redis): Promise<boolean> {
     const result = await redis.ping()
     return result === 'PONG'
   } catch (error) {
-    console.error('Redis connection test failed:', error)
+    logger.error('Redis connection test failed:', error)
     return false
   }
 }
@@ -36,17 +36,17 @@ async function initRedis(): Promise<Redis | null> {
       redisConnected = await testRedisConnection(redis)
       
       if (redisConnected) {
-        console.log('✅ Redis client initialized and connected successfully')
+        logger.error('✅ Redis client initialized and connected successfully')
       } else {
-        console.log('❌ Redis client initialized but connection failed - using memory fallback')
+        logger.error('❌ Redis client initialized but connection failed - using memory fallback')
         redis = null
       }
     } catch (error) {
-      console.log('❌ Redis initialization failed - using memory fallback:', error)
+      logger.error('❌ Redis initialization failed - using memory fallback:', error)
       redis = null
     }
   } else {
-    console.log('⚠️  Redis not available - using memory fallback')
+    logger.info('⚠️  Redis not available - using memory fallback')
   }
 
   return redis
@@ -56,7 +56,7 @@ async function initRedis(): Promise<Redis | null> {
 export { redis }
 
 // In-memory cache fallback for development
-const memoryCache = new Map<string, { value: any; expires?: number }>()
+const memoryCache = new Map<string, { value: unknown; expires?: number }>()
 
 // Clean up expired items from memory cache
 const cleanMemoryCache = () => {
@@ -74,7 +74,7 @@ setInterval(cleanMemoryCache, 5 * 60 * 1000)
 // Cache utility functions
 export const cache = {
   // Set a value with optional expiration (in seconds)
-  async set(key: string, value: any, expiration?: number): Promise<void> {
+  async set(key: string, value: unknown, expiration?: number): Promise<void> {
     // Always try memory cache first
     const expires = expiration ? Date.now() + (expiration * 1000) : undefined
     memoryCache.set(key, { value, expires })
@@ -136,7 +136,7 @@ export const cache = {
       try {
         await redisClient.del(key)
       } catch (error) {
-        console.debug('Redis delete failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis delete failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
   },
@@ -160,7 +160,7 @@ export const cache = {
         const result = await redisClient.exists(key)
         return result === 1
       } catch (error) {
-        console.debug('Redis exists failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis exists failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
     
@@ -182,7 +182,7 @@ export const cache = {
       try {
         await redisClient.expire(key, seconds)
       } catch (error) {
-        console.debug('Redis expire failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis expire failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
   },
@@ -223,7 +223,7 @@ export const cache = {
             }
           }
         } catch (error) {
-          console.debug('Redis mget failed:', error instanceof Error ? error.message : 'Unknown error')
+          logger.debug('Redis mget failed:', error instanceof Error ? error.message : 'Unknown error')
         }
       }
     }
@@ -248,7 +248,7 @@ export const cache = {
         }
         await redisClient.mset(serializedPairs)
       } catch (error) {
-        console.debug('Redis mset failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis mset failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
   },
@@ -263,7 +263,7 @@ export const cache = {
         memoryCache.set(key, { value: result })
         return result
       } catch (error) {
-        console.debug('Redis incr failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis incr failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -282,7 +282,7 @@ export const cache = {
       try {
         return await redisClient.sadd(key, members)
       } catch (error) {
-        console.debug('Redis sadd failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis sadd failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -307,7 +307,7 @@ export const cache = {
       try {
         return await redisClient.smembers(key)
       } catch (error) {
-        console.debug('Redis smembers failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis smembers failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -323,7 +323,7 @@ export const cache = {
       try {
         return await redisClient.srem(key, ...members)
       } catch (error) {
-        console.debug('Redis srem failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis srem failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -349,7 +349,7 @@ export const cache = {
         const result = await redisClient.sismember(key, member)
         return result === 1
       } catch (error) {
-        console.debug('Redis sismember failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis sismember failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -363,7 +363,7 @@ export const cache = {
 // Session management utilities
 export const session = {
   // Store session data
-  async create(sessionId: string, data: any, expiration: number = 3600): Promise<void> {
+  async create(sessionId: string, data: unknown, expiration: number = 3600): Promise<void> {
     await cache.set(`session:${sessionId}`, data, expiration)
   },
 
@@ -373,7 +373,7 @@ export const session = {
   },
 
   // Update session data
-  async update(sessionId: string, data: any, expiration?: number): Promise<void> {
+  async update(sessionId: string, data: unknown, expiration?: number): Promise<void> {
     const key = `session:${sessionId}`
     await cache.set(key, data, expiration)
   },
@@ -411,7 +411,7 @@ export const rateLimit = {
           resetTime
         }
       } catch (error) {
-        console.debug('Redis rate limit failed:', error instanceof Error ? error.message : 'Unknown error')
+        logger.debug('Redis rate limit failed:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 

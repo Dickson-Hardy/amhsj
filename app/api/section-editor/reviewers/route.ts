@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(transformedReviewers)
 
   } catch (error) {
-    console.error("Error fetching section editor reviewers:", error)
+    logger.error("Error fetching section editor reviewers:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

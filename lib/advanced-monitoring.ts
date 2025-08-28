@@ -160,16 +160,16 @@ class AdvancedMonitoringSystem {
       this.redis = new Redis(ADVANCED_MONITORING_CONFIG.redis)
       
       this.redis.on('connect', () => {
-        console.log('✅ Advanced Monitoring Redis connected')
+        logger.info('✅ Advanced Monitoring Redis connected')
       })
 
       this.redis.on('error', (err) => {
-        console.warn('⚠️ Advanced Monitoring Redis error:', err.message)
+        logger.warn('⚠️ Advanced Monitoring Redis error:', err.message)
       })
 
-      console.log('🚀 Advanced enterprise monitoring system initialized')
+      logger.error('🚀 Advanced enterprise monitoring system initialized')
     } catch (error) {
-      console.warn('⚠️ Advanced Monitoring Redis unavailable:', error)
+      logger.warn('⚠️ Advanced Monitoring Redis unavailable:', error)
     }
   }
 
@@ -295,7 +295,7 @@ class AdvancedMonitoringSystem {
       this.sendImmediateAlert(alert)
     }
 
-    console.log(`🚨 Alert [${alert.severity.toUpperCase()}]: ${alert.message}`)
+    logger.info(`🚨 Alert [${alert.severity.toUpperCase()}]: ${alert.message}`)
   }
 
   /**
@@ -352,7 +352,7 @@ class AdvancedMonitoringSystem {
           tags: {
             method: req.method,
             path: req.nextUrl.pathname,
-            error: error instanceof Error ? error.message : String(error),
+            error: isAppError(error) ? error.message : (isAppError(error) ? error.message : (error instanceof Error ? error.message : String(error))),
           },
         })
 
@@ -376,7 +376,7 @@ class AdvancedMonitoringSystem {
   /**
    * Get real-time dashboard data
    */
-  async getDashboardData(): Promise<any> {
+  async getDashboardData(): Promise<unknown> {
     try {
       const now = Date.now()
       const oneHourAgo = now - (60 * 60 * 1000)
@@ -407,7 +407,7 @@ class AdvancedMonitoringSystem {
         },
       }
     } catch (error) {
-      console.error('Dashboard data error:', error)
+      logger.error('Dashboard data error:', error)
       return { error: 'Failed to load dashboard data' }
     }
   }
@@ -439,7 +439,7 @@ class AdvancedMonitoringSystem {
 
       return metrics.sort((a, b) => a.timestamp - b.timestamp)
     } catch (error) {
-      console.error('Get metrics error:', error)
+      logger.error('Get metrics error:', error)
       return []
     }
   }
@@ -454,7 +454,7 @@ class AdvancedMonitoringSystem {
       const alertData = await this.redis.lrange('alerts:active', 0, -1)
       return alertData.map(data => JSON.parse(data) as Alert)
     } catch (error) {
-      console.error('Get alerts error:', error)
+      logger.error('Get alerts error:', error)
       return []
     }
   }
@@ -523,7 +523,7 @@ class AdvancedMonitoringSystem {
         await this.redis.setex('system:health', 300, JSON.stringify(health))
       }
     } catch (error) {
-      console.error('System health collection error:', error)
+      logger.error('System health collection error:', error)
     }
   }
 
@@ -538,12 +538,12 @@ class AdvancedMonitoringSystem {
       const data = await this.redis.get('system:health')
       return data ? JSON.parse(data) : null
     } catch (error) {
-      console.error('Get system health error:', error)
+      logger.error('Get system health error:', error)
       return null
     }
   }
 
-  private calculateKPIs(metrics: Metric[]): any {
+  private calculateKPIs(metrics: Metric[]): unknown {
     const responseTimeMetrics = metrics.filter(m => m.name === 'http_request_duration')
     const requestMetrics = metrics.filter(m => m.name === 'http_requests_total')
     const errorMetrics = metrics.filter(m => m.name === 'http_requests_total' && m.tags?.status?.startsWith('4') || m.tags?.status?.startsWith('5'))
@@ -620,7 +620,7 @@ class AdvancedMonitoringSystem {
       this.tracesBuffer = []
       this.alertsBuffer = []
     } catch (error) {
-      console.error('Buffer flush error:', error)
+      logger.error('Buffer flush error:', error)
     }
   }
 
@@ -635,9 +635,9 @@ class AdvancedMonitoringSystem {
         await this.redis.zremrangebyscore(key, 0, cutoff)
       }
 
-      console.log(`🧹 Cleaned up metrics older than ${new Date(cutoff).toISOString()}`)
+      logger.error(`🧹 Cleaned up metrics older than ${new Date(cutoff).toISOString()}`)
     } catch (error) {
-      console.error('Metrics cleanup error:', error)
+      logger.error('Metrics cleanup error:', error)
     }
   }
 
@@ -664,7 +664,7 @@ class AdvancedMonitoringSystem {
       // - Email alerts
       // - PagerDuty integration
       
-      console.log(`🚨 IMMEDIATE ALERT: ${alert.message}`)
+      logger.info(`🚨 IMMEDIATE ALERT: ${alert.message}`)
       
       // Example webhook notification
       if (ADVANCED_MONITORING_CONFIG.alerts.webhookUrl) {
@@ -675,7 +675,7 @@ class AdvancedMonitoringSystem {
         // })
       }
     } catch (error) {
-      console.error('Alert sending error:', error)
+      logger.error('Alert sending error:', error)
     }
   }
 
@@ -704,10 +704,10 @@ export const advancedMonitoringSystem = new AdvancedMonitoringSystem()
 
 // Monitoring decorators
 export function MonitorPerformance(operationName?: string) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const trace = advancedMonitoringSystem.startTrace(operationName || `${target.constructor.name}.${propertyKey}`)
       
       try {
@@ -715,7 +715,7 @@ export function MonitorPerformance(operationName?: string) {
         advancedMonitoringSystem.endTrace(trace, 'ok')
         return result
       } catch (error) {
-        advancedMonitoringSystem.addTraceLog(trace, 'error', error instanceof Error ? error.message : String(error))
+        advancedMonitoringSystem.addTraceLog(trace, 'error', isAppError(error) ? error.message : (isAppError(error) ? error.message : (error instanceof Error ? error.message : String(error))))
         advancedMonitoringSystem.endTrace(trace, 'error')
         throw error
       }
@@ -726,10 +726,10 @@ export function MonitorPerformance(operationName?: string) {
 }
 
 export function RecordMetric(metricName: string, type: MetricType = MetricType.COUNTER) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const startTime = performance.now()
       
       try {

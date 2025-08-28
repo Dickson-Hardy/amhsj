@@ -138,7 +138,9 @@ export default function SectionEditorDashboard() {
       }
 
     } catch (error) {
-      console.error('Error fetching section editor dashboard data:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching section editor dashboard data:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -163,10 +165,14 @@ export default function SectionEditorDashboard() {
         // Refresh dashboard data after successful decision
         fetchDashboardData()
       } else {
-        console.error('Failed to make editorial decision')
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to make editorial decision')
+        }
       }
     } catch (error) {
-      console.error('Error making editorial decision:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error making editorial decision:', error)
+      }
     }
   }
 
@@ -188,10 +194,14 @@ export default function SectionEditorDashboard() {
         // Refresh dashboard data after successful assignment
         fetchDashboardData()
       } else {
-        console.error('Failed to assign reviewer')
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to assign reviewer')
+        }
       }
     } catch (error) {
-      console.error('Error assigning reviewer:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error assigning reviewer:', error)
+      }
     }
   }
 

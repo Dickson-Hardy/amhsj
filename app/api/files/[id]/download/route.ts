@@ -47,7 +47,7 @@ export async function GET(
       // Read file and stream it
       const fileBuffer = await fs.readFile(fileRecord.filePath)
       
-      return new NextResponse(fileBuffer as any, {
+      return new NextResponse(fileBuffer as unknown, {
         headers: {
           'Content-Type': fileRecord.mimeType || 'application/octet-stream',
           'Content-Disposition': `attachment; filename="${fileRecord.originalName}"`,

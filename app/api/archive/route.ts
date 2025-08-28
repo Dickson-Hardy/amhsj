@@ -124,7 +124,7 @@ async function handleGetVolumes(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      volumes: volumes.map((vol: any) => ({
+      volumes: volumes.map((vol: unknown) => ({
         number: vol.volume,
         articleCount: parseInt(vol.article_count),
         firstPublished: vol.first_published,
@@ -180,7 +180,7 @@ async function handleGetIssues(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      issues: issues.map((issue: any) => ({
+      issues: issues.map((issue: unknown) => ({
         number: issue.issue,
         volume: volumeNumber,
         articleCount: parseInt(issue.article_count),
@@ -227,12 +227,12 @@ async function handleGetStatistics(request: NextRequest) {
     return NextResponse.json({
       success: true,
       statistics: {
-        totalArticles: parseInt((totalArticles[0] as any)?.count || '0'),
-        totalVolumes: parseInt((volumeCount[0] as any)?.count || '0'),
-        recentPublications: parseInt((recentActivity[0] as any)?.count || '0'),
+        totalArticles: parseInt((totalArticles[0] as unknown)?.count || '0'),
+        totalVolumes: parseInt((volumeCount[0] as unknown)?.count || '0'),
+        recentPublications: parseInt((recentActivity[0] as unknown)?.count || '0'),
         categoryBreakdown: categoryStats.map(cat => ({
-          category: (cat as any).category,
-          count: parseInt((cat as any).count)
+          category: (cat as unknown).category,
+          count: parseInt((cat as unknown).count)
         }))
       }
     })
@@ -298,11 +298,11 @@ async function handleGetArchive(request: NextRequest) {
       WHERE ${sql.raw(whereClause)}
     `)
 
-    const total = parseInt((countResult[0] as any)?.total || '0')
+    const total = parseInt((countResult[0] as unknown)?.total || '0')
 
     return NextResponse.json({
       success: true,
-      articles: articlesResult.map((article: any) => ({
+      articles: articlesResult.map((article: unknown) => ({
         id: article.id,
         title: article.title,
         abstract: article.abstract,

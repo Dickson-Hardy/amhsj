@@ -49,7 +49,7 @@ export default function ORCIDIntegration({ user }: { user: User }) {
       // Redirect to ORCID OAuth
       window.location.href = '/api/auth/orcid'
     } catch (error) {
-      console.error('Error connecting ORCID:', error)
+      logger.error('Error connecting ORCID:', error)
       toast.error('Failed to connect ORCID')
       setIsLoading(false)
     }
@@ -67,14 +67,14 @@ export default function ORCIDIntegration({ user }: { user: User }) {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to disconnect ORCID')
+        throw new AppError('Failed to disconnect ORCID')
       }
 
       toast.success('ORCID account disconnected successfully')
       // Refresh the page to update the UI
       window.location.reload()
     } catch (error) {
-      console.error('Error disconnecting ORCID:', error)
+      logger.error('Error disconnecting ORCID:', error)
       toast.error('Failed to disconnect ORCID')
     } finally {
       setIsDisconnecting(false)
@@ -99,13 +99,13 @@ export default function ORCIDIntegration({ user }: { user: User }) {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to sync ORCID profile')
+        throw new AppError('Failed to sync ORCID profile')
       }
 
       toast.success('ORCID profile synced successfully')
       window.location.reload()
     } catch (error) {
-      console.error('Error syncing ORCID:', error)
+      logger.error('Error syncing ORCID:', error)
       toast.error('Failed to sync ORCID profile')
     } finally {
       setIsLoading(false)

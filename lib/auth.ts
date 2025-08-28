@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           }
         } catch (error) {
-          console.error("Auth error:", error)
+          logger.error("Auth error:", error)
           return null
         }
       }
@@ -73,10 +73,10 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.role = dbUser.role
             token.lastUpdated = Date.now()
-            logAuth(`Token refreshed for user ${token.sub}`, token.sub, 'token_refresh')
+            logAuth(`process.env.AUTH_TOKEN_PREFIXrefreshed for user ${token.sub}`, token.sub, 'token_refresh')
           }
         } catch (error) {
-          console.error("Error refreshing token:", error)
+          logger.error("Error refreshing token:", error)
         }
       }
       
@@ -119,8 +119,8 @@ async function sendVerificationEmail(email: string, verificationToken: string) {
     await sendEmailVerification(email, userName, verificationUrl)
     logAuth(`Verification email sent to ${email}`, undefined, 'email_verification_sent')
   } catch (error) {
-    console.error(`Failed to send verification email to ${email}:`, error)
-    throw new Error("Failed to send verification email")
+    logger.error(`Failed to send verification email to ${email}:`, error)
+    throw new AppError("Failed to send verification email")
   }
 }
 
@@ -128,24 +128,24 @@ export async function signup(email: string, password: string, name: string) {
   try {
     // Validate input
     if (!email || !password || !name) {
-      throw new Error("Please provide an email, password, and name.")
+      throw new AppError("Please provide an email, password, and name.")
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      throw new Error("Please provide a valid email address.")
+      throw new AppError("Please provide a valid email address.")
     }
 
     // Validate password strength
     if (password.length < 8) {
-      throw new Error("Password must be at least 8 characters long.")
+      throw new AppError("Password must be at least 8 characters long.")
     }
 
     // Check if user already exists
     const existingUser = await getUserByEmail(email)
     if (existingUser) {
-      throw new Error("Email already in use.")
+      throw new AppError("Email already in use.")
     }
 
     // Production password hashing with bcrypt
@@ -154,7 +154,7 @@ export async function signup(email: string, password: string, name: string) {
     // Create user in database
     const user = await createUser(email, hashedPassword, name.trim())
     if (!user) {
-      throw new Error("Failed to create user.")
+      throw new AppError("Failed to create user.")
     }
 
     // Generate verification token
@@ -167,8 +167,8 @@ export async function signup(email: string, password: string, name: string) {
     await sendVerificationEmail(user.email, verificationToken)
 
     return { success: true, message: "User created. Please verify your email." }
-  } catch (error: any) {
-    console.error("Signup error:", error)
+  } catch (error: unknown) {
+    logger.error("Signup error:", error)
     return { success: false, message: error.message || "Signup failed." }
   }
 }
@@ -177,27 +177,27 @@ export async function login(email: string, password: string) {
   try {
     // Validate input
     if (!email || !password) {
-      throw new Error("Please provide an email and password.")
+      throw new AppError("Please provide an email and password.")
     }
 
     // Check if user exists (replace with your database query)
     const user = await getUserByEmail(email) // Replace with your actual database query
     if (!user) {
-      throw new Error("Invalid credentials.")
+      throw new ValidationError("Invalid credentials.")
     }
 
     // Compare passwords (replace with your password comparison logic)
     const passwordMatch = await bcrypt.compare(password, user.password) // Replace with your actual password comparison logic
     if (!passwordMatch) {
-      throw new Error("Invalid credentials.")
+      throw new ValidationError("Invalid credentials.")
     }
 
     // Production JWT token generation
     const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET!, { expiresIn: "7d" })
 
     return { success: true, token }
-  } catch (error: any) {
-    console.error("Login error:", error)
+  } catch (error: unknown) {
+    logger.error("Login error:", error)
     return { success: false, message: error.message || "Login failed." }
   }
 }
@@ -212,8 +212,8 @@ export async function verifyEmail(email: string, token: string) {
     }
 
     return { success: true, message: "Email verified successfully!" }
-  } catch (error: any) {
-    console.error("Email verification error:", error)
+  } catch (error: unknown) {
+    logger.error("Email verification error:", error)
     return { success: false, message: "Email verification failed." }
   }
 }
@@ -232,15 +232,15 @@ export async function requestPasswordReset(email: string) {
     // Save reset token to database
     const success = await UserService.savePasswordResetToken(email, resetToken)
     if (!success) {
-      throw new Error("Failed to save reset token")
+      throw new AppError("Failed to save reset token")
     }
     // Send reset email
     const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
     const { sendPasswordReset } = await import("./email-hybrid")
     await sendPasswordReset(email, user.name ? user.name : email.split('@')[0], resetUrl)
     return { success: true, message: "If an account with that email exists, a password reset link has been sent." }
-  } catch (error: any) {
-    console.error("Password reset request error:", error)
+  } catch (error: unknown) {
+    logger.error("Password reset request error:", error)
     return { success: false, message: "Password reset request failed." }
   }
 }
@@ -250,7 +250,7 @@ export async function resetPassword(token: string, newPassword: string) {
   try {
     // Validate password strength
     if (newPassword.length < 8) {
-      throw new Error("Password must be at least 8 characters long.")
+      throw new AppError("Password must be at least 8 characters long.")
     }
 
     const success = await UserService.resetPassword(token, newPassword)
@@ -260,8 +260,8 @@ export async function resetPassword(token: string, newPassword: string) {
     }
 
     return { success: true, message: "Password reset successfully!" }
-  } catch (error: any) {
-    console.error("Password reset error:", error)
+  } catch (error: unknown) {
+    logger.error("Password reset error:", error)
     return { success: false, message: error.message || "Password reset failed." }
   }
 }
@@ -291,8 +291,8 @@ export async function updateProfile(
     await UserService.updateLastActive(userId)
 
     return { success: true, message: "Profile updated successfully!" }
-  } catch (error: any) {
-    console.error("Profile update error:", error)
+  } catch (error: unknown) {
+    logger.error("Profile update error:", error)
     return { success: false, message: "Profile update failed." }
   }
 }
@@ -324,8 +324,8 @@ export async function getUserProfile(userId: string) {
         stats,
       }
     }
-  } catch (error: any) {
-    console.error("Get user profile error:", error)
+  } catch (error: unknown) {
+    logger.error("Get user profile error:", error)
     return { success: false, message: "Failed to get user profile." }
   }
 }
@@ -347,7 +347,7 @@ async function getUserByEmail(
       name: user.name,
     }
   } catch (error) {
-    console.error("Error getting user by email:", error)
+    logger.error("Error getting user by email:", error)
     return null
   }
 }
@@ -357,17 +357,17 @@ async function createUser(email: string, hashedPassword: string, name: string): 
     // Check if user already exists
     const existingUser = await UserService.userExists(email)
     if (existingUser) {
-      throw new Error("User already exists")
+      throw new AppError("User already exists")
     }
 
     const user = await UserService.createUser(email, hashedPassword, name)
     if (!user) {
-      throw new Error("Failed to create user")
+      throw new AppError("Failed to create user")
     }
 
     return { id: user.id, email: user.email }
   } catch (error) {
-    console.error("Error creating user:", error)
+    logger.error("Error creating user:", error)
     throw error
   }
 }
@@ -376,10 +376,10 @@ async function saveVerificationToken(userId: string, token: string): Promise<voi
   try {
     const success = await UserService.saveVerificationToken(userId, token)
     if (!success) {
-      throw new Error("Failed to save verification token")
+      throw new AppError("Failed to save verification token")
     }
   } catch (error) {
-    console.error("Error saving verification token:", error)
+    logger.error("Error saving verification token:", error)
     throw error
   }
 }

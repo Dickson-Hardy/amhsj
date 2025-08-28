@@ -52,7 +52,7 @@ class TurnitinService {
   }> {
     try {
       if (!this.API_KEY) {
-        throw new Error('Turnitin API key not configured')
+        throw new AppError('Turnitin API key not configured')
       }
 
       const payload = {
@@ -67,7 +67,7 @@ class TurnitinService {
       const response = await fetch(`${this.API_URL}/document/add`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.API_KEY}`,
+          'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${this.API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
@@ -86,7 +86,7 @@ class TurnitinService {
           error: `Turnitin submission failed: ${error}`
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { context: 'TurnitinService.submitDocument' })
       return {
         success: false,
@@ -103,7 +103,7 @@ class TurnitinService {
     try {
       const response = await fetch(`${this.API_URL}/document/get/${submissionId}`, {
         headers: {
-          'Authorization': `Bearer ${this.API_KEY}`,
+          'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${this.API_KEY}`,
           'Accept': 'application/json'
         }
       })
@@ -145,7 +145,7 @@ class TurnitinService {
           error: `Failed to get Turnitin report: ${response.statusText}`
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { context: 'TurnitinService.getReport', submissionId })
       return {
         success: false,
@@ -154,7 +154,7 @@ class TurnitinService {
     }
   }
 
-  private static parseTurnitinSources(sources: any[]): PlagiarismSource[] {
+  private static parseTurnitinSources(sources: unknown[]): PlagiarismSource[] {
     return sources.map(source => ({
       url: source.url,
       title: source.title,
@@ -190,7 +190,7 @@ class CopyscapeService {
   }> {
     try {
       if (!this.USERNAME || !this.API_KEY) {
-        throw new Error('Copyscape credentials not configured')
+        throw new AppError('Copyscape credentials not configured')
       }
 
       const params = new URLSearchParams({
@@ -235,7 +235,7 @@ class CopyscapeService {
           error: `Copyscape check failed: ${response.statusText}`
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { context: 'CopyscapeService.checkText' })
       return {
         success: false,
@@ -247,7 +247,7 @@ class CopyscapeService {
   private static parseCopyscapeResponse(response: string): PlagiarismSource[] {
     const sources: PlagiarismSource[] = []
     
-    // Basic parsing - in real implementation, you'd parse XML properly
+    // process.env.AUTH_TOKEN_PREFIX + ' 'parsing - in real implementation, you'd parse XML properly
     const urlMatches = response.match(/url="([^"]+)"/g) || []
     const titleMatches = response.match(/title="([^"]+)"/g) || []
     const textMatches = response.match(/textsnippet="([^"]+)"/g) || []
@@ -312,7 +312,7 @@ export class ProductionPlagiarismService {
           if (useCopyscape) {
             return await this.useCopyscapeAsFallback(request, submissionId)
           } else {
-            throw new Error(turnitinResult.error || 'Turnitin submission failed')
+            throw new AppError(turnitinResult.error || 'Turnitin submission failed')
           }
         }
       } else if (useCopyscape) {
@@ -322,7 +322,7 @@ export class ProductionPlagiarismService {
         // No real services configured - use mock for development
         return this.generateMockResult(submissionId, request)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { context: 'checkPlagiarism', request })
       
       return {
@@ -360,7 +360,7 @@ export class ProductionPlagiarismService {
         default:
           return null
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { context: 'getResult', submissionId })
       return null
     }
@@ -389,7 +389,7 @@ export class ProductionPlagiarismService {
           estimatedCompletion: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { context: 'checkStatus', submissionId })
       return { status: 'failed' }
     }
@@ -440,7 +440,7 @@ export class ProductionPlagiarismService {
         id: submissionId
       } as PlagiarismResult
     } else {
-      throw new Error(copyscapeResult.error || 'Copyscape check failed')
+      throw new AppError(copyscapeResult.error || 'Copyscape check failed')
     }
   }
 

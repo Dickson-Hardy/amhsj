@@ -83,7 +83,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Error generating metrics:', error);
+    logger.error('Error generating metrics:', error);
     return NextResponse.json(
       { error: 'Failed to generate metrics' },
       { status: 500 }
@@ -100,7 +100,7 @@ async function updateMetricsFromDatabase() {
       GROUP BY status
     `)
     
-    articleCounts.forEach((row: any) => {
+    articleCounts.forEach((row: unknown) => {
       articlesTotal.set({ status: row.status }, parseInt(row.count))
     })
 
@@ -111,7 +111,7 @@ async function updateMetricsFromDatabase() {
       GROUP BY status
     `)
     
-    reviewCounts.forEach((row: any) => {
+    reviewCounts.forEach((row: unknown) => {
       reviewsTotal.set({ status: row.status }, parseInt(row.count))
     })
 
@@ -122,7 +122,7 @@ async function updateMetricsFromDatabase() {
       WHERE DATE(created_at) = CURRENT_DATE
     `)
     
-    submissionsToday.set(parseInt((todaySubmissions[0] as any)?.count || '0'))
+    submissionsToday.set(parseInt((todaySubmissions[0] as unknown)?.count || '0'))
 
     // Get active users (logged in within last hour)
     const activeUsersResult = await db.execute(sql`
@@ -131,14 +131,14 @@ async function updateMetricsFromDatabase() {
       WHERE created_at >= NOW() - INTERVAL '1 hour'
     `)
     
-    activeUsers.set(parseInt((activeUsersResult[0] as any)?.count || '0'))
+    activeUsers.set(parseInt((activeUsersResult[0] as unknown)?.count || '0'))
 
     // Database connection metrics (approximate)
     databaseConnections.set(5) // This would come from connection pool stats
     redisConnections.set(3) // This would come from Redis connection stats
 
   } catch (error) {
-    console.error('Error updating metrics from database:', error)
+    logger.error('Error updating metrics from database:', error)
     // Set default values on error
     articlesTotal.set({ status: 'published' }, 0)
     reviewsTotal.set({ status: 'pending' }, 0)

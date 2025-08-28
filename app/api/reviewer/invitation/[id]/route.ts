@@ -57,7 +57,7 @@ export async function GET(
           parsedKeywords = invitationData.articleKeywords
         }
       } catch (error) {
-        console.error("Error parsing keywords:", error)
+        logger.error("Error parsing keywords:", error)
         parsedKeywords = []
       }
     }
@@ -71,7 +71,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error("Error fetching review invitation:", error)
+    logger.error("Error fetching review invitation:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching applications:", error)
+    logger.error("Error fetching applications:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
           .limit(1)
 
         if (existingProfile.length === 0) {
-          const applicationData = application.applicationData as any
+          const applicationData = application.applicationData as unknown
           await db.insert(editorProfiles).values({
             userId: application.userId,
             editorType: applicationData?.editorType || "associate",
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error processing application:", error)
+    logger.error("Error processing application:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

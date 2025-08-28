@@ -152,11 +152,11 @@ export default function SupportTicketForm({
 
         onTicketSubmitted?.(result.ticketId)
       } else {
-        throw new Error(result.message || 'Failed to submit ticket')
+        throw new AppError(result.message || 'Failed to submit ticket')
       }
 
     } catch (error: unknown) {
-      console.error('Support ticket submission error:', error)
+      logger.error('Support ticket submission error:', error)
       const errorMessage = error instanceof Error ? error.message : "Failed to submit support ticket. Please try again."
       toast({
         variant: "destructive",

@@ -1,12 +1,23 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { workflowManager } from "@/lib/workflow"
-import { logError } from "@/lib/logger"
+import { NextRequest } from "next/server"
 import { z } from "zod"
+import * as crypto from "crypto"
+import { requireAuth, ROLES } from "@/lib/api-utils"
+import {
+  createApiResponse,
+  createErrorResponse,
+  validateRequest,
+  withErrorHandler
+} from "@/lib/api-utils"
+import { logger } from "@/lib/logger"
+import { workflowManager } from "@/lib/workflow"
 import { db } from "@/lib/db"
 import { submissions } from "@/lib/db/schema"
 import { eq, sql } from "drizzle-orm"
+
+// Validation schemas
+const querySchema = z.object({
+  submissionId: z.string().optional(),
+})
 
 // Workflow submission schema
 const workflowSubmissionSchema = z.object({
@@ -45,39 +56,41 @@ const workflowSubmissionSchema = z.object({
   revisionNotes: z.string().optional()
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Require authentication for workflow submission
+    const session = await requireAuth(request, [ROLES.AUTHOR, ROLES.ASSOCIATE_EDITOR, ROLES.ADMIN])
+    
+    logger.api("Submitting article to workflow", { 
+      requestId, 
+      userId: session.user.id, 
+      userRole: session.user.role 
+    })
 
     const body = await request.json()
-    const validation = workflowSubmissionSchema.safeParse(body)
+    const validatedData = validateRequest(workflowSubmissionSchema, body)
     
-    if (!validation.success) {
-      return NextResponse.json({ 
-        error: "Validation failed", 
-        details: validation.error.errors 
-      }, { status: 400 })
-    }
-
-    const { articleData, submissionType, previousSubmissionId, revisionNotes } = validation.data
+    const { articleData, submissionType, previousSubmissionId, revisionNotes } = validatedData
     const authorId = session.user.id
 
     // Submit article through workflow manager
     const result = await workflowManager.submitArticle(articleData, authorId)
 
     if (!result.success) {
-      return NextResponse.json({ 
-        error: result.message || "Workflow submission failed" 
-      }, { status: 500 })
+      logger.error("Workflow submission failed", { 
+        requestId, 
+        userId: authorId, 
+        message: result.message 
+      })
+      throw new Error(result.message || "Workflow submission failed")
     }
 
     // If this is a revision, update the previous submission
     if (submissionType === "revision" && previousSubmissionId) {
       try {
-        // Append superseded note to previous submission history (do not change to a non-existent status)
+        // Append superseded note to previous submission history
         await db
           .update(submissions)
           .set({
@@ -108,72 +121,96 @@ export async function POST(request: NextRequest) {
             .where(eq(submissions.id, result.submissionId))
         }
       } catch (revisionError) {
-        logError(revisionError as Error, { endpoint: "/api/workflow/submit", operation: "revision_update" })
+        logger.error("Failed to update revision history", { 
+          requestId, 
+          error: revisionError instanceof Error ? revisionError.message : String(revisionError) 
+        })
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      submissionId: result.submissionId,
-      articleId: result.article?.id,
-      workflowStatus: "submitted",
-      message: "Article submitted to workflow successfully",
-      nextSteps: [
-        "Technical check in progress",
-        "Editor assignment pending",
-        "Reviewer selection pending"
-      ]
+    logger.api("Article submitted to workflow successfully", { 
+      requestId, 
+      submissionId: result.submissionId, 
+      articleId: result.article?.id 
     })
 
+    return createApiResponse(
+      {
+        submissionId: result.submissionId,
+        articleId: result.article?.id,
+        workflowStatus: "submitted",
+        nextSteps: [
+          "Technical check in progress",
+          "Editor assignment pending",
+          "Reviewer selection pending"
+        ]
+      },
+      "Article submitted to workflow successfully",
+      requestId
+    )
   } catch (error) {
-    logError(error as Error, { endpoint: "/api/workflow/submit", operation: "POST" })
-    return NextResponse.json({ 
-      error: "Internal server error" 
-    }, { status: 500 })
+    logger.error("Failed to submit article to workflow", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
   }
-}
+})
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    // Require authentication for workflow status check
+    const { user } = await requireAuth(request)
+    
     const { searchParams } = new URL(request.url)
-    const submissionId = searchParams.get("submissionId")
+    const queryData = validateRequest(querySchema, Object.fromEntries(searchParams))
+    
+    const submissionId = queryData.submissionId
 
     if (!submissionId) {
-      return NextResponse.json({ 
-        error: "Submission ID required" 
-      }, { status: 400 })
+      throw new Error("Submission ID required")
     }
 
+    logger.api("Checking workflow status", { 
+      requestId, 
+      userId: user.id, 
+      submissionId 
+    })
+
     // Get workflow status from database
-    try {
-      const [submission] = await db
-        .select()
-        .from(submissions)
-        .where(eq(submissions.id, submissionId))
-        .limit(1)
+    const [submission] = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .limit(1)
 
-      if (!submission) {
-        return NextResponse.json({
-          error: "Submission not found"
-        }, { status: 404 })
-      }
+    if (!submission) {
+      throw new Error("Submission not found")
+    }
 
-      // Check permissions - user can only see their own submissions unless they're admin/editor
-      if (session.user.role !== "admin" && 
-          session.user.role !== "editor" && 
-          submission.authorId !== session.user.id) {
-        return NextResponse.json({
-          error: "Access denied"
-        }, { status: 403 })
-      }
+    // Check permissions - user can only see their own submissions unless they're admin/editor
+    if (![ROLES.ADMIN, ROLES.ASSOCIATE_EDITOR].includes(user.role) && 
+        submission.authorId !== user.id) {
+      logger.security("Unauthorized workflow status access attempt", {
+        requestId,
+        userId: user.id,
+        userRole: user.role,
+        submissionId,
+        submissionAuthorId: submission.authorId
+      })
+      throw new Error("Access denied")
+    }
 
-      return NextResponse.json({
-        success: true,
+    logger.api("Workflow status retrieved successfully", { 
+      requestId, 
+      submissionId, 
+      status: submission.status 
+    })
+
+    return createApiResponse(
+      {
         submissionId,
         workflowStatus: submission.status,
         statusHistory: submission.statusHistory || [],
@@ -181,21 +218,18 @@ export async function GET(request: NextRequest) {
         lastUpdated: submission.updatedAt,
         estimatedCompletion: getEstimatedCompletion(submission.status),
         nextSteps: getNextSteps(submission.status)
-      })
-    } catch (error) {
-      logError(error as Error, { endpoint: "/api/workflow/submit", operation: "GET" })
-      return NextResponse.json({
-        error: "Failed to retrieve workflow status"
-      }, { status: 500 })
-    }
-
+      },
+      "Workflow status retrieved successfully",
+      requestId
+    )
   } catch (error) {
-    logError(error as Error, { endpoint: "/api/workflow/submit", operation: "GET" })
-    return NextResponse.json({ 
-      error: "Internal server error" 
-    }, { status: 500 })
+    logger.error("Failed to retrieve workflow status", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
   }
-}
+})
 
 // Helper function to get estimated completion time
 function getEstimatedCompletion(status: string): string {

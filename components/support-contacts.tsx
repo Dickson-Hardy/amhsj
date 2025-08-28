@@ -254,7 +254,7 @@ export default function SupportContacts() {
                       {/* Quick Contact Button */}
                       <Button 
                         className="w-full" 
-                        onClick={() => window.open(`mailto:${contact.email}`, '_blank')}
+                        onClick={() => window.open(`process.env.EMAIL_FROM${contact.email}`, '_blank')}
                       >
                         <Mail className="h-4 w-4 mr-2" />
                         Send Email
@@ -382,7 +382,7 @@ export default function SupportContacts() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Try Basic Solutions</h4>
+                  <h4 className="font-medium mb-2">Try process.env.AUTH_TOKEN_PREFIX + ' 'Solutions</h4>
                   <ul className="space-y-1 text-sm text-gray-600">
                     <li>• Clear browser cache</li>
                     <li>• Try different browser</li>

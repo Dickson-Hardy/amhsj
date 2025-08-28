@@ -18,7 +18,7 @@ export function initializeMonitoring() {
   }
 }
 
-export function captureException(error: Error, context?: any) {
+export function captureException(error: Error, context?: unknown) {
   if (process.env.NODE_ENV === "production") {
     Sentry.captureException(error, {
       tags: {
@@ -28,7 +28,7 @@ export function captureException(error: Error, context?: any) {
       extra: context,
     })
   } else {
-    console.error("Error captured:", error, context)
+    logger.error("Error captured:", error, context)
   }
 }
 
@@ -36,7 +36,7 @@ export function captureMessage(message: string, level: "info" | "warning" | "err
   if (process.env.NODE_ENV === "production") {
     Sentry.captureMessage(message, level)
   } else {
-    console.log(`[${level.toUpperCase()}] ${message}`)
+    logger.info(`[${level.toUpperCase()}] ${message}`)
   }
 }
 

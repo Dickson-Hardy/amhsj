@@ -135,7 +135,7 @@ export class CollaborationService {
   static initializeWebSocket(server: HTTPServer): void {
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
+        origin: process.env.NEXTAUTH_URL || "http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL",
         methods: ["GET", "POST"]
       }
     })
@@ -292,7 +292,7 @@ export class CollaborationService {
       return session
     } catch (error) {
       logger.error('Error creating collaboration session:', error)
-      throw new Error('Failed to create collaboration session')
+      throw new AppError('Failed to create collaboration session')
     }
   }
 
@@ -312,7 +312,7 @@ export class CollaborationService {
       `
 
       if (sessionRows.length === 0) {
-        throw new Error('Session not found or inactive')
+        throw new NotFoundError('Session not found or inactive')
       }
 
       // Add participant
@@ -335,7 +335,7 @@ export class CollaborationService {
       return session
     } catch (error) {
       logger.error('Error joining collaboration session:', error)
-      throw new Error('Failed to join collaboration session')
+      throw new AppError('Failed to join collaboration session')
     }
   }
 
@@ -349,7 +349,7 @@ export class CollaborationService {
       `
 
       if (sessionRows.length === 0) {
-        throw new Error('Session not found')
+        throw new NotFoundError('Session not found')
       }
 
       const { rows: participantRows } = await sql`
@@ -366,14 +366,14 @@ export class CollaborationService {
       return session
     } catch (error) {
       logger.error('Error getting collaboration session:', error)
-      throw new Error('Failed to get collaboration session')
+      throw new AppError('Failed to get collaboration session')
     }
   }
 
   /**
    * Handle edit operation with conflict resolution
    */
-  private static async handleEditOperation(socket: any, data: any): Promise<void> {
+  private static async handleEditOperation(socket: unknown, data: any): Promise<void> {
     const { operation, clientTimestamp } = data
     const sessionId = socket.sessionId
     const userId = socket.userId
@@ -527,7 +527,7 @@ export class CollaborationService {
   private static async addComment(
     sessionId: string,
     userId: string,
-    data: any
+    data: unknown
   ): Promise<Comment> {
     const { rows: userRows } = await sql`
       SELECT name, avatar_url FROM users WHERE id = ${userId}
@@ -610,7 +610,7 @@ export class CollaborationService {
   private static async createVersionSnapshot(
     sessionId: string,
     userId: string,
-    data: any
+    data: unknown
   ): Promise<VersionSnapshot> {
     const { rows: userRows } = await sql`
       SELECT name FROM users WHERE id = ${userId}
@@ -771,7 +771,7 @@ export class CollaborationService {
     `
   }
 
-  private static mapSessionFromDB(row: any): CollaborationSession {
+  private static mapSessionFromDB(row: unknown): CollaborationSession {
     return {
       id: row.id,
       manuscriptId: row.manuscript_id,
@@ -783,7 +783,7 @@ export class CollaborationService {
     }
   }
 
-  private static mapParticipantFromDB(row: any): Participant {
+  private static mapParticipantFromDB(row: unknown): Participant {
     return {
       userId: row.user_id,
       userName: row.user_name,

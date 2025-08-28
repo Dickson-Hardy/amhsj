@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     await db.insert(adminLogs).values({
       id: crypto.randomUUID(),
       adminId: 'admin-user-id', // Would get from auth session
-      adminEmail: 'admin@journal.com',
+      adminEmail: 'process.env.EMAIL_FROMjournal.com',
       action: 'Backup Initiated',
       resourceType: 'backup',
       resourceId: backupId,
@@ -48,14 +48,14 @@ export async function POST(request: NextRequest) {
         backupResult = await createFullBackup(backupId, storage, compression, encryption)
         break
       default:
-        throw new Error('Invalid backup type')
+        throw new ValidationError('Invalid backup type')
     }
 
     // Log backup completion
     await db.insert(adminLogs).values({
       id: crypto.randomUUID(),
       adminId: 'admin-user-id',
-      adminEmail: 'admin@journal.com',
+      adminEmail: 'process.env.EMAIL_FROMjournal.com',
       action: 'Backup Completed',
       resourceType: 'backup',
       resourceId: backupId,
@@ -75,13 +75,13 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Backup creation failed:', error)
+    logger.error('Backup creation failed:', error)
     
     // Log backup failure
     await db.insert(adminLogs).values({
       id: crypto.randomUUID(),
       adminId: 'admin-user-id',
-      adminEmail: 'admin@journal.com',
+      adminEmail: 'process.env.EMAIL_FROMjournal.com',
       action: 'Backup Failed',
       resourceType: 'backup',
       resourceId: 'failed-backup',
@@ -135,7 +135,7 @@ async function createDatabaseBackup(backupId: string, storage: string, compressi
     
     return { size, location, downloadUrl }
   } catch (error) {
-    throw new Error(`Database backup failed: ${error}`)
+    throw new AppError(`Database backup failed: ${error}`)
   }
 }
 
@@ -182,7 +182,7 @@ async function createFilesBackup(backupId: string, storage: string, compression:
     
     return { size, location, downloadUrl }
   } catch (error) {
-    throw new Error(`Files backup failed: ${error}`)
+    throw new AppError(`Files backup failed: ${error}`)
   }
 }
 
@@ -230,7 +230,7 @@ async function uploadToCloudStorage(filePath: string, filename: string, storage:
     case 's3':
       return await uploadToS3(filePath, filename)
     default:
-      throw new Error(`Unsupported storage type: ${storage}`)
+      throw new AppError(`Unsupported storage type: ${storage}`)
   }
 }
 
@@ -257,7 +257,7 @@ async function uploadToCloudinary(filePath: string, filename: string) {
       downloadUrl: result.secure_url
     }
   } catch (error) {
-    throw new Error(`Cloudinary upload failed: ${error}`)
+    throw new AppError(`Cloudinary upload failed: ${error}`)
   }
 }
 
@@ -301,7 +301,7 @@ async function uploadToS3(filePath: string, filename: string) {
       downloadUrl
     }
   } catch (error) {
-    throw new Error(`S3 upload failed: ${error}`)
+    throw new AppError(`S3 upload failed: ${error}`)
   }
 }
 
@@ -326,7 +326,7 @@ export async function GET() {
       backupTypes: ['database', 'files', 'full']
     })
   } catch (error) {
-    console.error('Error fetching backup history:', error)
+    logger.error('Error fetching backup history:', error)
     return NextResponse.json(
       { error: 'Failed to fetch backup history' },
       { status: 500 }

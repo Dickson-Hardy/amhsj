@@ -99,7 +99,7 @@ function determineEmailProvider(category: EmailCategory, to: string): 'resend' |
 // Send email via Resend
 async function sendViaResend(job: EmailJob): Promise<string | null> {
 	const response = await resend.emails.send({
-		from: job.from || process.env.FROM_EMAIL || 'AMHSJ <noreply@yourjournal.com>',
+		from: job.from || process.env.FROM_EMAIL || 'AMHSJ <process.env.EMAIL_FROMyourjournal.com>',
 		to: job.to,
 		subject: job.subject,
 		html: job.html,
@@ -108,11 +108,11 @@ async function sendViaResend(job: EmailJob): Promise<string | null> {
 		attachments: job.attachments?.map(att => ({ filename: att.filename, content: att.content, contentType: att.contentType }))
 	})
 	
-	if ((response as any).error) {
-		throw new Error((response as any).error.message)
+	if ((response as unknown).error) {
+		throw new Error((response as unknown).error.message)
 	}
 	
-	return (response as any).data?.id || null
+	return (response as unknown).data?.id || null
 }
 
 // Send email via Zoho
@@ -148,18 +148,18 @@ async function processEmailQueue() {
 				messageId = await sendViaZoho(job)
 			}
 			
-			console.log(`Email sent successfully to ${job.to.join(', ')} via ${job.provider.toUpperCase()} with ID: ${messageId}`)
-		} catch (error: any) {
-			console.error(`Failed to send email to ${job.to.join(', ')} via ${job.provider}:`, error)
+			logger.error(`Email sent successfully to ${job.to.join(', ')} via ${job.provider.toUpperCase()} with ID: ${messageId}`)
+		} catch (error: unknown) {
+			logger.error(`Failed to send email to ${job.to.join(', ')} via ${job.provider}:`, error)
 			
 			// Retry logic
 			if (job.retries < 3) {
 				job.retries++
 				job.scheduledAt = new Date(Date.now() + 5000 * job.retries) // Exponential backoff
 				emailQueue.push(job)
-				console.log(`Email to ${job.to.join(', ')} queued for retry ${job.retries}/3`)
+				logger.error(`Email to ${job.to.join(', ')} queued for retry ${job.retries}/3`)
 			} else {
-				console.error(`Failed to send email to ${job.to.join(', ')} after 3 retries`)
+				logger.error(`Failed to send email to ${job.to.join(', ')} after 3 retries`)
 			}
 		}
 	}
@@ -201,7 +201,7 @@ export async function sendEmail({
 	const recipients = Array.isArray(to) ? to : [to]
 	for (const email of recipients) {
 		if (!isValidEmail(email)) {
-			console.error(`Invalid email address: ${email}`)
+			logger.error(`Invalid email address: ${email}`)
 			return { success: false, error: `Invalid email address: ${email}` }
 		}
 	}
@@ -235,14 +235,14 @@ export async function sendEmail({
 				messageId = await sendViaZoho(emailJob)
 			}
 			
-			console.log(`Priority email sent immediately to ${recipients.join(', ')} via ${provider.toUpperCase()} with ID: ${messageId}`)
+			logger.info(`Priority email sent immediately to ${recipients.join(', ')} via ${provider.toUpperCase()} with ID: ${messageId}`)
 			return { 
 				success: true, 
 				messageId: messageId || undefined,
 				provider 
 			}
-		} catch (error: any) {
-			console.error(`Priority email failed, adding to queue:`, error)
+		} catch (error: unknown) {
+			logger.error(`Priority email failed, adding to queue:`, error)
 			emailQueue.push(emailJob)
 			return { 
 				success: false, 
@@ -253,7 +253,7 @@ export async function sendEmail({
 	} else {
 		// Add to queue for regular emails
 		emailQueue.push(emailJob)
-		console.log(`Email queued for ${recipients.join(', ')} via ${provider.toUpperCase()}`)
+		logger.info(`Email queued for ${recipients.join(', ')} via ${provider.toUpperCase()}`)
 		return { 
 			success: true, 
 			messageId: emailJob.id,
@@ -288,7 +288,7 @@ export async function sendTemplateEmail({
 	// Get template
 	const template = emailTemplates[templateId]
 	if (!template) {
-		console.error(`Template not found: ${templateId}`)
+		logger.error(`Template not found: ${templateId}`)
 		return { success: false, error: `Template not found: ${templateId}` }
 	}
 
@@ -296,7 +296,7 @@ export async function sendTemplateEmail({
 	const category = TEMPLATE_CATEGORIES[templateId]
 
 	// Generate email content with proper parameter spreading
-	const templateFn = template as any
+	const templateFn = template as unknown
 	const emailContent = templateFn(...Object.values(variables))
 
 	return sendEmail({
@@ -455,7 +455,7 @@ export function getEmailQueueStatus() {
 
 export function clearEmailQueue() {
 	emailQueue.length = 0
-	console.log('Email queue cleared')
+	logger.info('Email queue cleared')
 }
 
 export async function checkEmailServiceHealth(): Promise<{
@@ -477,9 +477,9 @@ export async function checkEmailServiceHealth(): Promise<{
 			subject: 'Resend Health Check',
 			html: '<p>Health check email</p>'
 		})
-		results.resend = !(testResend as any).error
+		results.resend = !(testResend as unknown).error
 	} catch (error) {
-		console.error('Resend health check failed:', error)
+		logger.error('Resend health check failed:', error)
 	}
 
 	// Test Zoho
@@ -487,7 +487,7 @@ export async function checkEmailServiceHealth(): Promise<{
 		await zohoTransporter.verify()
 		results.zoho = true
 	} catch (error) {
-		console.error('Zoho health check failed:', error)
+		logger.error('Zoho health check failed:', error)
 	}
 
 	results.overall = results.resend && results.zoho

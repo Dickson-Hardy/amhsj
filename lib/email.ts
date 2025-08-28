@@ -43,7 +43,7 @@ export function getEmailQueueStatus() {
 // Clear email queue (for testing or emergency)
 export function clearEmailQueue() {
   emailQueue.length = 0
-  console.log('Email queue cleared')
+  logger.info('Email queue cleared')
 }
 
 // Process email queue
@@ -64,18 +64,18 @@ async function processEmailQueue() {
         text: job.text,
       })
       
-      console.log(`Email sent successfully to ${job.to}`)
+      logger.error(`Email sent successfully to ${job.to}`)
     } catch (error) {
-      console.error(`Failed to send email to ${job.to}:`, error)
+      logger.error(`Failed to send email to ${job.to}:`, error)
       
       // Retry logic
       if (job.retries < 3) {
         job.retries++
         job.scheduledAt = new Date(Date.now() + 5000 * job.retries) // Exponential backoff
         emailQueue.push(job)
-        console.log(`Email to ${job.to} queued for retry ${job.retries}/3`)
+        logger.error(`Email to ${job.to} queued for retry ${job.retries}/3`)
       } else {
-        console.error(`Failed to send email to ${job.to} after 3 retries`)
+        logger.error(`Failed to send email to ${job.to} after 3 retries`)
       }
     }
   }
@@ -101,7 +101,7 @@ export async function sendEmail({
 }) {
   // Validate email address
   if (!isValidEmail(to)) {
-    throw new Error(`Invalid email address: ${to}`)
+    throw new ValidationError(`Invalid email address: ${to}`)
   }
 
   const emailJob: EmailJob = {
@@ -124,15 +124,15 @@ export async function sendEmail({
         html,
         text,
       })
-      console.log(`Priority email sent immediately to ${to}`)
+      logger.error(`Priority email sent immediately to ${to}`)
     } catch (error) {
-      console.error(`Priority email failed, adding to queue:`, error)
+      logger.error(`Priority email failed, adding to queue:`, error)
       emailQueue.push(emailJob)
     }
   } else {
     // Add to queue for regular emails
     emailQueue.push(emailJob)
-    console.log(`Email queued for ${to}`)
+    logger.info(`Email queued for ${to}`)
   }
 }
 
@@ -297,7 +297,7 @@ export async function sendWorkflowNotification(
   userName: string,
   title: string,
   message: string,
-  context?: any
+  context?: unknown
 ) {
   const html = `
     <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">

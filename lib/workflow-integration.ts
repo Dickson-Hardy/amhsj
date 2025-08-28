@@ -31,7 +31,7 @@ export class WorkflowIntegrationService {
   /**
    * Submit article and trigger workflow
    */
-  async submitArticle(articleData: any, authorId: string) {
+  async submitArticle(articleData: unknown, authorId: string) {
     try {
       logInfo("Starting article submission workflow", { authorId, title: articleData.title })
 
@@ -39,7 +39,7 @@ export class WorkflowIntegrationService {
       const result = await workflowManager.submitArticle(articleData, authorId)
 
       if (!result.success) {
-        throw new Error(result.message || "Workflow submission failed")
+        throw new AppError(result.message || "Workflow submission failed")
       }
 
       // Send confirmation email to author
@@ -94,7 +94,7 @@ export class WorkflowIntegrationService {
       const result = await workflowManager.updateSubmissionStatus(submissionId, newStatus, metadata)
 
       if (!result.success) {
-        throw new Error(result.message || "Status update failed")
+        throw new AppError(result.message || "Status update failed")
       }
 
       // Send notifications based on status change
@@ -149,7 +149,7 @@ export class WorkflowIntegrationService {
       })
 
       if (!result.success) {
-        throw new Error(result.message || "Editor assignment failed")
+        throw new AppError(result.message || "Editor assignment failed")
       }
 
       // Send assignment notification to editor
@@ -207,7 +207,7 @@ export class WorkflowIntegrationService {
       )
 
       if (!result.success) {
-        throw new Error(result.message || "Reviewer assignment failed")
+        throw new AppError(result.message || "Reviewer assignment failed")
       }
 
       // Send assignment notifications to reviewers
@@ -255,7 +255,7 @@ export class WorkflowIntegrationService {
   private async handleStatusChangeNotifications(
     submissionId: string,
     newStatus: string,
-    metadata: any
+    metadata: unknown
   ) {
     try {
       // Get submission details
@@ -369,7 +369,7 @@ export class WorkflowIntegrationService {
   private async sendEditorAssignmentNotification(
     editorId: string,
     submissionId: string,
-    metadata: any
+    metadata: unknown
   ) {
     try {
       const editor = await db
@@ -403,7 +403,7 @@ export class WorkflowIntegrationService {
   private async sendReviewerAssignmentNotification(
     reviewerId: string,
     submissionId: string,
-    metadata: any
+    metadata: unknown
   ) {
     try {
       const reviewer = await db

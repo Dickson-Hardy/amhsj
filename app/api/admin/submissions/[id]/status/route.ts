@@ -66,13 +66,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
           createdAt: new Date().toISOString()
         })
       } catch (notificationError) {
-        console.error("Failed to create notification:", notificationError)
+        logger.error("Failed to create notification:", notificationError)
         // Don't fail the whole request if notification fails
       }
     }
 
     // Log the status change (you might want to add an audit log table)
-    console.log(`Submission ${submissionId} status changed to ${status} by admin ${session.user.id}`)
+    logger.info(`Submission ${submissionId} status changed to ${status} by admin ${session.user.id}`)
 
     return NextResponse.json({
       success: true,

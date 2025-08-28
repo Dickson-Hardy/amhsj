@@ -36,7 +36,7 @@ export class ProfileCompletenessService {
     const missingFields: string[] = []
     const recommendations: string[] = []
     
-    // Basic Information (40 points)
+    // process.env.AUTH_TOKEN_PREFIX + ' 'Information (40 points)
     if (data.name && data.name.trim().length >= 2) {
       score += 10
     } else {
@@ -150,7 +150,7 @@ export class ProfileCompletenessService {
       })
       
       if (!user) {
-        throw new Error("User not found")
+        throw new NotFoundError("User not found")
       }
       
       const profileData: ProfileCompletenessData = {
@@ -169,7 +169,7 @@ export class ProfileCompletenessService {
       return this.calculateProfileCompleteness(profileData)
       
     } catch (error) {
-      console.error("Error calculating profile completeness:", error)
+      logger.error("Error calculating profile completeness:", error)
       return {
         score: 0,
         missingFields: ["Unable to calculate profile completeness"],
@@ -198,7 +198,7 @@ export class ProfileCompletenessService {
       return completeness.score
       
     } catch (error) {
-      console.error("Error updating profile completeness:", error)
+      logger.error("Error updating profile completeness:", error)
       return 0
     }
   }

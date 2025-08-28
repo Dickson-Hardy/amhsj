@@ -37,7 +37,7 @@ export default function TawkToWidget({
     const hasValidIds = propertyId !== "YOUR_PROPERTY_ID" && widgetId !== "YOUR_WIDGET_ID"
     
     if (!isEnabled || !hasValidIds) {
-      console.log('Tawk.to is disabled or missing configuration')
+      logger.info('Tawk.to is disabled or missing configuration')
       return
     }
     // Check if Tawk_API already exists to avoid loading multiple times
@@ -61,7 +61,7 @@ export default function TawkToWidget({
 
       // Optional: Configure Tawk.to settings
       window.Tawk_API.onLoad = function() {
-        console.log('Tawk.to chat widget loaded successfully')
+        logger.api('Tawk.to chat widget loaded successfully')
         
         // Optional: Set visitor information if user is logged in
         // You can pass user data here if available
@@ -74,19 +74,19 @@ export default function TawkToWidget({
 
       // Optional: Handle chat events
       window.Tawk_API.onChatMaximized = function() {
-        console.log('Chat maximized')
+        logger.api('Chat maximized')
       }
 
       window.Tawk_API.onChatMinimized = function() {
-        console.log('Chat minimized')
+        logger.api('Chat minimized')
       }
 
       window.Tawk_API.onChatStarted = function() {
-        console.log('Chat started')
+        logger.api('Chat started')
       }
 
       window.Tawk_API.onChatEnded = function() {
-        console.log('Chat ended')
+        logger.api('Chat ended')
       }
     }
 

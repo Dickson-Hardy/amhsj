@@ -108,7 +108,7 @@ export function AdvancedSearch({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Basic Search */}
+          {/* process.env.AUTH_TOKEN_PREFIX + ' 'Search */}
           <div className="flex gap-2">
             <div className="flex-1">
               <Input

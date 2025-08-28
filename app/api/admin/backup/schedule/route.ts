@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error creating backup schedule:', error)
+    logger.error('Error creating backup schedule:', error)
     return NextResponse.json(
       { error: 'Failed to create backup schedule' },
       { status: 500 }
@@ -116,7 +116,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('Error fetching backup schedules:', error)
+    logger.error('Error fetching backup schedules:', error)
     return NextResponse.json(
       { error: 'Failed to fetch backup schedules' },
       { status: 500 }

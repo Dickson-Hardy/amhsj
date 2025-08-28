@@ -34,7 +34,7 @@ export default function SignupPage() {
   const router = useRouter()
   const { success, error: showErrorToast } = useToast()
 
-  // Basic Info State
+  // process.env.AUTH_TOKEN_PREFIX + ' 'Info State
   const [basicInfo, setBasicInfo] = useState<BasicUserInfo>({
     email: "",
     password: "",
@@ -70,7 +70,7 @@ export default function SignupPage() {
     maxWorkload: 10
   })
 
-  const handleBasicInfoChange = (field: keyof BasicUserInfo, value: any) => {
+  const handleBasicInfoChange = (field: keyof BasicUserInfo, value: unknown) => {
     setBasicInfo(prev => ({ ...prev, [field]: value }))
   }
 
@@ -130,7 +130,7 @@ export default function SignupPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Registration failed")
+        throw new AppError(data.error || "Registration failed")
       }
 
       success(
@@ -545,7 +545,7 @@ function EditorApplicationForm({
 
       <div>
         <Label htmlFor="editorType">Editor Type</Label>
-        <Select value={data.editorType} onValueChange={(value) => setData({...data, editorType: value as any})}>
+        <Select value={data.editorType} onValueChange={(value) => setData({...data, editorType: value as unknown})}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

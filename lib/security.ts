@@ -523,7 +523,7 @@ export class SecurityService {
   /**
    * Trigger automated security response
    */
-  private static async triggerAutomatedResponse(eventId: string, event: any): Promise<void> {
+  private static async triggerAutomatedResponse(eventId: string, event: unknown): Promise<void> {
     try {
       // Block IP if critical threat
       if (event.severity === 'critical') {
@@ -569,7 +569,7 @@ export class SecurityService {
   /**
    * Send security alert
    */
-  private static async sendSecurityAlert(event: any): Promise<void> {
+  private static async sendSecurityAlert(event: unknown): Promise<void> {
     // In production, this would send alerts via email, Slack, etc.
     logger.warn(`SECURITY ALERT: ${event.type} (${event.severity}) from ${event.ipAddress}`)
   }
@@ -577,7 +577,7 @@ export class SecurityService {
   /**
    * Create incident ticket
    */
-  private static async createIncidentTicket(eventId: string, event: any): Promise<void> {
+  private static async createIncidentTicket(eventId: string, event: unknown): Promise<void> {
     await sql`
       INSERT INTO security_incidents (
         event_id, title, description, severity, status, created_at
@@ -604,7 +604,7 @@ export class SecurityService {
       return iv.toString('hex') + ':' + encrypted
     } catch (error) {
       logger.error('Error encrypting data:', error)
-      throw new Error('Encryption failed')
+      throw new AppError('Encryption failed')
     }
   }
 
@@ -622,7 +622,7 @@ export class SecurityService {
       return decrypted
     } catch (error) {
       logger.error('Error decrypting data:', error)
-      throw new Error('Decryption failed')
+      throw new AppError('Decryption failed')
     }
   }
 
@@ -661,7 +661,7 @@ export class SecurityService {
       return report
     } catch (error) {
       logger.error('Error generating compliance report:', error)
-      throw new Error('Failed to generate compliance report')
+      throw new AppError('Failed to generate compliance report')
     }
   }
 
@@ -797,7 +797,7 @@ export class SecurityService {
   /**
    * Get security dashboard data
    */
-  static async getSecurityDashboard(): Promise<any> {
+  static async getSecurityDashboard(): Promise<unknown> {
     try {
       const [eventsData, threatsData, complianceData] = await Promise.all([
         this.getSecurityEventsStats(),
@@ -813,11 +813,11 @@ export class SecurityService {
       }
     } catch (error) {
       logger.error('Error getting security dashboard:', error)
-      throw new Error('Failed to get security dashboard')
+      throw new AppError('Failed to get security dashboard')
     }
   }
 
-  private static async getSecurityEventsStats(): Promise<any> {
+  private static async getSecurityEventsStats(): Promise<unknown> {
     const { rows } = await sql`
       SELECT 
         type,
@@ -833,7 +833,7 @@ export class SecurityService {
     return rows
   }
 
-  private static async getThreatStats(): Promise<any> {
+  private static async getThreatStats(): Promise<unknown> {
     const { rows } = await sql`
       SELECT 
         COUNT(*) as total_threats,
@@ -846,7 +846,7 @@ export class SecurityService {
     return rows[0]
   }
 
-  private static async getComplianceStats(): Promise<any> {
+  private static async getComplianceStats(): Promise<unknown> {
     const { rows } = await sql`
       SELECT 
         standard,

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(authUrl)
 
   } catch (error) {
-    console.error('Error initiating ORCID OAuth:', error)
+    logger.error('Error initiating ORCID OAuth:', error)
     
     return NextResponse.redirect(
       new URL('/dashboard?error=orcid_init_failed', request.url)

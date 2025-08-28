@@ -1,5 +1,6 @@
 "use client"
 
+import { logger } from "@/lib/logger";
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useCallback } from "react"
@@ -15,10 +16,10 @@ export function useSessionRefresh() {
   // Force session refresh
   const refreshSession = useCallback(async () => {
     try {
-      console.log("Refreshing session...")
+      logger.info("Refreshing session...")
       await update()
     } catch (error) {
-      console.error("Failed to refresh session:", error)
+      logger.error("Failed to refresh session:", error)
     }
   }, [update])
 
@@ -38,8 +39,8 @@ export function useSessionRefresh() {
         const isCorrectRole = currentPath.startsWith(expectedDashboard)
         
         if (!isCorrectRole) {
-          console.log(`Role mismatch detected. Current: ${currentPath}, Expected: ${expectedDashboard}`)
-          console.log(`Redirecting user with role ${session.user.role} to correct dashboard`)
+          logger.info(`Role mismatch detected. Current: ${currentPath}, Expected: ${expectedDashboard}`)
+          logger.info(`Redirecting user with role ${session.user.role} to correct dashboard`)
           router.replace(expectedDashboard)
         }
       }

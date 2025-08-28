@@ -92,7 +92,7 @@ export default function ReviewerApplicationDetailPage() {
       
       setApplication(mockApplication)
     } catch (error) {
-      console.error("Error fetching application:", error)
+      logger.error("Error fetching application:", error)
     } finally {
       setLoading(false)
     }
@@ -112,7 +112,7 @@ export default function ReviewerApplicationDetailPage() {
         alert('Failed to approve application')
       }
     } catch (error) {
-      console.error('Error approving application:', error)
+      logger.error('Error approving application:', error)
       alert('Error approving application')
     } finally {
       setProcessing(false)
@@ -139,7 +139,7 @@ export default function ReviewerApplicationDetailPage() {
         alert('Failed to reject application')
       }
     } catch (error) {
-      console.error('Error rejecting application:', error)
+      logger.error('Error rejecting application:', error)
       alert('Error rejecting application')
     } finally {
       setProcessing(false)

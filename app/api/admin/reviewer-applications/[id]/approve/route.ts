@@ -13,7 +13,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || (session.user as any).role !== "admin") {
+    if (!session?.user || (session.user as unknown).role !== "admin") {
       return NextResponse.json({ message: "Admin access required" }, { status: 403 })
     }
 
@@ -28,7 +28,7 @@ export async function POST(
     // 2. Update the user's role to 'reviewer'
     const userUpdateResult = await updateUserRole(updateResult.application.userId, 'reviewer')
     if (!userUpdateResult.success) {
-      console.warn('Failed to update user role:', userUpdateResult.error)
+      logger.warn('Failed to update user role:', userUpdateResult.error)
     }
     
     // 3. Create reviewer profile
@@ -38,9 +38,9 @@ export async function POST(
     await sendApprovalEmail(updateResult.application)
     
     // 5. Log the approval action
-    await logApplicationAction(applicationId, 'approved', (session.user as any).email)
+    await logApplicationAction(applicationId, 'approved', (session.user as unknown).email)
     
-    console.log(`Reviewer application ${applicationId} approved by ${(session.user as any).email}`)
+    logger.info(`Reviewer application ${applicationId} approved by ${(session.user as unknown).email}`)
     
     return NextResponse.json({ 
       success: true, 
@@ -48,7 +48,7 @@ export async function POST(
     })
     
   } catch (error) {
-    console.error("Error approving reviewer application:", error)
+    logger.error("Error approving reviewer application:", error)
     return NextResponse.json({ 
       message: "Failed to approve application" 
     }, { status: 500 })
@@ -90,7 +90,7 @@ async function updateApplicationStatus(applicationId: string, status: string) {
       }
     }
   } catch (error) {
-    console.error('Error updating application status:', error)
+    logger.error('Error updating application status:', error)
     return { success: false, error: 'Failed to update application status' }
   }
 }
@@ -105,15 +105,15 @@ async function updateUserRole(userId: string, newRole: string) {
       })
       .where(eq(users.id, userId))
 
-    console.log(`Updated user ${userId} role to ${newRole}`)
+    logger.error(`Updated user ${userId} role to ${newRole}`)
     return { success: true }
   } catch (error) {
-    console.error('Error updating user role:', error)
+    logger.error('Error updating user role:', error)
     return { success: false, error: 'Failed to update user role' }
   }
 }
 
-async function createReviewerProfile(application: any) {
+async function createReviewerProfile(application: unknown) {
   try {
     const applicationData = application.applicationData || {}
     
@@ -129,9 +129,9 @@ async function createReviewerProfile(application: any) {
       updatedAt: new Date()
     })
 
-    console.log(`Created reviewer profile for user ${application.userId}`)
+    logger.error(`Created reviewer profile for user ${application.userId}`)
   } catch (error) {
-    console.error('Error creating reviewer profile:', error)
+    logger.error('Error creating reviewer profile:', error)
     throw error
   }
 }
@@ -148,13 +148,13 @@ async function logApplicationAction(applicationId: string, action: string, admin
       timestamp: new Date().toISOString()
     }
     
-    console.log(`Application Action Logged:`, logEntry)
+    logger.error(`Application Action Logged:`, logEntry)
   } catch (error) {
-    console.error('Error logging application action:', error)
+    logger.error('Error logging application action:', error)
   }
 }
 
-async function sendApprovalEmail(application: any) {
+async function sendApprovalEmail(application: unknown) {
   try {
     const emailContent = {
       to: application.email,
@@ -200,9 +200,9 @@ async function sendApprovalEmail(application: any) {
     }
     
     await sendEmail(emailContent)
-    console.log('Approval email sent successfully')
+    logger.error('Approval email sent successfully')
   } catch (error) {
-    console.error('Error sending approval email:', error)
+    logger.error('Error sending approval email:', error)
     // Don't throw error - email failure shouldn't stop the approval process
   }
 }

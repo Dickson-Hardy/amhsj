@@ -103,12 +103,12 @@ export default function MonitoringDashboard() {
   const fetchMonitoringData = async () => {
     try {
       const response = await fetch(`/api/monitoring?endpoint=dashboard&timeframe=${timeframe}`)
-      if (!response.ok) throw new Error('Failed to fetch monitoring data')
+      if (!response.ok) throw new AppError('Failed to fetch monitoring data')
       
       const result = await response.json()
       setData(result.data)
     } catch (error) {
-      console.error('Monitoring data fetch error:', error)
+      logger.error('Monitoring data fetch error:', error)
       toast({
         title: 'Error',
         description: 'Failed to load monitoring data',
@@ -142,7 +142,7 @@ export default function MonitoringDashboard() {
         body: JSON.stringify({ pattern }),
       })
 
-      if (!response.ok) throw new Error('Failed to clear cache')
+      if (!response.ok) throw new AppError('Failed to clear cache')
 
       toast({
         title: 'Success',
@@ -168,7 +168,7 @@ export default function MonitoringDashboard() {
         body: JSON.stringify({ alertId, resolution: 'Resolved by admin' }),
       })
 
-      if (!response.ok) throw new Error('Failed to resolve alert')
+      if (!response.ok) throw new AppError('Failed to resolve alert')
 
       toast({
         title: 'Success',

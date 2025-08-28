@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       message: `Workload capacity updated to ${newCapacity} for editor ${editorId}` 
     })
   } catch (error) {
-    console.error('Error adjusting workload:', error)
+    logger.error('Error adjusting workload:', error)
     return NextResponse.json(
       { error: 'Failed to adjust workload' },
       { status: 500 }

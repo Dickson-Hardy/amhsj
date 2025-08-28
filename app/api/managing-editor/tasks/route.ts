@@ -105,7 +105,7 @@ export async function GET() {
 
     return NextResponse.json(tasks.slice(0, 10)) // Limit to 10 tasks
   } catch (error) {
-    console.error('Error fetching managing editor tasks:', error)
+    logger.error('Error fetching managing editor tasks:', error)
     return NextResponse.json(
       { error: 'Failed to fetch tasks' },
       { status: 500 }

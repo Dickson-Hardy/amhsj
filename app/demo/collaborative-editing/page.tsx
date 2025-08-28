@@ -87,12 +87,12 @@ export default function CollaborativeEditingDemo() {
   useEffect(() => {
     if (session?.user) {
       // Set user role based on session data or default to reviewer
-      const role = (session.user as any)?.role || 'reviewer'
+      const role = (session.user as unknown)?.role || 'reviewer'
       setUserRole(role)
     }
   }, [session])
 
-  const handleSessionCreated = (newSession: any) => {
+  const handleSessionCreated = (newSession: unknown) => {
     setSessionId(newSession.id)
     toast({
       title: "Collaboration Session Created",

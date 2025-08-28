@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error processing review deadlines:", error)
+    logger.error("Error processing review deadlines:", error)
     
     return NextResponse.json({
       success: false,
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error getting deadline statistics:", error)
+    logger.error("Error getting deadline statistics:", error)
     
     return NextResponse.json({
       success: false,

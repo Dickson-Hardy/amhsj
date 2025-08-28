@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         timestamp: result.timestamp
       }, { status: 400 })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'POST /api/integrations/doi' })
     
     return NextResponse.json({
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'GET /api/integrations/doi' })
     
     return NextResponse.json({

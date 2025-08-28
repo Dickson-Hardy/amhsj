@@ -257,7 +257,7 @@ export class PerformanceService {
       }
     } catch (error) {
       logger.error('Error getting performance analytics:', error)
-      throw new Error('Failed to get performance analytics')
+      throw new AppError('Failed to get performance analytics')
     }
   }
 
@@ -295,7 +295,7 @@ export class PerformanceService {
    */
   private static generateRecommendations(
     metrics: PerformanceMetrics,
-    cacheMetrics: any
+    cacheMetrics: unknown
   ): string[] {
     const recommendations: string[] = []
 
@@ -474,7 +474,7 @@ export class PerformanceService {
   static async getPerformanceReport(
     startDate: Date,
     endDate: Date
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
       const { rows } = await sql`
         SELECT 
@@ -509,7 +509,7 @@ export class PerformanceService {
       }
     } catch (error) {
       logger.error('Error generating performance report:', error)
-      throw new Error('Failed to generate performance report')
+      throw new AppError('Failed to generate performance report')
     }
   }
 
@@ -535,15 +535,15 @@ export class PerformanceService {
     return []
   }
 
-  private static async convertToWebP(image: any): Promise<void> {
+  private static async convertToWebP(image: unknown): Promise<void> {
     // Mock implementation - would convert images to WebP format
   }
 
-  private static async generateResponsiveImages(image: any): Promise<void> {
+  private static async generateResponsiveImages(image: unknown): Promise<void> {
     // Mock implementation - would generate different sizes
   }
 
-  private static async implementLazyLoading(image: any): Promise<void> {
+  private static async implementLazyLoading(image: unknown): Promise<void> {
     // Mock implementation - would add lazy loading attributes
   }
 

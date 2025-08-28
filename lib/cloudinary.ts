@@ -15,7 +15,7 @@ export async function uploadToCloudinary(
   filename: string,
   folder: string = 'manuscript-submissions',
   resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto'
-): Promise<any> {
+): Promise<unknown> {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
@@ -37,7 +37,7 @@ export async function uploadToCloudinary(
 }
 
 // Delete file from Cloudinary
-export async function deleteFromCloudinary(publicId: string): Promise<any> {
+export async function deleteFromCloudinary(publicId: string): Promise<unknown> {
   try {
     const result = await cloudinary.uploader.destroy(publicId)
     return result

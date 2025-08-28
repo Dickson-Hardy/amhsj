@@ -56,7 +56,7 @@ export function Footer() {
                 <Mail className="h-4 w-4 mt-0.5 text-gray-500" />
                 <div>
                   <div>Editor-in-Chief:</div>
-                  <a href="mailto:editor@amhsj.org" className="text-blue-600 hover:text-blue-800">
+                  <a href="process.env.EMAIL_FROMeditor@amhsj.org" className="text-blue-600 hover:text-blue-800">
                     editor@amhsj.org
                   </a>
                 </div>

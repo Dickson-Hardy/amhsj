@@ -98,7 +98,7 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Error adding reply:', error)
+    logger.error('Error adding reply:', error)
     return NextResponse.json({ 
       error: error instanceof z.ZodError 
         ? 'Invalid input data' 
@@ -112,7 +112,7 @@ async function sendReplyMentionNotifications(
   manuscriptId: string,
   commentId: string,
   mentions: string[],
-  reply: any,
+  reply: unknown,
   senderId: string
 ) {
   try {
@@ -148,6 +148,6 @@ async function sendReplyMentionNotifications(
       `
     }
   } catch (error) {
-    console.error('Error sending reply mention notifications:', error)
+    logger.error('Error sending reply mention notifications:', error)
   }
 }

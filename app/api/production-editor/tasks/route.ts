@@ -88,7 +88,7 @@ export async function GET() {
 
     return NextResponse.json(tasks)
   } catch (error) {
-    console.error('Error fetching production tasks:', error)
+    logger.error('Error fetching production tasks:', error)
     return NextResponse.json(
       { error: 'Failed to fetch tasks' },
       { status: 500 }

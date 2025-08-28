@@ -104,7 +104,7 @@ export function AIAssessmentDashboard({ manuscriptId, className }: AIAssessmentD
     }
   }
 
-  const startAssessment = async (manuscriptId: string, content: any) => {
+  const startAssessment = async (manuscriptId: string, content: unknown) => {
     try {
       setLoading(true)
       setError(null)
@@ -163,7 +163,7 @@ export function AIAssessmentDashboard({ manuscriptId, className }: AIAssessmentD
             plagiarismScore: data.data.similarityScore,
             issues: [
               ...currentAssessment.issues,
-              ...data.data.flaggedContent.map((item: any) => ({
+              ...data.data.flaggedContent.map((item: unknown) => ({
                 type: 'warning' as const,
                 message: `Potential plagiarism detected: ${item.reason}`,
                 section: item.section

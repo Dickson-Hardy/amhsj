@@ -81,7 +81,7 @@ export default function NewsManagementPage() {
         })
       }
     } catch (error) {
-      console.error("Error fetching news:", error)
+      logger.error("Error fetching news:", error)
       toast({
         title: "Error",
         description: "Failed to fetch news items",
@@ -117,7 +117,7 @@ export default function NewsManagementPage() {
         resetForm()
         fetchNewsItems()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -155,7 +155,7 @@ export default function NewsManagementPage() {
         resetForm()
         fetchNewsItems()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -183,7 +183,7 @@ export default function NewsManagementPage() {
         })
         fetchNewsItems()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -211,7 +211,7 @@ export default function NewsManagementPage() {
         })
         fetchNewsItems()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({

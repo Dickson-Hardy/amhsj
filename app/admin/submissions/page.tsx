@@ -175,7 +175,7 @@ export default function AdminSubmissionsPage() {
         }
       ])
     } catch (error) {
-      console.error('Error fetching submissions data:', error)
+      logger.error('Error fetching submissions data:', error)
     } finally {
       setLoading(false)
     }

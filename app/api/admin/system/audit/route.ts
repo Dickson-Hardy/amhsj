@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         userId: notifications.userId,
         userEmail: users.email,
         userName: users.name,
-        ipAddress: sql<string>`COALESCE(ip_address, '127.0.0.1')`.as('ipAddress'), // Real IP tracking needed
+        ipAddress: sql<string>`COALESCE(ip_address, 'process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL')`.as('ipAddress'), // Real IP tracking needed
         userAgent: sql<string>`COALESCE(user_agent, 'Unknown Browser')`.as('userAgent'), // Real user agent tracking needed
         createdAt: notifications.createdAt
       })
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       errorEvents: processedLogs.filter(log => log.severity === 'error').length,
       warningEvents: processedLogs.filter(log => log.severity === 'warning').length,
       uniqueUsers: new Set(processedLogs.map(log => log.userId).filter(Boolean)).size,
-      topActions: processedLogs.reduce((acc: any, log) => {
+      topActions: processedLogs.reduce((acc: unknown, log) => {
         const action = log.action || 'unknown'
         acc[action] = (acc[action] || 0) + 1
         return acc
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error fetching audit trail:", error)
+    logger.error("Error fetching audit trail:", error)
     return NextResponse.json(
       { error: "Failed to fetch audit trail" },
       { status: 500 }
@@ -219,7 +219,7 @@ export async function PATCH(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error updating notification:", error)
+    logger.error("Error updating notification:", error)
     return NextResponse.json(
       { error: "Failed to update notification" },
       { status: 500 }

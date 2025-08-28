@@ -43,7 +43,7 @@ export async function PUT(
       )
     }
 
-    // Check if issue has any articles
+    // Check if issue has unknown articles
     const articlesCount = await db
       .select()
       .from(articles)
@@ -96,7 +96,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error("Error publishing issue:", error)
+    logger.error("Error publishing issue:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       crossRefValid = crossRefResponse.ok
     } catch (error) {
       // DOI might not exist in CrossRef yet, which is fine for new articles
-      console.log("CrossRef validation failed:", error)
+      logger.error("CrossRef validation failed:", error)
     }
 
     // Update article with DOI
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error validating DOI:", error)
+    logger.error("Error validating DOI:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

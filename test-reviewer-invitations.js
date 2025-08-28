@@ -1,23 +1,27 @@
 // Test script for reviewer invitation system
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 import { db } from "./lib/db/index.js"
 import { users, articles, reviewInvitations } from "./lib/db/schema.js"
 import { v4 as uuidv4 } from "uuid"
 import { eq } from "drizzle-orm"
 
 async function testReviewerInvitationSystem() {
-  console.log("🧪 Testing Reviewer Invitation System...")
+  logger.info("🧪 Testing Reviewer Invitation System...")
 
   try {
     // 1. Check if we have test users and articles
-    console.log("\n📋 Checking test data...")
+    logger.info("\n📋 Checking test data...")
     
     const testUsers = await db.select().from(users).limit(5)
     const testArticles = await db.select().from(articles).limit(3)
     
-    console.log(`Found ${testUsers.length} users and ${testArticles.length} articles`)
+    logger.info(`Found ${testUsers.length} users and ${testArticles.length} articles`)
     
     if (testUsers.length < 2 || testArticles.length < 1) {
-      console.log("❌ Insufficient test data. Creating sample data...")
+      logger.info("❌ Insufficient test data. Creating sample data...")
       
       // Create test reviewer if needed
       if (testUsers.length < 2) {
@@ -33,7 +37,7 @@ async function testReviewerInvitationSystem() {
           expertise: ["Artificial Intelligence", "Machine Learning", "Healthcare Technology"],
           isActive: true,
         })
-        console.log("✅ Created test reviewer: Dr. Sarah Johnson")
+        logger.info("✅ Created test reviewer: Dr. Sarah Johnson")
       }
       
       // Create test article if needed
@@ -49,12 +53,12 @@ async function testReviewerInvitationSystem() {
           submittedAt: new Date(),
           authorId: testUsers[0]?.id || uuidv4(),
         })
-        console.log("✅ Created test article: AI-Driven Healthcare Solutions")
+        logger.info("✅ Created test article: AI-Driven Healthcare Solutions")
       }
     }
 
     // 2. Create a test review invitation
-    console.log("\n📧 Creating test review invitation...")
+    logger.info("\n📧 Creating test review invitation...")
     
     const refreshedUsers = await db.select().from(users).limit(5)
     const refreshedArticles = await db.select().from(articles).limit(3)
@@ -79,20 +83,20 @@ async function testReviewerInvitationSystem() {
       createdAt: new Date(),
     })
 
-    console.log(`✅ Created review invitation:`)
-    console.log(`   - Invitation ID: ${invitationId}`)
-    console.log(`   - Reviewer: ${reviewer.name} (${reviewer.email})`)
-    console.log(`   - Article: ${article.title}`)
-    console.log(`   - Manuscript No: ${article.manuscriptNumber}`)
-    console.log(`   - Due Date: ${dueDate.toLocaleDateString()}`)
+    logger.info(`✅ Created review invitation:`)
+    logger.info(`   - Invitation ID: ${invitationId}`)
+    logger.info(`   - Reviewer: ${reviewer.name} (${reviewer.email})`)
+    logger.info(`   - Article: ${article.title}`)
+    logger.info(`   - Manuscript No: ${article.manuscriptNumber}`)
+    logger.info(`   - Due Date: ${dueDate.toLocaleDateString()}`)
 
     // 3. Test invitation URLs
-    console.log("\n🔗 Generated invitation URLs:")
-    console.log(`   Accept: http://localhost:3000/reviewer/invitation/${invitationId}/accept`)
-    console.log(`   Decline: http://localhost:3000/reviewer/invitation/${invitationId}/decline`)
+    logger.info("\n🔗 Generated invitation URLs:")
+    logger.info(`   Accept: http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/reviewer/invitation/${invitationId}/accept`)
+    logger.info(`   Decline: http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/reviewer/invitation/${invitationId}/decline`)
 
     // 4. Check invitation in database
-    console.log("\n🔍 Verifying invitation in database...")
+    logger.info("\n🔍 Verifying invitation in database...")
     const createdInvitation = await db
       .select({
         id: reviewInvitations.id,
@@ -111,25 +115,25 @@ async function testReviewerInvitationSystem() {
 
     if (createdInvitation.length > 0) {
       const invitation = createdInvitation[0]
-      console.log("✅ Invitation verified:")
-      console.log(`   - Status: ${invitation.status}`)
-      console.log(`   - Reviewer: ${invitation.reviewerName} (${invitation.reviewerEmail})`)
-      console.log(`   - Article: ${invitation.articleTitle}`)
-      console.log(`   - Manuscript: ${invitation.manuscriptNumber}`)
-      console.log(`   - Due: ${invitation.dueDate?.toLocaleDateString()}`)
+      logger.info("✅ Invitation verified:")
+      logger.info(`   - Status: ${invitation.status}`)
+      logger.info(`   - Reviewer: ${invitation.reviewerName} (${invitation.reviewerEmail})`)
+      logger.info(`   - Article: ${invitation.articleTitle}`)
+      logger.info(`   - Manuscript: ${invitation.manuscriptNumber}`)
+      logger.info(`   - Due: ${invitation.dueDate?.toLocaleDateString()}`)
     } else {
-      console.log("❌ Could not verify invitation in database")
+      logger.info("❌ Could not verify invitation in database")
     }
 
-    console.log("\n✅ Reviewer invitation system test completed successfully!")
-    console.log("\n📝 Next Steps:")
-    console.log("1. Visit the generated URLs to test accept/decline functionality")
-    console.log("2. Check email templates by calling the invitation API endpoint")
-    console.log("3. Test reviewer dashboard at /reviewer/dashboard")
-    console.log("4. Verify email sending functionality")
+    logger.info("\n✅ Reviewer invitation system test completed successfully!")
+    logger.info("\n📝 Next Steps:")
+    logger.info("1. Visit the generated URLs to test accept/decline functionality")
+    logger.info("2. Check email templates by calling the invitation API endpoint")
+    logger.info("3. Test reviewer dashboard at /reviewer/dashboard")
+    logger.info("4. Verify email sending functionality")
 
   } catch (error) {
-    console.error("❌ Test failed:", error)
+    logger.error("❌ Test failed:", error)
     throw error
   }
 }
@@ -138,11 +142,11 @@ async function testReviewerInvitationSystem() {
 if (require.main === module) {
   testReviewerInvitationSystem()
     .then(() => {
-      console.log("✅ Test completed successfully")
+      logger.info("✅ Test completed successfully")
       process.exit(0)
     })
     .catch((error) => {
-      console.error("❌ Test failed:", error)
+      logger.error("❌ Test failed:", error)
       process.exit(1)
     })
 }

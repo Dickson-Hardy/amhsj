@@ -52,7 +52,7 @@ export async function GET() {
 
     return NextResponse.json(formattedArticles)
   } catch (error) {
-    console.error('Error fetching production articles:', error)
+    logger.error('Error fetching production articles:', error)
     return NextResponse.json(
       { error: 'Failed to fetch articles' },
       { status: 500 }

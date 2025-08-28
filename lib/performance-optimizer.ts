@@ -95,7 +95,7 @@ class PerformanceOptimizer {
       
               // Performance optimization Redis connected
     } catch (error) {
-      console.warn('⚠️ Performance Redis unavailable:', error)
+      logger.warn('⚠️ Performance Redis unavailable:', error)
     }
   }
 
@@ -103,7 +103,7 @@ class PerformanceOptimizer {
     try {
       await mkdir(PERFORMANCE_CONFIG.image.cacheDir, { recursive: true })
     } catch (error) {
-      console.warn('Cache directory creation failed:', error)
+      logger.warn('Cache directory creation failed:', error)
     }
   }
 
@@ -188,8 +188,8 @@ class PerformanceOptimizer {
         originalSize,
       }
     } catch (error) {
-      console.error('Image optimization error:', error)
-      throw new Error(`Image optimization failed: ${error}`)
+      logger.error('Image optimization error:', error)
+      throw new AppError(`Image optimization failed: ${error}`)
     }
   }
 
@@ -272,7 +272,7 @@ class PerformanceOptimizer {
         compressionRatio: 1,
       }
     } catch (error) {
-      console.error('Compression error:', error)
+      logger.error('Compression error:', error)
       return {
         data: Buffer.isBuffer(data) ? data : Buffer.from(data),
         encoding: 'identity',
@@ -369,10 +369,10 @@ class PerformanceOptimizer {
 
       // Log performance warnings
       if (metric.name === 'page-load-time' && metric.value > 3000) {
-        console.warn(`⚠️ Slow page load: ${metric.url} took ${metric.value}ms`)
+        logger.warn(`⚠️ Slow page load: ${metric.url} took ${metric.value}ms`)
       }
     } catch (error) {
-      console.error('Performance metric recording error:', error)
+      logger.error('Performance metric recording error:', error)
     }
   }
 
@@ -406,7 +406,7 @@ class PerformanceOptimizer {
 
       return mockData
     } catch (error) {
-      console.error('Bundle analysis error:', error)
+      logger.error('Bundle analysis error:', error)
       return {
         totalSize: 0,
         chunks: [],
@@ -425,13 +425,13 @@ class PerformanceOptimizer {
       }
 
       // Mock CDN purge - implement actual CDN API calls
-      console.log(`🔄 Purging CDN cache for ${urls.length} URLs:`, urls)
+      logger.api(`🔄 Purging CDN cache for ${urls.length} URLs:`, urls)
       
       // Example for Cloudflare API:
       // const response = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
       //   method: 'POST',
       //   headers: {
-      //     'Authorization': `Bearer ${apiToken}`,
+      //     'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${apiToken}`,
       //     'Content-Type': 'application/json',
       //   },
       //   body: JSON.stringify({ files: urls }),
@@ -439,7 +439,7 @@ class PerformanceOptimizer {
 
       return { success: true, purged: urls.length }
     } catch (error) {
-      console.error('CDN purge error:', error)
+      logger.error('CDN purge error:', error)
       return { success: false, purged: 0 }
     }
   }
@@ -447,7 +447,7 @@ class PerformanceOptimizer {
   /**
    * Performance report generation
    */
-  async generatePerformanceReport(): Promise<any> {
+  async generatePerformanceReport(): Promise<unknown> {
     try {
       if (!this.redis) {
         return { error: 'Redis unavailable for performance metrics' }
@@ -481,7 +481,7 @@ class PerformanceOptimizer {
 
       return report
     } catch (error) {
-      console.error('Performance report generation error:', error)
+      logger.error('Performance report generation error:', error)
       return { error: 'Failed to generate performance report' }
     }
   }
@@ -498,25 +498,25 @@ class PerformanceOptimizer {
     return createHash('md5').update(key).digest('hex')
   }
 
-  private async getFromCache(key: string): Promise<any> {
+  private async getFromCache(key: string): Promise<unknown> {
     if (!this.redis) return null
 
     try {
       const data = await this.redis.get(`cache:${key}`)
       return data ? JSON.parse(data) : null
     } catch (error) {
-      console.error('Cache get error:', error)
+      logger.error('Cache get error:', error)
       return null
     }
   }
 
-  private async setCache(key: string, data: any, ttl: number): Promise<void> {
+  private async setCache(key: string, data: unknown, ttl: number): Promise<void> {
     if (!this.redis) return
 
     try {
       await this.redis.setex(`cache:${key}`, ttl, JSON.stringify(data))
     } catch (error) {
-      console.error('Cache set error:', error)
+      logger.error('Cache set error:', error)
     }
   }
 
@@ -556,7 +556,7 @@ class PerformanceOptimizer {
     return recommendations
   }
 
-  private calculatePerformanceTrends(metrics: PerformanceMetric[]): any {
+  private calculatePerformanceTrends(metrics: PerformanceMetric[]): unknown {
     // Simple trend analysis - in production, implement more sophisticated analysis
     const now = Date.now()
     const oneHourAgo = now - (60 * 60 * 1000)
@@ -587,10 +587,10 @@ export const performanceOptimizer = new PerformanceOptimizer()
 
 // Performance decorators
 export function OptimizeResponse(cacheType: 'static' | 'api' | 'pages' | 'images' = 'api') {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (req: NextRequest, ...args: any[]) {
+    descriptor.value = async function (req: NextRequest, ...args: unknown[]) {
       const startTime = Date.now()
 
       try {

@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       message: `Task action ${action} completed for task ${taskId}` 
     })
   } catch (error) {
-    console.error('Error handling task action:', error)
+    logger.error('Error handling task action:', error)
     return NextResponse.json(
       { error: 'Failed to perform task action' },
       { status: 500 }

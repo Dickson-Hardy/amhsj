@@ -42,13 +42,13 @@ interface AuthorLayoutProps {
 }
 
 const authorSidebarItems = [
-  { href: '/dashboard', icon: Home, label: 'Dashboard', description: 'Submission overview' },
-  { href: '/dashboard/profile', icon: User, label: 'My Profile', description: 'Complete your profile' },
+  { href: '/author/dashboard', icon: Home, label: 'Dashboard', description: 'Submission overview' },
+  { href: '/author/profile', icon: User, label: 'My Profile', description: 'Complete your profile' },
   { href: '/submit', icon: Plus, label: 'New Submission', description: 'Submit manuscript' },
-  { href: '/dashboard?tab=submissions', icon: FileText, label: 'My Manuscripts', description: 'Track submissions' },
-  { href: '/dashboard?tab=submissions&filter=revisions', icon: Upload, label: 'Revisions Required', description: 'Respond to reviews' },
-  { href: '/dashboard?tab=reviews', icon: Eye, label: 'Review Status', description: 'Peer review progress' },
-  { href: '/dashboard?tab=submissions&filter=published', icon: CheckCircle, label: 'Published Works', description: 'Published articles' },
+  { href: '/submissions', icon: FileText, label: 'My Submissions', description: 'View all manuscripts' },
+  { href: '/submissions?filter=revisions', icon: Upload, label: 'Revisions Required', description: 'Respond to reviews' },
+  { href: '/submissions?tab=reviews', icon: Eye, label: 'Review Status', description: 'Peer review progress' },
+  { href: '/submissions?filter=published', icon: CheckCircle, label: 'Published Works', description: 'Published articles' },
   { href: '/dashboard?tab=messages', icon: MessageSquare, label: 'Editorial Messages', description: 'Editor communications' },
   { href: '/dashboard?tab=analytics', icon: BarChart3, label: 'Publication Metrics', description: 'Impact & citations' },
   { href: '/author-guidelines', icon: BookOpen, label: 'Submission Guidelines', description: 'Author guidelines' },

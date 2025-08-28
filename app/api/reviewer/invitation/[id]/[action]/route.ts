@@ -91,7 +91,7 @@ export async function POST(
           html: emailContent.html,
         })
       } catch (emailError) {
-        console.error("Failed to send confirmation email:", emailError)
+        logger.error("Failed to send confirmation email:", emailError)
       }
 
       return Response.json({
@@ -106,8 +106,8 @@ export async function POST(
       // Store decline reason and alternative reviewers if provided
       if (declineReason || alternativeReviewers) {
         // In a real implementation, you might want to store this in a separate table
-        console.log("Decline reason:", declineReason)
-        console.log("Alternative reviewers:", alternativeReviewers)
+        logger.info("Decline reason:", declineReason)
+        logger.info("Alternative reviewers:", alternativeReviewers)
       }
 
       // Send notification to editorial team
@@ -126,7 +126,7 @@ export async function POST(
           `,
         })
       } catch (emailError) {
-        console.error("Failed to send decline notification:", emailError)
+        logger.error("Failed to send decline notification:", emailError)
       }
 
       return Response.json({
@@ -136,7 +136,7 @@ export async function POST(
     }
 
   } catch (error) {
-    console.error("Error processing reviewer response:", error)
+    logger.error("Error processing reviewer response:", error)
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -189,7 +189,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error("Error retrieving review invitation:", error)
+    logger.error("Error retrieving review invitation:", error)
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }

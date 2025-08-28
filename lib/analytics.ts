@@ -25,15 +25,15 @@ async function getJournalStats() {
   try {
     // Get total users
     const usersResult = await db.execute(sql`SELECT COUNT(*) as count FROM users`)
-    const totalUsers = parseInt((usersResult[0] as any)?.count || '0')
+    const totalUsers = parseInt((usersResult[0] as unknown)?.count || '0')
 
     // Get total articles
     const articlesResult = await db.execute(sql`SELECT COUNT(*) as count FROM articles`)
-    const totalArticles = parseInt((articlesResult[0] as any)?.count || '0')
+    const totalArticles = parseInt((articlesResult[0] as unknown)?.count || '0')
 
     // Get total reviews
     const reviewsResult = await db.execute(sql`SELECT COUNT(*) as count FROM reviews`)
-    const totalReviews = parseInt((reviewsResult[0] as any)?.count || '0')
+    const totalReviews = parseInt((reviewsResult[0] as unknown)?.count || '0')
 
     // Get articles published this month
     const thisMonthResult = await db.execute(sql`
@@ -42,7 +42,7 @@ async function getJournalStats() {
       WHERE status = 'published' 
       AND published_date >= date_trunc('month', CURRENT_DATE)
     `)
-    const publishedThisMonth = parseInt((thisMonthResult[0] as any)?.count || '0')
+    const publishedThisMonth = parseInt((thisMonthResult[0] as unknown)?.count || '0')
 
     // Get top categories
     const categoriesResult = await db.execute(sql`
@@ -53,7 +53,7 @@ async function getJournalStats() {
       ORDER BY count DESC 
       LIMIT 5
     `)
-    const topCategories = categoriesResult.map(row => (row as any).category)
+    const topCategories = categoriesResult.map(row => (row as unknown).category)
 
     // Get monthly submissions for the last 6 months
     const monthlyResult = await db.execute(sql`
@@ -65,7 +65,7 @@ async function getJournalStats() {
       GROUP BY EXTRACT(MONTH FROM created_at)
       ORDER BY month
     `)
-    const monthlySubmissions = monthlyResult.map(row => parseInt((row as any).count))
+    const monthlySubmissions = monthlyResult.map(row => parseInt((row as unknown).count))
 
     // Calculate IoT/Smart Systems percentage
     const iotResult = await db.execute(sql`
@@ -74,7 +74,7 @@ async function getJournalStats() {
       WHERE category IN ('Healthcare Technology & Innovation', 'Biomedical Sciences & Research')
       AND status = 'published'
     `)
-    const iotCount = parseInt((iotResult[0] as any)?.count || '0')
+    const iotCount = parseInt((iotResult[0] as unknown)?.count || '0')
     const iotPercentage = totalArticles > 0 ? Math.round((iotCount / totalArticles) * 100) : 0
 
     return {
@@ -90,7 +90,7 @@ async function getJournalStats() {
       },
     }
   } catch (error) {
-    console.error("Error getting journal stats:", error)
+    logger.error("Error getting journal stats:", error)
     return {
       success: false,
       error: "Failed to fetch journal statistics",
@@ -130,7 +130,7 @@ async function getUserAnalytics(userId: string) {
         SELECT id FROM articles WHERE author_id = ${userId}
       ) AND user_agent LIKE '%download%'
     `)
-    const totalDownloads = parseInt((downloadsResult[0] as any)?.downloads || '0')
+    const totalDownloads = parseInt((downloadsResult[0] as unknown)?.downloads || '0')
 
     // Get total views
     const viewsResult = await db.execute(sql`
@@ -140,7 +140,7 @@ async function getUserAnalytics(userId: string) {
         SELECT id FROM articles WHERE author_id = ${userId}
       )
     `)
-    const totalViews = parseInt((viewsResult[0] as any)?.views || '0')
+    const totalViews = parseInt((viewsResult[0] as unknown)?.views || '0')
 
     // Get monthly view trends for last 6 months
     const trendsResult = await db.execute(sql`
@@ -155,7 +155,7 @@ async function getUserAnalytics(userId: string) {
       GROUP BY DATE_TRUNC('month', created_at)
       ORDER BY month
     `)
-    const monthlyViews = trendsResult.map(row => parseInt((row as any).views))
+    const monthlyViews = trendsResult.map(row => parseInt((row as unknown).views))
 
     // Get review metrics
     const reviewMetricsResult = await db.execute(sql`
@@ -176,22 +176,22 @@ async function getUserAnalytics(userId: string) {
       success: true,
       analytics: {
         articles: {
-          total: parseInt((articleStats as any).total),
-          underReview: parseInt((articleStats as any).under_review),
-          published: parseInt((articleStats as any).published),
+          total: parseInt((articleStats as unknown).total),
+          underReview: parseInt((articleStats as unknown).under_review),
+          published: parseInt((articleStats as unknown).published),
         },
         totalDownloads,
         totalViews,
         monthlyViews,
         reviewMetrics: {
-          completed: parseInt((reviewMetrics as any).reviews_completed),
-          averageRating: parseFloat((reviewMetrics as any).avg_rating || '0'),
-          averageTimedays: parseFloat((reviewMetrics as any).avg_review_time_days || '0'),
+          completed: parseInt((reviewMetrics as unknown).reviews_completed),
+          averageRating: parseFloat((reviewMetrics as unknown).avg_rating || '0'),
+          averageTimedays: parseFloat((reviewMetrics as unknown).avg_review_time_days || '0'),
         }
       },
     }
   } catch (error) {
-    console.error("Error getting user analytics:", error)
+    logger.error("Error getting user analytics:", error)
     return {
       success: false,
       analytics: {
@@ -218,7 +218,7 @@ export async function trackPageView(articleId: string, userId: string | null) {
     headers: headersObj,
   }
 
-  const getSessionId = (req: any) => {
+  const getSessionId = (req: unknown) => {
     const cookie = req.headers.get("cookie");
     if (!cookie) return null;
 
@@ -259,7 +259,7 @@ export async function getArticleMetrics(articleId: string) {
     
     return calculated
   } catch (error) {
-    console.error("Error getting article metrics:", error)
+    logger.error("Error getting article metrics:", error)
     // Fallback to direct calculation
     return await calculateArticleMetrics(articleId)
   }

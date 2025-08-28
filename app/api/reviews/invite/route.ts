@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Generate invitation URLs
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL'
     const acceptUrl = `${baseUrl}/reviewer/invitation/${reviewId}/accept`
     const declineUrl = `${baseUrl}/reviewer/invitation/${reviewId}/decline`
 
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         html: emailContent.html,
       })
     } catch (emailError) {
-      console.error("Failed to send review invitation email:", emailError)
+      logger.error("Failed to send review invitation email:", emailError)
       // Don't fail the invitation creation for email errors
     }
 
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error sending review invitation:", error)
+    logger.error("Error sending review invitation:", error)
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error retrieving review invitations:", error)
+    logger.error("Error retrieving review invitations:", error)
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }

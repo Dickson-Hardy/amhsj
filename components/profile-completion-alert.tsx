@@ -8,7 +8,7 @@ import Link from "next/link"
 
 interface ProfileCompletionAlertProps {
   profileCompleteness: number
-  profileData?: any
+  profileData?: unknown
 }
 
 export function ProfileCompletionAlert({ 

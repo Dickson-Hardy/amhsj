@@ -141,7 +141,7 @@ export function EnhancedDocumentViewer({
         setError('Failed to load comments')
       }
     } catch (error) {
-      console.error('Failed to load comments:', error)
+      logger.error('Failed to load comments:', error)
       setError('Failed to load comments')
     } finally {
       setLoading(false)
@@ -202,10 +202,10 @@ export function EnhancedDocumentViewer({
           description: "Your comment has been added successfully."
         })
       } else {
-        throw new Error(data.error || 'Failed to add comment')
+        throw new AppError(data.error || 'Failed to add comment')
       }
     } catch (error) {
-      console.error('Failed to add comment:', error)
+      logger.error('Failed to add comment:', error)
       toast({
         title: "Error",
         description: "Failed to add comment. Please try again.",
@@ -245,10 +245,10 @@ export function EnhancedDocumentViewer({
           description: "Your reply has been added successfully."
         })
       } else {
-        throw new Error(data.error || 'Failed to add reply')
+        throw new AppError(data.error || 'Failed to add reply')
       }
     } catch (error) {
-      console.error('Failed to add reply:', error)
+      logger.error('Failed to add reply:', error)
       toast({
         title: "Error",
         description: "Failed to add reply. Please try again.",
@@ -278,7 +278,7 @@ export function EnhancedDocumentViewer({
         })
       }
     } catch (error) {
-      console.error('Failed to resolve comment:', error)
+      logger.error('Failed to resolve comment:', error)
       toast({
         title: "Error",
         description: "Failed to resolve comment.",
@@ -311,10 +311,10 @@ export function EnhancedDocumentViewer({
           description: "Your document download has started."
         })
       } else {
-        throw new Error('Download failed')
+        throw new AppError('Download failed')
       }
     } catch (error) {
-      console.error('Download error:', error)
+      logger.error('Download error:', error)
       toast({
         title: "Download Error",
         description: "Failed to download document.",

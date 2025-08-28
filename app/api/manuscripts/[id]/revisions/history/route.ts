@@ -20,7 +20,7 @@ export async function GET(
 
     return NextResponse.json(history)
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { endpoint: `/api/manuscripts/${params}/revisions/history` })
     return NextResponse.json({
       success: false,

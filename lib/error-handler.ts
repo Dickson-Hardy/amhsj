@@ -15,7 +15,7 @@ export class ErrorHandler {
    * Handle and log errors consistently
    */
   static handleError(error: Error | unknown, context: ErrorContext = {}): void {
-    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorMessage = isAppError(error) ? error.message : (isAppError(error) ? error.message : (error instanceof Error ? error.message : String(error)))
     
     logger.error(`Error in ${context.operation || 'unknown operation'}: ${errorMessage}`, {
       ...context,

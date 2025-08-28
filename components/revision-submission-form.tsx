@@ -232,11 +232,11 @@ export default function RevisionSubmissionForm({
         })
         onSubmissionComplete(result.versionNumber, result.revisionId)
       } else {
-        throw new Error(result.message || 'Failed to submit revision')
+        throw new AppError(result.message || 'Failed to submit revision')
       }
 
     } catch (error: unknown) {
-      console.error('Revision submission error:', error)
+      logger.error('Revision submission error:', error)
       const errorMessage = error instanceof Error ? error.message : "Failed to submit revision. Please try again."
       toast({
         variant: "destructive",

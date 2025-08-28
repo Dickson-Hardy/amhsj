@@ -8,10 +8,14 @@ export function RegisterServiceWorker() {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/sw.js').then(
           function(registration) {
-            console.log('Service Worker registration successful with scope: ', registration.scope);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Service Worker registration successful with scope: ', registration.scope);
+            }
           },
           function(err) {
-            console.log('Service Worker registration failed: ', err);
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Service Worker registration failed: ', err);
+            }
           }
         );
       });

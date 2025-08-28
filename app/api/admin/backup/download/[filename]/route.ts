@@ -80,7 +80,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error downloading backup:', error)
+    logger.error('Error downloading backup:', error)
     return NextResponse.json(
       { error: 'Failed to download backup file' },
       { status: 500 }

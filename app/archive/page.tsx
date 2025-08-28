@@ -133,7 +133,7 @@ export default function ArchivePage() {
         setFilterOptions(filterData.filters)
       }
     } catch (error) {
-      console.error("Error fetching initial data:", error)
+      logger.error("Error fetching initial data:", error)
     } finally {
       setLoading(false)
     }
@@ -163,7 +163,7 @@ export default function ArchivePage() {
         setFilterOptions(data.filters)
       }
     } catch (error) {
-      console.error("Error fetching articles:", error)
+      logger.error("Error fetching articles:", error)
     } finally {
       setLoading(false)
     }
@@ -178,7 +178,7 @@ export default function ArchivePage() {
         setVolumes(data.volumes)
       }
     } catch (error) {
-      console.error("Error fetching volumes:", error)
+      logger.error("Error fetching volumes:", error)
     }
   }
 
@@ -191,7 +191,7 @@ export default function ArchivePage() {
         setIssues(data.issues)
       }
     } catch (error) {
-      console.error("Error fetching issues:", error)
+      logger.error("Error fetching issues:", error)
     }
   }
 

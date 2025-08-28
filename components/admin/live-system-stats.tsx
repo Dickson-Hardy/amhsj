@@ -54,7 +54,7 @@ export function LiveSystemStats() {
           pendingSubmissions
         })
       } catch (error) {
-        console.error('Failed to fetch live stats:', error)
+        logger.error('Failed to fetch live stats:', error)
         // Use reasonable fallbacks
         setStats({
           pendingReviews: 5,

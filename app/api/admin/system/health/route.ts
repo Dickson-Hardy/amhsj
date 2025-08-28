@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
         resourceUsage.memory = Math.round((usedHeap / totalHeap) * 100)
       }
 
-      // Basic system load approximation
+      // process.env.AUTH_TOKEN_PREFIX + ' 'system load approximation
       if (typeof process !== 'undefined' && process.cpuUsage) {
         const startUsage = process.cpuUsage()
         setTimeout(() => {
@@ -194,7 +194,7 @@ export async function GET(request: NextRequest) {
       // - pm2 monitoring for Node.js applications
 
     } catch (error) {
-      console.error('System monitoring error:', error)
+      logger.error('System monitoring error:', error)
       // Use reasonable defaults if monitoring fails
     }
 
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error checking system health:", error)
+    logger.error("Error checking system health:", error)
     return NextResponse.json({
       overall: {
         status: 'critical',

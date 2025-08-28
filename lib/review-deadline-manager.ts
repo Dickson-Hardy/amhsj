@@ -12,7 +12,7 @@ export class ReviewDeadlineManager {
    */
   async processDeadlines() {
     try {
-      console.log('📅 Processing review invitation deadlines...')
+      logger.info('📅 Processing review invitation deadlines...')
       
       const results = {
         remindersProcessed: 0,
@@ -30,14 +30,14 @@ export class ReviewDeadlineManager {
       results.withdrawalsProcessed = withdrawalResults.processed
       results.errors.push(...withdrawalResults.errors)
 
-      console.log(`✅ Deadline processing completed:`)
-      console.log(`   - Reminders sent: ${results.remindersProcessed}`)
-      console.log(`   - Withdrawals processed: ${results.withdrawalsProcessed}`)
-      console.log(`   - Errors: ${results.errors.length}`)
+      logger.error(`✅ Deadline processing completed:`)
+      logger.error(`   - Reminders sent: ${results.remindersProcessed}`)
+      logger.error(`   - Withdrawals processed: ${results.withdrawalsProcessed}`)
+      logger.error(`   - Errors: ${results.errors.length}`)
 
       return results
     } catch (error) {
-      console.error('❌ Error processing deadlines:', error)
+      logger.error('❌ Error processing deadlines:', error)
       throw error
     }
   }
@@ -88,10 +88,10 @@ export class ReviewDeadlineManager {
             .where(eq(reviewInvitations.id, invitation.id))
 
           results.processed++
-          console.log(`📧 Reminder sent to ${invitation.reviewerName} for ${invitation.articleTitle}`)
+          logger.error(`📧 Reminder sent to ${invitation.reviewerName} for ${invitation.articleTitle}`)
         } catch (error) {
           const errorMsg = `Failed to send reminder to ${invitation.reviewerEmail}: ${error}`
-          console.error(errorMsg)
+          logger.error(errorMsg)
           results.errors.push(errorMsg)
         }
       }
@@ -135,10 +135,10 @@ export class ReviewDeadlineManager {
         try {
           await this.processWithdrawal(invitation)
           results.processed++
-          console.log(`🚫 Withdrawal processed for ${invitation.reviewerName} - ${invitation.articleTitle}`)
+          logger.error(`🚫 Withdrawal processed for ${invitation.reviewerName} - ${invitation.articleTitle}`)
         } catch (error) {
           const errorMsg = `Failed to process withdrawal for ${invitation.reviewerEmail}: ${error}`
-          console.error(errorMsg)
+          logger.error(errorMsg)
           results.errors.push(errorMsg)
         }
       }
@@ -152,8 +152,8 @@ export class ReviewDeadlineManager {
   /**
    * Send reminder email
    */
-  private async sendReminderEmail(invitation: any) {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+  private async sendReminderEmail(invitation: unknown) {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL'
     const acceptUrl = `${baseUrl}/reviewer/invitation/${invitation.id}/accept`
     const declineUrl = `${baseUrl}/reviewer/invitation/${invitation.id}/decline`
     
@@ -188,7 +188,7 @@ export class ReviewDeadlineManager {
   /**
    * Process withdrawal
    */
-  private async processWithdrawal(invitation: any) {
+  private async processWithdrawal(invitation: unknown) {
     // Update invitation status to withdrawn
     await db
       .update(reviewInvitations)

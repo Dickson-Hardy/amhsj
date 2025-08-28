@@ -129,7 +129,7 @@ export default function ManagingEditorDashboard() {
       }
 
     } catch (error) {
-      console.error('Error fetching managing editor dashboard data:', error)
+      logger.error('Error fetching managing editor dashboard data:', error)
     } finally {
       setLoading(false)
     }
@@ -148,10 +148,10 @@ export default function ManagingEditorDashboard() {
       if (response.ok) {
         fetchDashboardData()
       } else {
-        console.error('Failed to perform task action')
+        logger.error('Failed to perform task action')
       }
     } catch (error) {
-      console.error('Error handling task action:', error)
+      logger.error('Error handling task action:', error)
     }
   }
 
@@ -168,10 +168,10 @@ export default function ManagingEditorDashboard() {
       if (response.ok) {
         fetchDashboardData()
       } else {
-        console.error('Failed to adjust workload')
+        logger.error('Failed to adjust workload')
       }
     } catch (error) {
-      console.error('Error adjusting workload:', error)
+      logger.error('Error adjusting workload:', error)
     }
   }
 

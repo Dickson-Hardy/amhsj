@@ -1,7 +1,7 @@
 import { initRedis } from "./redis"
 
 // Enhanced in-memory cache with cleanup and size limits
-const memoryCache = new Map<string, { value: any; expires: number; size: number }>()
+const memoryCache = new Map<string, { value: unknown; expires: number; size: number }>()
 const MAX_MEMORY_CACHE_SIZE = 1000 // Maximum number of items
 const MAX_MEMORY_CACHE_BYTES = 50 * 1024 * 1024 // 50MB max
 
@@ -43,7 +43,7 @@ function cleanupMemoryCache() {
 setInterval(cleanupMemoryCache, 5 * 60 * 1000)
 
 // Utility to estimate object size
-function estimateSize(obj: any): number {
+function estimateSize(obj: unknown): number {
   return JSON.stringify(obj).length * 2 // Rough estimate (2 bytes per character)
 }
 
@@ -76,7 +76,7 @@ export class CacheManager {
           return parsed
         }
       } catch (error) {
-        console.debug("Redis get failed, using memory cache only:", error instanceof Error ? error.message : 'Unknown error')
+        logger.debug("Redis get failed, using memory cache only:", error instanceof Error ? error.message : 'Unknown error')
         this.redisAvailable = false
         // Reset Redis availability after 5 minutes
         setTimeout(() => { this.redisAvailable = true }, 5 * 60 * 1000)
@@ -86,7 +86,7 @@ export class CacheManager {
     return null
   }
 
-  static async set(key: string, value: any, ttl = 3600): Promise<void> {
+  static async set(key: string, value: unknown, ttl = 3600): Promise<void> {
     const size = estimateSize(value)
     
     // Always store in memory cache first
@@ -102,7 +102,7 @@ export class CacheManager {
       try {
         await redis.setex(key, ttl, JSON.stringify(value))
       } catch (error) {
-        console.debug("Redis set failed, using memory cache only:", error instanceof Error ? error.message : 'Unknown error')
+        logger.debug("Redis set failed, using memory cache only:", error instanceof Error ? error.message : 'Unknown error')
         this.redisAvailable = false
         // Reset Redis availability after 5 minutes
         setTimeout(() => { this.redisAvailable = true }, 5 * 60 * 1000)
@@ -120,7 +120,7 @@ export class CacheManager {
       try {
         await redis.del(key)
       } catch (error) {
-        console.debug("Redis delete failed:", error instanceof Error ? error.message : 'Unknown error')
+        logger.debug("Redis delete failed:", error instanceof Error ? error.message : 'Unknown error')
         this.redisAvailable = false
         setTimeout(() => { this.redisAvailable = true }, 5 * 60 * 1000)
       }
@@ -138,48 +138,48 @@ export class CacheManager {
       
       // For Redis, we'll skip pattern invalidation since it's not well supported in Upstash
       // In production, consider using Redis SCAN or tag-based invalidation
-      console.debug(`Invalidated ${keys.length} keys from memory cache for pattern: ${pattern}`)
+      logger.debug(`Invalidated ${keys.length} keys from memory cache for pattern: ${pattern}`)
       
     } catch (error) {
-      console.debug("Cache invalidation error:", error instanceof Error ? error.message : 'Unknown error')
+      logger.debug("Cache invalidation error:", error instanceof Error ? error.message : 'Unknown error')
     }
   }
 
   // Cache article data
-  static async cacheArticle(articleId: string, article: any): Promise<void> {
+  static async cacheArticle(articleId: string, article: unknown): Promise<void> {
     await this.set(`article:${articleId}`, article, 7200) // 2 hours
   }
 
-  static async getCachedArticle(articleId: string): Promise<any> {
+  static async getCachedArticle(articleId: string): Promise<unknown> {
     return this.get(`article:${articleId}`)
   }
 
   // Cache search results
-  static async cacheSearchResults(query: string, results: any): Promise<void> {
+  static async cacheSearchResults(query: string, results: unknown): Promise<void> {
     const key = `search:${Buffer.from(query).toString("base64")}`
     await this.set(key, results, 1800) // 30 minutes
   }
 
-  static async getCachedSearchResults(query: string): Promise<any> {
+  static async getCachedSearchResults(query: string): Promise<unknown> {
     const key = `search:${Buffer.from(query).toString("base64")}`
     return this.get(key)
   }
 
   // Cache user data
-  static async cacheUser(userId: string, user: any): Promise<void> {
+  static async cacheUser(userId: string, user: unknown): Promise<void> {
     await this.set(`user:${userId}`, user, 3600) // 1 hour
   }
 
-  static async getCachedUser(userId: string): Promise<any> {
+  static async getCachedUser(userId: string): Promise<unknown> {
     return this.get(`user:${userId}`)
   }
 
   // Cache statistics
-  static async cacheStats(type: string, stats: any): Promise<void> {
+  static async cacheStats(type: string, stats: unknown): Promise<void> {
     await this.set(`stats:${type}`, stats, 900) // 15 minutes
   }
 
-  static async getCachedStats(type: string): Promise<any> {
+  static async getCachedStats(type: string): Promise<unknown> {
     return this.get(`stats:${type}`)
   }
 

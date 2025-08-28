@@ -42,7 +42,7 @@ export async function GET() {
     })
 
   } catch (error) {
-    console.error("Error fetching current issue data:", error)
+    logger.error("Error fetching current issue data:", error)
     return NextResponse.json(
       {
         success: false,

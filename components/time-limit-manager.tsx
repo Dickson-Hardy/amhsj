@@ -142,11 +142,11 @@ export function TimeLimitManager({
         }
       }
     } catch (error) {
-      console.error('Error fetching time limits:', error)
+      logger.error('Error fetching time limits:', error)
     }
   }
 
-  const handleTimeLimitChange = (stage: string, field: keyof TimeLimit, value: any) => {
+  const handleTimeLimitChange = (stage: string, field: keyof TimeLimit, value: unknown) => {
     setTimeLimits(prev => prev.map(tl => 
       tl.stage === stage ? { ...tl, [field]: value } : tl
     ))
@@ -178,10 +178,10 @@ export function TimeLimitManager({
         onSave(timeLimits)
         setHasChanges(false)
       } else {
-        throw new Error('Failed to save time limits')
+        throw new AppError('Failed to save time limits')
       }
     } catch (error) {
-      console.error('Error saving time limits:', error)
+      logger.error('Error saving time limits:', error)
     } finally {
       setIsLoading(false)
     }

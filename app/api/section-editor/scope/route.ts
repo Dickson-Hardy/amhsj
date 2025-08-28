@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(sectionScope)
 
   } catch (error) {
-    console.error("Error fetching section scope:", error)
+    logger.error("Error fetching section scope:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

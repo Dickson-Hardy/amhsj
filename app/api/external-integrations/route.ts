@@ -194,7 +194,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function handleORCIDConnect(body: any, userId: string) {
+async function handleORCIDConnect(body: unknown, userId: string) {
   try {
     const validatedData = ORCIDConnectSchema.parse(body)
 
@@ -210,7 +210,7 @@ async function handleORCIDConnect(body: any, userId: string) {
       success: true,
       data: {
         orcidId: result.orcidId,
-        accessToken: result.accessToken ? "********" : null, // Don't expose actual token
+        accessToken: result.accessprocess.env.AUTH_TOKEN_PREFIX? "********" : null, // Don't expose actual token
         profile: result.profile
       }
     })
@@ -231,7 +231,7 @@ async function handleORCIDConnect(body: any, userId: string) {
   }
 }
 
-async function handleORCIDSync(body: any, userId: string) {
+async function handleORCIDSync(body: unknown, userId: string) {
   try {
     const validatedData = ORCIDSyncSchema.parse(body)
 
@@ -265,7 +265,7 @@ async function handleORCIDSync(body: any, userId: string) {
   }
 }
 
-async function handleCrossRefSearch(body: any, userId: string) {
+async function handleCrossRefSearch(body: unknown, userId: string) {
   try {
     const validatedData = CrossRefSearchSchema.parse(body)
 
@@ -302,7 +302,7 @@ async function handleCrossRefSearch(body: any, userId: string) {
   }
 }
 
-async function handleDOIRegistration(body: any, userId: string) {
+async function handleDOIRegistration(body: unknown, userId: string) {
   try {
     const validatedData = DOIRegistrationSchema.parse(body)
 
@@ -351,7 +351,7 @@ async function handleDOIRegistration(body: any, userId: string) {
   }
 }
 
-async function handlePubMedSearch(body: any, userId: string) {
+async function handlePubMedSearch(body: unknown, userId: string) {
   try {
     const validatedData = PubMedSearchSchema.parse(body)
 
@@ -388,7 +388,7 @@ async function handlePubMedSearch(body: any, userId: string) {
   }
 }
 
-async function handleCitationAnalysis(body: any, userId: string) {
+async function handleCitationAnalysis(body: unknown, userId: string) {
   try {
     const validatedData = CitationAnalysisSchema.parse(body)
 
@@ -420,7 +420,7 @@ async function handleCitationAnalysis(body: any, userId: string) {
   }
 }
 
-async function handleSimilarWorksSearch(body: any, userId: string) {
+async function handleSimilarWorksSearch(body: unknown, userId: string) {
   try {
     const { manuscriptData, threshold = 0.7 } = body
 

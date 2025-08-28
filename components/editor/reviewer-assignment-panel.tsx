@@ -32,7 +32,7 @@ interface WorkflowStep {
 }
 
 interface AssignmentResult {
-  assignedReviewers: any[]
+  assignedReviewers: unknown[]
   recommendedUsed: number
   systemFound: number
   totalAssigned: number
@@ -63,7 +63,7 @@ export function ReviewerAssignmentPanel({
   const [previewData, setPreviewData] = useState<{
     recommendedReviewers: RecommendedReviewer[]
     systemCandidates: SystemCandidate[]
-    summary: any
+    summary: unknown
   } | null>(null)
   const [targetReviewerCount, setTargetReviewerCount] = useState(3)
 
@@ -87,7 +87,7 @@ export function ReviewerAssignmentPanel({
         })
       }
     } catch (error) {
-      console.error('Error loading preview:', error)
+      logger.error('Error loading preview:', error)
       toast({
         title: "Error",
         description: "Failed to load reviewer preview",
@@ -129,7 +129,7 @@ export function ReviewerAssignmentPanel({
         })
       }
     } catch (error) {
-      console.error('Error assigning reviewers:', error)
+      logger.error('Error assigning reviewers:', error)
       toast({
         title: "Error",
         description: "An error occurred while assigning reviewers",

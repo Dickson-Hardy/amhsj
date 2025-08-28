@@ -187,8 +187,8 @@ async function handleSearch(searchParams: URLSearchParams) {
   }
 }
 
-async function handleSyncProfile(userId: string, body: any) {
-  const { orcidId, accessToken } = body
+async function handleSyncProfile(userId: string, body: unknown) {
+  const { orcidId, accessToken } = body as { orcidId: string; accessToken: string }
 
   if (!orcidId || !accessToken) {
     return NextResponse.json(
@@ -213,7 +213,7 @@ async function handleSyncProfile(userId: string, body: any) {
   }
 }
 
-async function handleAddWork(userId: string, body: any) {
+async function handleAddWork(userId: string, body: unknown) {
   const { work } = body
 
   if (!work) {
@@ -248,7 +248,7 @@ async function handleAddWork(userId: string, body: any) {
   }
 }
 
-async function handleUpdateWork(userId: string, body: any) {
+async function handleUpdateWork(userId: string, body: unknown) {
   const { putCode, work } = body
 
   if (!putCode || !work) {
@@ -283,7 +283,7 @@ async function handleUpdateWork(userId: string, body: any) {
   }
 }
 
-async function handleDeleteWork(userId: string, body: any) {
+async function handleDeleteWork(userId: string, body: unknown) {
   const { putCode } = body
 
   if (!putCode) {

@@ -31,7 +31,7 @@ export async function GET() {
 
     return NextResponse.json(formattedReviewers)
   } catch (error) {
-    console.error('Error fetching guest editor reviewers:', error)
+    logger.error('Error fetching guest editor reviewers:', error)
     return NextResponse.json(
       { error: 'Failed to fetch reviewers' },
       { status: 500 }

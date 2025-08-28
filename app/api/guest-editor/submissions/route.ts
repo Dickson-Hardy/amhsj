@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { submissions, users } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { logError } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -41,7 +42,9 @@ export async function GET() {
 
     return NextResponse.json(formattedSubmissions)
   } catch (error) {
-    console.error('Error fetching guest editor submissions:', error)
+    logError(error as Error, {
+      context: 'GET /api/guest-editor/submissions'
+    })
     return NextResponse.json(
       { error: 'Failed to fetch submissions' },
       { status: 500 }

@@ -22,7 +22,7 @@ export async function GET() {
 
     return NextResponse.json(specialIssue)
   } catch (error) {
-    console.error('Error fetching special issue:', error)
+    logger.error('Error fetching special issue:', error)
     return NextResponse.json(
       { error: 'Failed to fetch special issue' },
       { status: 500 }

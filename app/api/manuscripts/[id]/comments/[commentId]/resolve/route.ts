@@ -84,7 +84,7 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error('Error resolving comment:', error)
+    logger.error('Error resolving comment:', error)
     return NextResponse.json({ 
       error: 'Failed to resolve comment' 
     }, { status: 500 })
@@ -140,7 +140,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('Error unresolving comment:', error)
+    logger.error('Error unresolving comment:', error)
     return NextResponse.json({ 
       error: 'Failed to unresolve comment' 
     }, { status: 500 })

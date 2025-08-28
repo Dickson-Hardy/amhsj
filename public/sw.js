@@ -25,25 +25,25 @@ const dynamicAssets = [
 
 // Install event - Enhanced caching
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
+  logger.info('Service Worker: Installing...');
   
   event.waitUntil(
     Promise.all([
       // Cache static assets
       caches.open(STATIC_CACHE).then((cache) => {
-        console.log('Service Worker: Caching static assets');
+        logger.info('Service Worker: Caching static assets');
         return cache.addAll(staticAssets);
       }),
       // Cache dynamic assets
       caches.open(DYNAMIC_CACHE).then((cache) => {
-        console.log('Service Worker: Preparing dynamic cache');
+        logger.info('Service Worker: Preparing dynamic cache');
         return cache.addAll(['/offline.html']);
       })
     ]).then(() => {
-      console.log('Service Worker: Installation successful');
+      logger.info('Service Worker: Installation successful');
       self.skipWaiting();
     }).catch((error) => {
-      console.error('Service Worker: Installation failed:', error);
+      logger.error('Service Worker: Installation failed:', error);
     })
   );
 });
@@ -70,20 +70,20 @@ self.addEventListener('fetch', (event) => {
 
 // Activate event - Clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
+  logger.info('Service Worker: Activating...');
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-            console.log('Service Worker: Deleting old cache:', cacheName);
+            logger.info('Service Worker: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker: Activation successful');
+      logger.info('Service Worker: Activation successful');
       return self.clients.claim();
     })
   );
@@ -91,7 +91,7 @@ self.addEventListener('activate', (event) => {
 
 // Push notification event
 self.addEventListener('push', (event) => {
-  console.log('Service Worker: Push notification received');
+  logger.info('Service Worker: Push notification received');
   
   const options = {
     body: event.data ? event.data.text() : 'New notification from AMHSJ',
@@ -121,7 +121,7 @@ self.addEventListener('push', (event) => {
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: Notification clicked');
+  logger.info('Service Worker: Notification clicked');
   
   event.notification.close();
   
@@ -141,7 +141,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Background sync event
 self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Background sync triggered');
+  logger.info('Service Worker: Background sync triggered');
   
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync());
@@ -163,7 +163,7 @@ async function cacheFirstStrategy(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.error('Network request failed:', error);
+    logger.error('Network request failed:', error);
     return await caches.match('/offline.html');
   }
 }
@@ -177,7 +177,7 @@ async function networkFirstStrategy(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.log('Network failed, trying cache:', error);
+    logger.info('Network failed, trying cache:', error);
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
@@ -209,7 +209,7 @@ async function staleWhileRevalidateStrategy(request) {
 
 // Background sync function
 async function doBackgroundSync() {
-  console.log('Service Worker: Performing background sync');
+  logger.info('Service Worker: Performing background sync');
   
   try {
     // Sync offline actions stored in IndexedDB
@@ -219,13 +219,13 @@ async function doBackgroundSync() {
       try {
         await fetch(action.url, action.options);
         await removeOfflineAction(action.id);
-        console.log('Background sync: Action completed:', action.type);
+        logger.info('Background sync: Action completed:', action.type);
       } catch (error) {
-        console.error('Background sync: Action failed:', action.type, error);
+        logger.error('Background sync: Action failed:', action.type, error);
       }
     }
   } catch (error) {
-    console.error('Background sync failed:', error);
+    logger.error('Background sync failed:', error);
   }
 }
 
@@ -237,12 +237,12 @@ async function getOfflineActions() {
 
 async function removeOfflineAction(id) {
   // In a real implementation, this would remove from IndexedDB
-  console.log('Removing offline action:', id);
+  logger.info('Removing offline action:', id);
 }
 
 // Message event for communication with main thread
 self.addEventListener('message', (event) => {
-  console.log('Service Worker: Message received:', event.data);
+  logger.info('Service Worker: Message received:', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -257,4 +257,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('Service Worker: Script loaded successfully');
+logger.info('Service Worker: Script loaded successfully');

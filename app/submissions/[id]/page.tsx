@@ -139,7 +139,7 @@ export default function SubmissionDetailPage() {
       if (submissionRes.ok) {
         const submissionData = await submissionRes.json()
         if (submissionData.success) {
-          const foundSubmission = submissionData.submissions.find((s: any) => s.id === params.id)
+          const foundSubmission = submissionData.submissions.find((s: unknown) => s.id === params.id)
           if (foundSubmission) {
             setSubmission(foundSubmission)
           } else {

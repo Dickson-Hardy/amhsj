@@ -8,7 +8,7 @@ interface FormValidationIndicatorProps {
   abstract: string
   category: string
   keywords: string
-  authors: any[]
+  authors: unknown[]
   currentStep: number
 }
 

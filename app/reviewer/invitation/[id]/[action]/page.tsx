@@ -47,12 +47,14 @@ export default function ReviewerInvitationPage() {
     try {
       const response = await fetch(`/api/reviewer/invitation/${reviewId}`)
       if (!response.ok) {
-        throw new Error("Failed to fetch invitation")
+        throw new AppError("Failed to fetch invitation")
       }
       const data = await response.json()
       setInvitation(data.invitation)
     } catch (error) {
-      console.error("Error fetching invitation:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching invitation:", error)
+      }
       setError("Failed to load invitation details")
     } finally {
       setLoading(false)
@@ -87,7 +89,7 @@ export default function ReviewerInvitationPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to submit response")
+        throw new AppError(errorData.error || "Failed to submit response")
       }
 
       const data = await response.json()
@@ -104,8 +106,10 @@ export default function ReviewerInvitationPage() {
         }, 2000)
       }
 
-    } catch (error: any) {
-      console.error("Error submitting response:", error)
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error submitting response:", error)
+      }
       setError(error.message || "Failed to submit response")
       toast.error(error.message || "Failed to submit response")
     } finally {

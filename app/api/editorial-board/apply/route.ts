@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     
     // Extract form data
-    const applicationData: { [key: string]: any } = {
+    const applicationData: { [key: string]: unknown } = {
       applicant_id: session.user.id,
       position: formData.get("position") as string,
       first_name: formData.get("firstName") as string,
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     ]
     
     for (const field of requiredFields) {
-      if (!(applicationData as any)[field]) {
+      if (!(applicationData as unknown)[field]) {
         return NextResponse.json(
           { error: `Missing required field: ${field}` }, 
           { status: 400 }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     const adminResult = await sql`
       SELECT email FROM users WHERE role IN ('admin', 'editor') AND email IS NOT NULL
     `;
-    const adminEmails = adminResult.map((row: any) => row.email);
+    const adminEmails = adminResult.map((row: unknown) => row.email);
 
     // Send confirmation and notification emails
     try {
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         adminEmails
       )
     } catch (emailError) {
-      console.error("Failed to send emails:", emailError)
+      logger.error("Failed to send emails:", emailError)
       // Don't fail the application submission if email fails
     }
 
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Editorial board application error:", error)
+    logger.error("Editorial board application error:", error)
     return NextResponse.json(
       { error: "Failed to submit application" },
       { status: 500 }
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ applications: result })
     }
   } catch (error) {
-    console.error("Get editorial board applications error:", error)
+    logger.error("Get editorial board applications error:", error)
     return NextResponse.json(
       { error: "Failed to retrieve applications" },
       { status: 500 }
@@ -248,11 +248,11 @@ async function uploadFile(file: File, category: string): Promise<string> {
     // 3. Return the actual storage URL
     // For now, we'll store the file reference
     
-    console.log(`File uploaded: ${file.name} -> ${uploadUrl}`)
+    logger.info(`File uploaded: ${file.name} -> ${uploadUrl}`)
     
     return uploadUrl
   } catch (error) {
-    console.error('Error uploading file:', error)
-    throw new Error(`Failed to upload ${category} file`)
+    logger.error('Error uploading file:', error)
+    throw new AppError(`Failed to upload ${category} file`)
   }
 }

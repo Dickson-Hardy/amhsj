@@ -1,3 +1,6 @@
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DOIGenerator } from '../lib/doi'
 
@@ -83,7 +86,7 @@ describe('DOI Generator', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer test-api-key'
+            'Authorization': 'process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """test-api-key'
           })
         })
       )

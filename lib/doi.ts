@@ -22,23 +22,23 @@ export class DOIGenerator {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.CROSSREF_API_KEY}`,
-          "User-Agent": "AMHSJ/1.0 (mailto:admin@amhsj.org)"
+          "Authorization": `process.env.AUTH_TOKEN_PREFIX + ' '${process.env.CROSSREF_API_KEY}`,
+          "User-Agent": "AMHSJ/1.0 (process.env.EMAIL_FROMprocess.env.EMAIL_FROMamhsj.org)"
         },
         body: JSON.stringify(crossRefData)
       })
 
       if (response.ok) {
         const result = await response.json()
-        console.log(`DOI ${doi} registered successfully with CrossRef:`, result)
+        logger.info(`DOI ${doi} registered successfully with CrossRef:`, result)
         return true
       } else {
         const error = await response.text()
-        console.error(`CrossRef registration failed: ${error}`)
+        logger.error(`CrossRef registration failed: ${error}`)
         return false
       }
     } catch (error) {
-      console.error("DOI registration error:", error)
+      logger.error("DOI registration error:", error)
       return false
     }
   }
@@ -100,7 +100,7 @@ export class DOIGenerator {
     try {
       const response = await fetch(`${this.CROSSREF_API_URL}/${doi}`, {
         headers: {
-          "User-Agent": "AMHSJ/1.0 (mailto:admin@amhsj.org)"
+          "User-Agent": "AMHSJ/1.0 (process.env.EMAIL_FROMprocess.env.EMAIL_FROMamhsj.org)"
         }
       })
 
@@ -151,7 +151,7 @@ export interface DOIMetadata {
 
 export interface DOIVerificationResult {
   exists: boolean
-  metadata?: any
+  metadata?: unknown
   registeredAt?: string
   error?: string
 }

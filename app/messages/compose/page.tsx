@@ -83,7 +83,7 @@ export default function ComposeMessagePage() {
           router.push('/dashboard?tab=messages')
         }
       } else {
-        throw new Error('Failed to send message')
+        throw new AppError('Failed to send message')
       }
     } catch (error) {
       handleError(error, { 

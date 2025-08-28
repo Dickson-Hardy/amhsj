@@ -15,8 +15,8 @@ export async function searchArticles(query: string, limit: number, offset: numbe
     const result = await sql.query(searchQuery, [query, limit, offset])
     return result.rows
   } catch (error) {
-    console.error("Database error:", error)
-    throw new Error("Failed to search articles.")
+    logger.error("Database error:", error)
+    throw new AppError("Failed to search articles.")
   }
 }
 
@@ -81,7 +81,7 @@ async function getSearchSuggestions(query: string) {
 
     return { success: true, suggestions }
   } catch (error) {
-    console.error("Search suggestions error:", error)
+    logger.error("Search suggestions error:", error)
     return { success: false, suggestions: [] }
   }
 }
@@ -120,7 +120,7 @@ async function advancedSearchArticles(filters: {
       WHERE a.status = 'published'
     `
 
-    const params: any[] = []
+    const params: unknown[] = []
     let paramIndex = 1
 
     // Full-text search
@@ -180,7 +180,7 @@ async function advancedSearchArticles(filters: {
       WHERE a.status = 'published'
     `
     
-    const countParams: any[] = []
+    const countParams: unknown[] = []
     let countParamIndex = 1
 
     // Apply same filters to count query
@@ -233,8 +233,8 @@ async function advancedSearchArticles(filters: {
       }
     }
   } catch (error) {
-    console.error("Advanced search error:", error)
-    throw new Error("Failed to perform advanced search.")
+    logger.error("Advanced search error:", error)
+    throw new AppError("Failed to perform advanced search.")
   }
 }
 

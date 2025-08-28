@@ -142,7 +142,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="p-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={(session?.user as any)?.image || ""} />
+                <AvatarImage src={(session?.user as unknown)?.image || ""} />
                 <AvatarFallback className="bg-indigo-100 text-indigo-600">
                   {session?.user?.name?.charAt(0) || "U"}
                 </AvatarFallback>

@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error("Error uploading advertisement:", error)
+    logger.error("Error uploading advertisement:", error)
     return NextResponse.json(
       { error: "Failed to upload advertisement" },
       { status: 500 }
@@ -114,15 +114,15 @@ async function saveAdvertisementToDatabase(adData: {
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     }
     
-    console.log("Advertisement saved to database:", advertisement)
+    logger.error("Advertisement saved to database:", advertisement)
     return advertisement
   } catch (error) {
-    console.error('Error saving advertisement to database:', error)
-    throw new Error('Failed to save advertisement to database')
+    logger.error('Error saving advertisement to database:', error)
+    throw new AppError('Failed to save advertisement to database')
   }
 }
 
-async function logAdvertisementUpload(adminEmail: string, adData: any) {
+async function logAdvertisementUpload(adminEmail: string, adData: unknown) {
   try {
     // In a real implementation, log the action:
     // await prisma.adminLog.create({
@@ -135,8 +135,8 @@ async function logAdvertisementUpload(adminEmail: string, adData: any) {
     //   }
     // })
     
-    console.log(`Advertisement upload logged by ${adminEmail}: ${adData.filename}`)
+    logger.error(`Advertisement upload logged by ${adminEmail}: ${adData.filename}`)
   } catch (error) {
-    console.error('Error logging advertisement upload:', error)
+    logger.error('Error logging advertisement upload:', error)
   }
 }

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error("Error loading email settings:", error)
+    logger.error("Error loading email settings:", error)
     return NextResponse.json(
       { error: "Failed to load email settings" },
       { status: 500 }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error("Error saving email settings:", error)
+    logger.error("Error saving email settings:", error)
     return NextResponse.json(
       { error: "Failed to save email settings" },
       { status: 500 }
@@ -71,7 +71,7 @@ async function loadEmailSettings() {
     `)
     
     if (result.length > 0) {
-      const settings = result[0] as any
+      const settings = result[0] as unknown
       return {
         submissionConfirmations: settings.submission_confirmations,
         reviewAssignments: settings.review_assignments,
@@ -105,17 +105,17 @@ async function loadEmailSettings() {
         port: 587,
         username: "",
         password: "",
-        fromEmail: "noreply@amjhs.com",
+        fromEmail: "process.env.EMAIL_FROMamjhs.com",
         fromName: "Academic Medical Journal of Health Sciences"
       }
     }
   } catch (error) {
-    console.error('Error loading email settings:', error)
-    throw new Error('Failed to load email settings')
+    logger.error('Error loading email settings:', error)
+    throw new AppError('Failed to load email settings')
   }
 }
 
-async function saveEmailSettings(emailSettings: any) {
+async function saveEmailSettings(emailSettings: unknown) {
   try {
     // Save to database using raw SQL for flexibility
     await db.execute(sql`
@@ -149,7 +149,7 @@ async function saveEmailSettings(emailSettings: any) {
         ${emailSettings.smtpSettings?.port || 587},
         ${emailSettings.smtpSettings?.username || ''},
         ${emailSettings.smtpSettings?.password || ''},
-        ${emailSettings.smtpSettings?.fromEmail || 'noreply@amjhs.com'},
+        ${emailSettings.smtpSettings?.fromEmail || 'process.env.EMAIL_FROMamjhs.com'},
         ${emailSettings.smtpSettings?.fromName || 'Academic Medical Journal of Health Sciences'},
         NOW()
       )
@@ -166,19 +166,19 @@ async function saveEmailSettings(emailSettings: any) {
         smtp_port = ${emailSettings.smtpSettings?.port || 587},
         smtp_username = ${emailSettings.smtpSettings?.username || ''},
         smtp_password = ${emailSettings.smtpSettings?.password || ''},
-        from_email = ${emailSettings.smtpSettings?.fromEmail || 'noreply@amjhs.com'},
+        from_email = ${emailSettings.smtpSettings?.fromEmail || 'process.env.EMAIL_FROMamjhs.com'},
         from_name = ${emailSettings.smtpSettings?.fromName || 'Academic Medical Journal of Health Sciences'},
         updated_at = NOW()
     `)
     
-    console.log("Email settings saved to database:", emailSettings)
+    logger.error("Email settings saved to database:", emailSettings)
   } catch (error) {
-    console.error('Error saving email settings:', error)
-    throw new Error('Failed to save email settings to database')
+    logger.error('Error saving email settings:', error)
+    throw new AppError('Failed to save email settings to database')
   }
 }
 
-async function logEmailSettingsChange(adminEmail: string, settings: any) {
+async function logEmailSettingsChange(adminEmail: string, settings: unknown) {
   try {
     // Log to admin_logs table
     await db.execute(sql`
@@ -186,9 +186,9 @@ async function logEmailSettingsChange(adminEmail: string, settings: any) {
       VALUES ('EMAIL_SETTINGS_UPDATED', ${adminEmail}, ${JSON.stringify(settings)}, NOW())
     `)
     
-    console.log(`Email settings change logged by ${adminEmail}:`, settings)
+    logger.error(`Email settings change logged by ${adminEmail}:`, settings)
   } catch (error) {
-    console.error('Error logging email settings change:', error)
+    logger.error('Error logging email settings change:', error)
     // Don't fail the request if logging fails
   }
 }

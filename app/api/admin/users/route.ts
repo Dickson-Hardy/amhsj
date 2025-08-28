@@ -1,23 +1,36 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
+import * as crypto from "crypto"
+import { requireAuth, ROLES } from "@/lib/api-utils"
+import { 
+  createApiResponse, 
+  createErrorResponse, 
+  parseQueryParams,
+  createPaginatedResponse,
+  withErrorHandler,
+  handleDatabaseError
+} from "@/lib/api-utils"
 import { db } from "@/lib/db"
 import { users, submissions, reviews } from "@/lib/db/schema"
 import { desc, ilike, eq, count, sql, and } from "drizzle-orm"
-import { logError } from "@/lib/logger"
+import { logger } from "@/lib/logger"
 
-export async function GET(request: Request) {
+async function getUsers(request: NextRequest) {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || !["admin", "editor-in-chief"].includes(session.user.role)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Authenticate and authorize
+    const session = await requireAuth(request, [ROLES.ADMIN])
+    
+    logger.api("Admin users request initiated", {
+      userId: session.user.id,
+      userRole: session.user.role,
+      requestId,
+      endpoint: "/api/admin/users"
+    })
 
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const role = searchParams.get("role")
-    const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "20")
+    // Parse query parameters
+    const { page, limit, search } = parseQueryParams(request)
+    const role = request.nextUrl.searchParams.get("role")
     const offset = (page - 1) * limit
 
     // Build query conditions
@@ -31,6 +44,7 @@ export async function GET(request: Request) {
       conditions.push(eq(users.role, role))
     }
 
+    // Get users with pagination
     const userList = await db.select({
       id: users.id,
       name: users.name,
@@ -48,53 +62,84 @@ export async function GET(request: Request) {
     .limit(limit)
     .offset(offset)
 
+    // Get total count for pagination
+    const totalCountResult = await db
+      .select({ count: count() })
+      .from(users)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+    
+    const totalUsers = totalCountResult[0]?.count || 0
+
     // Get stats for all users
-    const totalUsers = userList.length
-    const activeUsers = userList.filter(u => u.isActive === true).length
-    const pendingUsers = userList.filter(u => u.isVerified === false).length
-    const adminUsers = userList.filter(u => u.role === 'admin').length
-    const editorUsers = userList.filter(u => u.role === 'editor').length
-    const reviewerUsers = userList.filter(u => u.role === 'reviewer').length
-    const authorUsers = userList.filter(u => u.role === 'author').length
+    const stats = {
+      totalUsers,
+      activeUsers: userList.filter(u => u.isActive === true).length,
+      pendingUsers: userList.filter(u => u.isVerified === false).length,
+      adminUsers: userList.filter(u => u.role === ROLES.ADMIN).length,
+      editorUsers: userList.filter(u => u.role === ROLES.ASSOCIATE_EDITOR).length,
+      reviewerUsers: userList.filter(u => u.role === ROLES.REVIEWER).length,
+      authorUsers: userList.filter(u => u.role === ROLES.AUTHOR).length
+    }
 
     // Get submission and review counts for each user
     const usersWithCounts = await Promise.all(
       userList.map(async (user) => {
-        const submissionCount = await db
-          .select({ count: count() })
-          .from(submissions)
-          .where(sql`${submissions.authorId} = ${user.id}`)
+        try {
+          const [submissionCount, reviewCount] = await Promise.all([
+            db.select({ count: count() })
+              .from(submissions)
+              .where(sql`${submissions.authorId} = ${user.id}`),
+            db.select({ count: count() })
+              .from(reviews)
+              .where(sql`${reviews.reviewerId} = ${user.id}`)
+          ])
 
-        const reviewCount = await db
-          .select({ count: count() })
-          .from(reviews)
-          .where(sql`${reviews.reviewerId} = ${user.id}`)
-
-        return {
-          ...user,
-          submissionsCount: submissionCount[0]?.count || 0,
-          reviewsCount: reviewCount[0]?.count || 0,
-          joinDate: user.createdAt ? user.createdAt.toISOString().split('T')[0] : 'Unknown',
-          lastLogin: user.lastLoginAt ? user.lastLoginAt.toISOString().split('T')[0] : 'Never'
+          return {
+            ...user,
+            submissionsCount: submissionCount[0]?.count || 0,
+            reviewsCount: reviewCount[0]?.count || 0,
+            joinDate: user.createdAt ? user.createdAt.toISOString().split('T')[0] : 'Unknown',
+            lastLogin: user.lastLoginAt ? user.lastLoginAt.toISOString().split('T')[0] : 'Never'
+          }
+        } catch (error) {
+          logger.error("Failed to get user counts", {
+            userId: user.id,
+            error: error instanceof Error ? error.message : String(error),
+            requestId
+          })
+          
+          return {
+            ...user,
+            submissionsCount: 0,
+            reviewsCount: 0,
+            joinDate: user.createdAt ? user.createdAt.toISOString().split('T')[0] : 'Unknown',
+            lastLogin: user.lastLoginAt ? user.lastLoginAt.toISOString().split('T')[0] : 'Never'
+          }
         }
       })
     )
 
-    return NextResponse.json({
-      success: true,
-      users: usersWithCounts,
-      stats: {
-        totalUsers,
-        activeUsers,
-        pendingUsers,
-        adminUsers,
-        editorUsers,
-        reviewerUsers,
-        authorUsers
-      }
+    logger.api("Admin users request completed", {
+      userId: session.user.id,
+      userCount: usersWithCounts.length,
+      totalUsers,
+      requestId
     })
+
+    return createPaginatedResponse(
+      usersWithCounts,
+      { page, limit, total: totalUsers },
+      "Users retrieved successfully",
+      requestId
+    )
+
   } catch (error) {
-    logError(error as Error, { endpoint: "/api/admin/users" })
-    return NextResponse.json({ success: false, error: "Failed to fetch users" }, { status: 500 })
+    if (error.name === 'AuthenticationError' || error.name === 'AuthorizationError') {
+      throw error
+    }
+    
+    return handleDatabaseError(error)
   }
 }
+
+export const GET = withErrorHandler(getUsers)

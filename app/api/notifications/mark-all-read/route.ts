@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     `)
 
     // Get count of updated rows (depends on database driver response)
-    const updatedCount = (result as any).affectedRows || (result as any).rowCount || 0
+    const updatedCount = (result as unknown).affectedRows || (result as any).rowCount || 0
 
     return NextResponse.json({
       success: true,

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { redis } from '../lib/redis'
 import { CacheManager } from '../lib/cache'
@@ -21,7 +22,7 @@ describe('Redis Integration Tests', () => {
         const pong = await redis.ping()
         expect(pong).toBe('PONG')
       } else {
-        console.log('Redis not available - testing in-memory fallback')
+        logger.info('Redis not available - testing in-memory fallback')
         expect(true).toBe(true)
       }
     })

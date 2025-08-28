@@ -178,7 +178,7 @@ export async function POST(request: Request) {
             </ul>
         </div>
 
-        <p>If this is an emergency and you haven't heard from us within the expected timeframe, please contact <a href="mailto:emergency@amhsj.org">emergency@amhsj.org</a>.</p>
+        <p>If this is an emergency and you haven't heard from us within the expected timeframe, please contact <a href="process.env.EMAIL_FROMemergency@amhsj.org">emergency@amhsj.org</a>.</p>
 
         <p>Thank you for using AMHSJ!</p>
         
@@ -220,7 +220,7 @@ export async function POST(request: Request) {
       expectedResponse
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { endpoint: '/api/support/ticket' })
     return NextResponse.json({
       success: false,
@@ -264,7 +264,7 @@ export async function GET(request: Request) {
       supportInfo
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { endpoint: '/api/support/ticket GET' })
     return NextResponse.json({
       success: false,

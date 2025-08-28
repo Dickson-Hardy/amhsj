@@ -43,7 +43,7 @@ export function CommentSystem({ articleId, userRole }: CommentSystemProps) {
         setComments(data.comments)
       }
     } catch (error) {
-      console.error("Error fetching comments:", error)
+      logger.error("Error fetching comments:", error)
     }
   }
 
@@ -68,7 +68,7 @@ export function CommentSystem({ articleId, userRole }: CommentSystemProps) {
         fetchComments()
       }
     } catch (error) {
-      console.error("Error submitting comment:", error)
+      logger.error("Error submitting comment:", error)
     } finally {
       setLoading(false)
     }
@@ -103,7 +103,7 @@ export function CommentSystem({ articleId, userRole }: CommentSystemProps) {
               <div className="flex gap-2">
                 <select
                   value={commentType}
-                  onChange={(e) => setCommentType(e.target.value as any)}
+                  onChange={(e) => setCommentType(e.target.value as unknown)}
                   className="px-3 py-2 border rounded-md"
                 >
                   {userRole === "reviewer" && <option value="review">Review Comment</option>}

@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(transformedSubmissions)
 
   } catch (error) {
-    console.error("Error fetching section editor submissions:", error)
+    logger.error("Error fetching section editor submissions:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

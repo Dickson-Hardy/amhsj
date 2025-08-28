@@ -1,4 +1,5 @@
 // Database seeding script for medical journal content
+import { logger } from "@/lib/logger";
 import { db } from "../lib/db/index.js"
 import { users, articles } from "../lib/db/schema.js"
 import { eq } from "drizzle-orm"
@@ -70,15 +71,15 @@ const medicalArticles = [
 
 async function seedDatabase() {
   try {
-    console.log("🌱 Seeding AMHSJ Medical Research Database...")
+    logger.info("🌱 Seeding AMHSJ Medical Research Database...")
 
     // Insert researchers
-    console.log("👥 Adding medical researchers...")
+    logger.info("👥 Adding medical researchers...")
     const insertedUsers = await db.insert(users).values(medicalResearchers).returning()
-    console.log(`✅ Added ${insertedUsers.length} researchers`)
+    logger.info(`✅ Added ${insertedUsers.length} researchers`)
 
     // Insert medical articles
-    console.log("📄 Adding medical research articles...")
+    logger.info("📄 Adding medical research articles...")
     const articlesWithAuthors = medicalArticles.map((article, index) => ({
       ...article,
       authorId: insertedUsers[index % insertedUsers.length].id,
@@ -89,15 +90,15 @@ async function seedDatabase() {
     }))
 
     const insertedArticles = await db.insert(articles).values(articlesWithAuthors).returning()
-    console.log(`✅ Added ${insertedArticles.length} medical research articles`)
+    logger.info(`✅ Added ${insertedArticles.length} medical research articles`)
 
-    console.log("🎉 AMHSJ database seeded successfully!")
-    console.log("📊 Database now contains:")
-    console.log(`   - ${insertedUsers.length} medical researchers`)
-    console.log(`   - ${insertedArticles.length} research articles`)
-    console.log("   - Focus: 50% medical research content")
+    logger.info("🎉 AMHSJ database seeded successfully!")
+    logger.info("📊 Database now contains:")
+    logger.info(`   - ${insertedUsers.length} medical researchers`)
+    logger.info(`   - ${insertedArticles.length} research articles`)
+    logger.info("   - Focus: 50% medical research content")
   } catch (error) {
-    console.error("❌ Error seeding database:", error)
+    logger.error("❌ Error seeding database:", error)
     throw error
   }
 }

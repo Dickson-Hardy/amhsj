@@ -109,7 +109,7 @@ export async function POST(
     }
 
     // Update the assignment with editor response
-    const updateData: any = {
+    const updateData: unknown = {
       status: action === "accept" ? "accepted" : "declined",
       responseAt: new Date(),
       conflictDeclared,
@@ -160,12 +160,12 @@ export async function POST(
       )
 
       await sendEmail({
-        to: process.env.ADMIN_EMAIL || "admin@amjhs.org",
+        to: process.env.ADMIN_EMAIL || "process.env.EMAIL_FROMamjhs.org",
         subject: emailContent.subject,
         html: emailContent.html,
       })
     } catch (emailError) {
-      console.error("Failed to send notification email:", emailError)
+      logger.error("Failed to send notification email:", emailError)
       // Don't fail the response for email errors
     }
 
@@ -181,7 +181,7 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error("Error processing editor response:", error)
+    logger.error("Error processing editor response:", error)
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -246,7 +246,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error("Error retrieving assignment:", error)
+    logger.error("Error retrieving assignment:", error)
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }

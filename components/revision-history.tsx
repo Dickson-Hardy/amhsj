@@ -65,7 +65,7 @@ export default function RevisionHistory({ articleId, articleTitle }: RevisionHis
         setError("Failed to load revision history")
       }
     } catch (err) {
-      console.error("Error fetching revision history:", err)
+      logger.error("Error fetching revision history:", err)
       setError("Failed to load revision history")
     } finally {
       setLoading(false)

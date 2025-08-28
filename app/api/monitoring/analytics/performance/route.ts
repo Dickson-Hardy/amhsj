@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Performance metric tracked successfully"
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'POST /api/monitoring/analytics/performance' })
     
     return NextResponse.json({
@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: `Batch of ${metrics.length} metrics processed`
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { context: 'PUT /api/monitoring/analytics/performance' })
     
     return NextResponse.json({

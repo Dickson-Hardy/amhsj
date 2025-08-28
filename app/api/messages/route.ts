@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Conversation ID and content are required" }, { status: 400 })
       }
 
-      console.log("Sending message to conversation:", conversationId, "Content:", content.trim())
+      logger.info("Sending message to conversation:", conversationId, "Content:", content.trim())
 
       // Verify user has access to this conversation (simplified check for now)
       const conversation = await db
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
       }
 
-      console.log("Found conversation:", conversation[0])
+      logger.info("Found conversation:", conversation[0])
 
       // Insert the new message
       const [newMessage] = await db

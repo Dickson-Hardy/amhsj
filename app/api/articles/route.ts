@@ -1,12 +1,20 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { type NextRequest } from "next/server"
+import { z } from "zod"
+import * as crypto from "crypto"
+import { requireAuth, ROLES } from "@/lib/api-utils"
+import { 
+  createApiResponse, 
+  createErrorResponse, 
+  createPaginatedResponse,
+  validateRequest,
+  withErrorHandler
+} from "@/lib/api-utils"
+import { logger } from "@/lib/logger"
 import { db } from "@/lib/db"
 import { articles } from "@/lib/db/schema"
 import { eq, desc, ilike, and } from "drizzle-orm"
-import { z } from "zod"
-import { logError } from "@/lib/logger"
 
+// Validation schemas
 const createArticleSchema = z.object({
   title: z.string().min(10),
   abstract: z.string().min(100),
@@ -15,17 +23,43 @@ const createArticleSchema = z.object({
   authorId: z.string().uuid(),
 })
 
-export async function GET(request: NextRequest) {
+const querySchema = z.object({
+  search: z.string().optional(),
+  category: z.string().optional(),
+  year: z.string().optional(),
+  featured: z.string().optional(),
+  current: z.string().optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
+})
+
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
+    // Validate query parameters
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const category = searchParams.get("category")
-    const year = searchParams.get("year")
-    const featured = searchParams.get("featured") === "true"
-    const current = searchParams.get("current") === "true"
-    const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "10")
+    const queryData = validateRequest(querySchema, Object.fromEntries(searchParams))
+    
+    const search = queryData.search
+    const category = queryData.category
+    const year = queryData.year
+    const featured = queryData.featured === "true"
+    const current = queryData.current === "true"
+    const page = Number.parseInt(queryData.page || "1")
+    const limit = Number.parseInt(queryData.limit || "10")
     const offset = (page - 1) * limit
+
+    logger.api("Fetching articles", { 
+      requestId, 
+      search, 
+      category, 
+      year, 
+      featured, 
+      current, 
+      page, 
+      limit 
+    })
 
     let query = db.select().from(articles)
     const conditions = []
@@ -61,33 +95,62 @@ export async function GET(request: NextRequest) {
 
     const result = await query.orderBy(orderBy).limit(limit).offset(offset) as any[]
 
-    return NextResponse.json({ success: true, articles: result })
-  } catch (error) {
-    logError(error as Error, { context: "articles-fetch" })
-    return NextResponse.json({ success: false, error: "Failed to fetch articles" }, { status: 500 })
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      )
+    // Get total count for pagination
+    const totalQuery = db.select().from(articles)
+    if (conditions.length > 0) {
+      totalQuery.where(and(...conditions))
     }
+    const totalResults = await totalQuery
+
+    logger.api("Articles fetched successfully", { 
+      requestId, 
+      count: result.length, 
+      total: totalResults.length 
+    })
+
+    return createPaginatedResponse(
+      result,
+      page,
+      limit,
+      totalResults.length,
+      "Articles fetched successfully",
+      requestId
+    )
+  } catch (error) {
+    logger.error("Failed to fetch articles", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
+  }
+})
+
+export const POST = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
+  try {
+    // Require authentication for article creation
+    const session = await requireAuth(request, [ROLES.ADMIN])
+    
+    logger.api("Creating new article", { 
+      requestId, 
+      userId: session.user.id, 
+      userRole: session.user.role 
+    })
 
     const body = await request.json()
-    const validatedData = createArticleSchema.parse(body)
+    const validatedData = validateRequest(createArticleSchema, body)
 
-    // Ensure users can only submit articles for themselves (unless admin/editor)
-    if (validatedData.authorId !== session.user.id && 
-        !['admin', 'editor'].includes(session.user.role)) {
-      return NextResponse.json(
-        { success: false, error: "Can only submit articles for yourself" },
-        { status: 403 }
-      )
+    // Check if user can edit this article
+    if (article.author_id !== session.user.id && 
+        ![ROLES.ADMIN, ROLES.ASSOCIATE_EDITOR].includes(session.user.role as any)) {
+      logger.security("Unauthorized article creation attempt", {
+        requestId,
+        userId: session.user.id,
+        userRole: session.user.role,
+        attemptedAuthorId: validatedData.authorId
+      })
+      throw new Error("Can only submit articles for yourself")
     }
 
     const [newArticle] = await db
@@ -99,9 +162,22 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
-    return NextResponse.json({ success: true, article: newArticle })
+    logger.api("Article created successfully", { 
+      requestId, 
+      articleId: newArticle.id, 
+      authorId: validatedData.authorId 
+    })
+
+    return createApiResponse(
+      { article: newArticle },
+      "Article created successfully",
+      requestId
+    )
   } catch (error) {
-    logError(error as Error, { context: "article-creation" })
-    return NextResponse.json({ success: false, error: "Failed to create article" }, { status: 400 })
+    logger.error("Failed to create article", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
   }
-}
+})

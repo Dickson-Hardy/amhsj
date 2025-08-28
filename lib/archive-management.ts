@@ -300,7 +300,7 @@ export class ArchiveManagementService {
    * Get archive with advanced filtering and pagination
    */
   static async getArchive(filters: ArchiveFilters = {}): Promise<{
-    articles: any[]
+    articles: unknown[]
     pagination: { page: number; limit: number; total: number; totalPages: number }
     filters: { categories: string[]; years: number[]; volumes: string[]; issues: string[] }
   }> {

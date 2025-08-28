@@ -1,11 +1,12 @@
 // Script to create the first admin user
+import { logger } from "@/lib/logger";
 import { db } from "../lib/db/index.js"
 import { users } from "../lib/db/schema.js"
 import bcrypt from "bcryptjs"
 
 async function createAdmin() {
   try {
-    console.log("🔐 Creating AMHSJ Admin User...")
+    logger.info("🔐 Creating AMHSJ Admin User...")
 
     const hashedPassword = await bcrypt.hash("admin123!", 12)
 
@@ -22,14 +23,14 @@ async function createAdmin() {
       })
       .returning()
 
-    console.log("✅ Admin user created successfully!")
-    console.log("📧 Email: admin@amhsj.org")
-    console.log("🔑 Password: admin123!")
-    console.log("⚠️  Please change the password after first login")
+    logger.info("✅ Admin user created successfully!")
+    logger.info("📧 Email: admin@amhsj.org")
+    logger.info("🔑 Password: admin123!")
+    logger.info("⚠️  Please change the password after first login")
 
     return adminUser
   } catch (error) {
-    console.error("❌ Error creating admin user:", error)
+    logger.error("❌ Error creating admin user:", error)
     throw error
   }
 }

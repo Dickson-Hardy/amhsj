@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     try {
       // This would be implemented with proper email service
       // For now, we'll just log the assignment
-      console.log(`Review assignment created for submission ${submissionId} to reviewer ${reviewerId}`)
+      logger.error(`Review assignment created for submission ${submissionId} to reviewer ${reviewerId}`)
     } catch (emailError) {
       logError(emailError as Error, {
         operation: "assign_reviewer_email",
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error assigning reviewer:", error)
+    logger.error("Error assigning reviewer:", error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

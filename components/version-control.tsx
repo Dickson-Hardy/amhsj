@@ -36,7 +36,7 @@ export function VersionControl({ articleId, canEdit }: VersionControlProps) {
         setVersions(data.versions)
       }
     } catch (error) {
-      console.error("Error fetching versions:", error)
+      logger.error("Error fetching versions:", error)
     } finally {
       setLoading(false)
     }

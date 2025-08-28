@@ -7,10 +7,10 @@
 // Default stub implementations
 const defaultMonitoring = {
   captureException: (error, context) => {
-    console.error('[Monitoring Stub]', error, context);
+    logger.error('[Monitoring Stub]', error, context);
   },
   captureMessage: (message, level = 'info') => {
-    console.log(`[Monitoring Stub ${level}]`, message);
+    logger.info(`[Monitoring Stub ${level}]`, message);
   },
   setUser: () => {},
   trackPerformance: () => {},
@@ -33,7 +33,7 @@ export async function getMonitoring() {
       return monitoringModule;
     }
   } catch (err) {
-    console.error('Failed to load monitoring module:', err);
+    logger.error('Failed to load monitoring module:', err);
   }
   
   // Return stub implementation if not production or loading failed

@@ -117,7 +117,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
         })
       })
 
-      if (!response.ok) throw new Error('Failed to extract citations')
+      if (!response.ok) throw new AppError('Failed to extract citations')
 
       const data = await response.json()
       setCitations(data.citations)
@@ -127,7 +127,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
       setActiveTab('manage')
 
     } catch (error) {
-      console.error('Error extracting citations:', error)
+      logger.error('Error extracting citations:', error)
       toast.error('Failed to extract citations')
     } finally {
       setIsLoading(false)
@@ -151,7 +151,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
         })
       })
 
-      if (!response.ok) throw new Error('Failed to validate citations')
+      if (!response.ok) throw new AppError('Failed to validate citations')
 
       const data = await response.json()
       setValidations(data.validations)
@@ -160,7 +160,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
       toast.success(`Validated ${validCount}/${citations.length} citations`)
 
     } catch (error) {
-      console.error('Error validating citations:', error)
+      logger.error('Error validating citations:', error)
       toast.error('Failed to validate citations')
     } finally {
       setIsLoading(false)
@@ -184,7 +184,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
         })
       })
 
-      if (!response.ok) throw new Error('Failed to format citations')
+      if (!response.ok) throw new AppError('Failed to format citations')
 
       const data = await response.json()
       setBibliography(data.bibliography)
@@ -193,7 +193,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
       setActiveTab('bibliography')
 
     } catch (error) {
-      console.error('Error formatting citations:', error)
+      logger.error('Error formatting citations:', error)
       toast.error('Failed to format citations')
     } finally {
       setIsLoading(false)
@@ -217,7 +217,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
         })
       })
 
-      if (!response.ok) throw new Error('Failed to analyze citations')
+      if (!response.ok) throw new AppError('Failed to analyze citations')
 
       const data = await response.json()
       setAnalysis(data.analysis)
@@ -226,7 +226,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
       setActiveTab('analysis')
 
     } catch (error) {
-      console.error('Error analyzing citations:', error)
+      logger.error('Error analyzing citations:', error)
       toast.error('Failed to analyze citations')
     } finally {
       setIsLoading(false)
@@ -243,7 +243,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
     try {
       const response = await fetch(`/api/integrations/citations?action=search&query=${encodeURIComponent(searchQuery)}`)
       
-      if (!response.ok) throw new Error('Failed to search citations')
+      if (!response.ok) throw new AppError('Failed to search citations')
 
       const data = await response.json()
       setSearchResults(data.results)
@@ -251,7 +251,7 @@ export default function CitationManager({ initialText = '', onCitationsChange }:
       toast.success(`Found ${data.results.length} results`)
 
     } catch (error) {
-      console.error('Error searching citations:', error)
+      logger.error('Error searching citations:', error)
       toast.error('Failed to search citations')
     } finally {
       setIsLoading(false)

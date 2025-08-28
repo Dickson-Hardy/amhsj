@@ -92,7 +92,7 @@ export default function SubmissionRevisionPage() {
       if (submissionRes.ok) {
         const submissionData = await submissionRes.json()
         if (submissionData.success) {
-          const foundSubmission = submissionData.submissions.find((s: any) => s.id === params.id)
+          const foundSubmission = submissionData.submissions.find((s: unknown) => s.id === params.id)
           if (foundSubmission) {
             setSubmission(foundSubmission)
             
@@ -246,7 +246,7 @@ export default function SubmissionRevisionPage() {
           router.push(`/submissions/${params.id}`)
         }
       } else {
-        throw new Error('Failed to submit revision')
+        throw new AppError('Failed to submit revision')
       }
     } catch (error) {
       handleError(error, { 

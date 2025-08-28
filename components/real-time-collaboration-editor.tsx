@@ -249,7 +249,7 @@ export function RealTimeCollaborationEditor({
 
       const data = await response.json()
       if (!data.success) {
-        throw new Error(data.error || 'Failed to join session')
+        throw new AppError(data.error || 'Failed to join session')
       }
     } catch (error) {
       logger.error('Failed to join session:', error)
@@ -460,7 +460,7 @@ export function RealTimeCollaborationEditor({
       const data = await response.json()
       if (data.success) {
         // Note: This component would need toast hook integration
-        console.log('Version created successfully!')
+        logger.error('Version created successfully!')
       }
     } catch (error) {
       logger.error('Failed to create version:', error)

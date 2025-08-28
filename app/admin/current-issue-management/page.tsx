@@ -80,7 +80,7 @@ export default function CurrentIssueManagementPage() {
         })
       }
     } catch (error) {
-      console.error("Error fetching issues:", error)
+      logger.error("Error fetching issues:", error)
       toast({
         title: "Error",
         description: "Failed to fetch issues",
@@ -100,7 +100,7 @@ export default function CurrentIssueManagementPage() {
         setCurrentIssueArticles(data.articles || [])
       }
     } catch (error) {
-      console.error("Error fetching current issue:", error)
+      logger.error("Error fetching current issue:", error)
     } finally {
       setLoading(false)
     }
@@ -125,7 +125,7 @@ export default function CurrentIssueManagementPage() {
         fetchIssues()
         fetchCurrentIssue()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({
@@ -160,7 +160,7 @@ export default function CurrentIssueManagementPage() {
         fetchIssues()
         fetchCurrentIssue()
       } else {
-        throw new Error(data.error)
+        throw new AppError(data.error)
       }
     } catch (error) {
       toast({

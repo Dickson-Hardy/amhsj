@@ -23,8 +23,8 @@ export async function uploadFile(file: File, folder = "articles") {
       size: result.size,
     }
   } catch (error) {
-    console.error("ImageKit upload error:", error)
-    throw new Error("File upload failed")
+    logger.error("ImageKit upload error:", error)
+    throw new AppError("File upload failed")
   }
 }
 
@@ -32,8 +32,8 @@ export async function deleteFile(fileId: string) {
   try {
     await imagekit.deleteFile(fileId)
   } catch (error) {
-    console.error("ImageKit delete error:", error)
-    throw new Error("File deletion failed")
+    logger.error("ImageKit delete error:", error)
+    throw new AppError("File deletion failed")
   }
 }
 

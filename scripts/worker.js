@@ -30,9 +30,9 @@ async function initializeServices() {
     emailService = new EmailService();
     monitoringService = new ProductionMonitoringService();
     
-    console.log('✓ Worker services initialized');
+    logger.info('✓ Worker services initialized');
   } catch (error) {
-    console.error('✗ Failed to initialize worker services:', error);
+    logger.error('✗ Failed to initialize worker services:', error);
     process.exit(1);
   }
 }
@@ -44,7 +44,7 @@ async function initializeServices() {
 // Email Queue Processor
 async function processEmailQueue() {
   try {
-    console.log('Processing email queue...');
+    logger.info('Processing email queue...');
     
     // Get pending emails from database
     const pendingEmails = await db.query(`
@@ -71,9 +71,9 @@ async function processEmailQueue() {
           WHERE id = ?
         `, [email.id]);
         
-        console.log(`✓ Email sent to ${email.recipient}`);
+        logger.info(`✓ Email sent to ${email.recipient}`);
       } catch (error) {
-        console.error(`✗ Failed to send email to ${email.recipient}:`, error);
+        logger.error(`✗ Failed to send email to ${email.recipient}:`, error);
         
         // Mark as failed and increment retry count
         await db.query(`
@@ -85,14 +85,14 @@ async function processEmailQueue() {
       }
     }
   } catch (error) {
-    console.error('Email queue processing error:', error);
+    logger.error('Email queue processing error:', error);
   }
 }
 
 // Database Cleanup
 async function cleanupDatabase() {
   try {
-    console.log('Running database cleanup...');
+    logger.info('Running database cleanup...');
     
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -123,16 +123,16 @@ async function cleanupDatabase() {
       AND updated_at < ?
     `, [thirtyDaysAgo]);
     
-    console.log('✓ Database cleanup completed');
+    logger.info('✓ Database cleanup completed');
   } catch (error) {
-    console.error('Database cleanup error:', error);
+    logger.error('Database cleanup error:', error);
   }
 }
 
 // Report Generation
 async function generateReports() {
   try {
-    console.log('Generating reports...');
+    logger.info('Generating reports...');
     
     const today = new Date();
     const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
@@ -170,21 +170,21 @@ async function generateReports() {
     await fs.mkdir(path.dirname(reportPath), { recursive: true });
     await fs.writeFile(reportPath, JSON.stringify(reportData, null, 2));
     
-    console.log(`✓ Daily report generated: ${reportPath}`);
+    logger.info(`✓ Daily report generated: ${reportPath}`);
     
     // Send report to monitoring service
     if (monitoringService) {
       await monitoringService.trackEvent('daily_report_generated', reportData);
     }
   } catch (error) {
-    console.error('Report generation error:', error);
+    logger.error('Report generation error:', error);
   }
 }
 
 // System Health Check
 async function performHealthCheck() {
   try {
-    console.log('Performing health check...');
+    logger.info('Performing health check...');
     
     const healthData = {
       timestamp: new Date().toISOString(),
@@ -204,7 +204,7 @@ async function performHealthCheck() {
       if (process.env.UPSTASH_REDIS_REST_URL) {
         const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/ping`, {
           headers: {
-            'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+            'Authorization': `process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "process.env.AUTH_TOKEN_PREFIX || "Bearer """${process.env.UPSTASH_REDIS_REST_TOKEN}`
           }
         });
         
@@ -252,16 +252,16 @@ async function performHealthCheck() {
       await monitoringService.trackEvent('health_check_completed', healthData);
     }
     
-    console.log('✓ Health check completed');
+    logger.info('✓ Health check completed');
   } catch (error) {
-    console.error('Health check error:', error);
+    logger.error('Health check error:', error);
   }
 }
 
 // Log Rotation
 async function rotateLogFiles() {
   try {
-    console.log('Rotating log files...');
+    logger.info('Rotating log files...');
     
     const logsDir = path.join(process.cwd(), 'logs');
     const subdirs = ['app', 'access', 'error', 'security'];
@@ -285,16 +285,16 @@ async function rotateLogFiles() {
               await fs.rename(filePath, newPath);
               await fs.writeFile(filePath, ''); // Create new empty log file
               
-              console.log(`✓ Rotated log file: ${file}`);
+              logger.info(`✓ Rotated log file: ${file}`);
             }
           }
         }
       } catch (error) {
-        console.error(`Error rotating logs in ${subdir}:`, error);
+        logger.error(`Error rotating logs in ${subdir}:`, error);
       }
     }
   } catch (error) {
-    console.error('Log rotation error:', error);
+    logger.error('Log rotation error:', error);
   }
 }
 
@@ -302,7 +302,7 @@ async function rotateLogFiles() {
  * Cron Job Scheduler
  */
 function setupCronJobs() {
-  console.log('Setting up cron jobs...');
+  logger.info('Setting up cron jobs...');
   
   // Process email queue every minute
   cron.schedule('* * * * *', processEmailQueue);
@@ -319,7 +319,7 @@ function setupCronJobs() {
   // Log rotation every hour
   cron.schedule('0 * * * *', rotateLogFiles);
   
-  console.log('✓ Cron jobs scheduled');
+  logger.info('✓ Cron jobs scheduled');
 }
 
 /**
@@ -345,12 +345,12 @@ if (parentPort) {
           await rotateLogFiles();
           break;
         default:
-          console.warn('Unknown message type:', message.type);
+          logger.warn('Unknown message type:', message.type);
       }
       
       parentPort.postMessage({ success: true, type: message.type });
     } catch (error) {
-      console.error('Worker task error:', error);
+      logger.error('Worker task error:', error);
       parentPort.postMessage({ success: false, type: message.type, error: error.message });
     }
   });
@@ -360,29 +360,29 @@ if (parentPort) {
  * Main Worker Function
  */
 async function main() {
-  console.log('🚀 AMHSJ Background Worker starting...');
+  logger.info('🚀 AMHSJ Background Worker starting...');
   
   try {
     await initializeServices();
     setupCronJobs();
     
-    console.log('✓ Background worker is running');
+    logger.info('✓ Background worker is running');
     
     // Keep the worker alive
     if (!parentPort) {
       // Running as standalone process
       process.on('SIGINT', () => {
-        console.log('📴 Background worker shutting down...');
+        logger.info('📴 Background worker shutting down...');
         process.exit(0);
       });
       
       process.on('SIGTERM', () => {
-        console.log('📴 Background worker shutting down...');
+        logger.info('📴 Background worker shutting down...');
         process.exit(0);
       });
     }
   } catch (error) {
-    console.error('✗ Worker initialization failed:', error);
+    logger.error('✗ Worker initialization failed:', error);
     process.exit(1);
   }
 }

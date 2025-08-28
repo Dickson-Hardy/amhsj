@@ -1,3 +1,6 @@
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
 import { describe, it, expect, beforeEach } from 'vitest'
 import { RateLimiter } from '../lib/rate-limit'
 import { NextRequest } from 'next/server'
@@ -14,7 +17,7 @@ describe('Rate Limiting Tests', () => {
 
   describe('Rate Limiter', () => {
     it('should allow requests within limit', async () => {
-      const req = new NextRequest('http://localhost:3000/api/test', {
+      const req = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test', {
         headers: { 'x-forwarded-for': '192.168.1.1' }
       })
 
@@ -25,7 +28,7 @@ describe('Rate Limiting Tests', () => {
     })
 
     it('should block requests when limit exceeded', async () => {
-      const req = new NextRequest('http://localhost:3000/api/test', {
+      const req = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test', {
         headers: { 'x-forwarded-for': '192.168.1.2' }
       })
 
@@ -48,7 +51,7 @@ describe('Rate Limiting Tests', () => {
         maxRequests: 2
       })
 
-      const req = new NextRequest('http://localhost:3000/api/test', {
+      const req = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test', {
         headers: { 'x-forwarded-for': '192.168.1.3' }
       })
 
@@ -75,11 +78,11 @@ describe('Rate Limiting Tests', () => {
         keyGenerator: (req) => req.headers.get('user-id') || 'anonymous'
       })
 
-      const req1 = new NextRequest('http://localhost:3000/api/test', {
+      const req1 = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test', {
         headers: { 'user-id': 'user123' }
       })
 
-      const req2 = new NextRequest('http://localhost:3000/api/test', {
+      const req2 = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test', {
         headers: { 'user-id': 'user456' }
       })
 
@@ -96,7 +99,7 @@ describe('Rate Limiting Tests', () => {
 
   describe('IP Address Extraction', () => {
     it('should extract IP from x-forwarded-for header', async () => {
-      const req = new NextRequest('http://localhost:3000/api/test', {
+      const req = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test', {
         headers: { 'x-forwarded-for': '203.0.113.1, 198.51.100.1' }
       })
 
@@ -105,7 +108,7 @@ describe('Rate Limiting Tests', () => {
     })
 
     it('should handle missing IP gracefully', async () => {
-      const req = new NextRequest('http://localhost:3000/api/test')
+      const req = new NextRequest('http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"""/api/test')
 
       const result = await rateLimiter.isAllowed(req)
       expect(result.allowed).toBe(true)

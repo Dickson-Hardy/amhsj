@@ -31,7 +31,7 @@ function SubmitPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState("")
   const [profileLoading, setProfileLoading] = useState(true)
-  const [profileData, setProfileData] = useState<any>(null)
+  const [profileData, setProfileData] = useState<unknown>(null)
   const [profileCompleteness, setProfileCompleteness] = useState(0)
   const [uploadedFiles, setUploadedFiles] = useState<{[key: string]: File[]}>({
     manuscript: [],
@@ -137,7 +137,9 @@ function SubmitPageContent() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch profile data:', error)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch profile data:', error)
+        }
       } finally {
         setProfileLoading(false)
       }
@@ -326,7 +328,9 @@ function SubmitPageContent() {
         }
       }
     } catch (error) {
-      console.error('Failed to check eligibility:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to check eligibility:', error)
+      }
       toast({
         variant: "destructive",
         title: "Submission Error",
@@ -412,7 +416,9 @@ function SubmitPageContent() {
         })
       }
     } catch (error) {
-      console.error('Submission error:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Submission error:', error)
+      }
       toast({
         variant: "destructive",
         title: "Submission Error",
@@ -471,7 +477,7 @@ function SubmitPageContent() {
   }
 
   const steps = [
-    { number: 1, title: "Article Information", description: "Basic details about your submission" },
+    { number: 1, title: "Article Information", description: "process.env.AUTH_TOKEN_PREFIX + ' 'details about your submission" },
     { number: 2, title: "Authors & Affiliations", description: "Author information and institutional details" },
     { number: 3, title: "Recommended Reviewers", description: "Suggest qualified reviewers for your manuscript" },
     { number: 4, title: "Files & Documents", description: "Upload your manuscript and supporting files" },

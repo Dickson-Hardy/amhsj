@@ -357,7 +357,7 @@ async function handleGetVersions(sessionId: string, userId: string) {
 }
 
 // POST handlers
-async function handleCreateSession(userId: string, body: any) {
+async function handleCreateSession(userId: string, body: unknown) {
   try {
     const validatedData = CreateSessionSchema.parse(body)
 
@@ -403,7 +403,7 @@ async function handleCreateSession(userId: string, body: any) {
   }
 }
 
-async function handleJoinSession(userId: string, body: any) {
+async function handleJoinSession(userId: string, body: unknown) {
   try {
     const { sessionId, permissions } = body
 
@@ -433,7 +433,7 @@ async function handleJoinSession(userId: string, body: any) {
   }
 }
 
-async function handleApplyEdit(userId: string, body: any) {
+async function handleApplyEdit(userId: string, body: unknown) {
   try {
     const validatedData = ApplyEditSchema.parse(body)
 
@@ -465,7 +465,7 @@ async function handleApplyEdit(userId: string, body: any) {
   }
 }
 
-async function handleAddComment(userId: string, body: any) {
+async function handleAddComment(userId: string, body: unknown) {
   try {
     const validatedData = AddCommentSchema.parse(body)
 
@@ -499,7 +499,7 @@ async function handleAddComment(userId: string, body: any) {
   }
 }
 
-async function handleUpdatePresence(userId: string, body: any) {
+async function handleUpdatePresence(userId: string, body: unknown) {
   try {
     const { sessionId, cursor, status = "active" } = body
 
@@ -530,7 +530,7 @@ async function handleUpdatePresence(userId: string, body: any) {
   }
 }
 
-async function handleLeaveSession(userId: string, body: any) {
+async function handleLeaveSession(userId: string, body: unknown) {
   try {
     const { sessionId } = body
 
@@ -556,7 +556,7 @@ async function handleLeaveSession(userId: string, body: any) {
   }
 }
 
-async function handleCreateVersion(userId: string, body: any) {
+async function handleCreateVersion(userId: string, body: unknown) {
   try {
     const { sessionId, description } = body
 

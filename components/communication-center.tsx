@@ -73,23 +73,23 @@ export default function CommunicationCenter() {
     async function fetchMessages() {
       if (!session?.user?.id) return
 
-      console.log("Fetching conversations for user:", session.user.id)
+      logger.info("Fetching conversations for user:", session.user.id)
 
       try {
         const conversationsRes = await fetch(`/api/messages/conversations`)
-        console.log("Conversations response status:", conversationsRes.status)
+        logger.api("Conversations response status:", conversationsRes.status)
         
         const conversationsData = await conversationsRes.json()
-        console.log("Conversations data:", conversationsData)
+        logger.info("Conversations data:", conversationsData)
 
         if (conversationsData.success) {
           setConversations(conversationsData.conversations)
-          console.log("Set conversations:", conversationsData.conversations.length)
+          logger.error("Set conversations:", conversationsData.conversations.length)
         } else {
-          console.error("Failed to fetch conversations:", conversationsData.error)
+          logger.error("Failed to fetch conversations:", conversationsData.error)
         }
       } catch (error) {
-        console.error("Error fetching conversations:", error)
+        logger.error("Error fetching conversations:", error)
       } finally {
         setLoading(false)
       }
@@ -114,7 +114,7 @@ export default function CommunicationCenter() {
           setMessages(data.messages)
         }
       } catch (error) {
-        console.error("Error fetching conversation messages:", error)
+        logger.error("Error fetching conversation messages:", error)
       }
     }
 
@@ -123,11 +123,11 @@ export default function CommunicationCenter() {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || sendingMessage) {
-      console.log("Cannot send message: missing content, conversation, or already sending")
+      logger.info("Cannot send message: missing content, conversation, or already sending")
       return
     }
 
-    console.log("Sending message:", { conversationId: selectedConversation, content: newMessage.trim() })
+    logger.info("Sending message:", { conversationId: selectedConversation, content: newMessage.trim() })
     
     setSendingMessage(true)
 
@@ -143,13 +143,13 @@ export default function CommunicationCenter() {
         }),
       })
 
-      console.log("Response status:", response.status)
+      logger.info("Response status:", response.status)
       
       const data = await response.json()
-      console.log("Response data:", data)
+      logger.info("Response data:", data)
 
       if (response.ok && data.success) {
-        console.log("Message sent successfully!")
+        logger.info("Message sent successfully!")
         setNewMessage("")
         
         // Refresh messages
@@ -159,10 +159,10 @@ export default function CommunicationCenter() {
           
           if (updatedData.success) {
             setMessages(updatedData.messages)
-            console.log("Messages refreshed")
+            logger.error("Messages refreshed")
           }
         } catch (refreshError) {
-          console.error("Error refreshing messages:", refreshError)
+          logger.error("Error refreshing messages:", refreshError)
         }
         
         // Refresh conversations list
@@ -172,17 +172,17 @@ export default function CommunicationCenter() {
           
           if (conversationsData.success) {
             setConversations(conversationsData.conversations)
-            console.log("Conversations refreshed")
+            logger.error("Conversations refreshed")
           }
         } catch (refreshError) {
-          console.error("Error refreshing conversations:", refreshError)
+          logger.error("Error refreshing conversations:", refreshError)
         }
       } else {
-        console.error("Failed to send message:", data.error || "Unknown error")
+        logger.error("Failed to send message:", data.error || "Unknown error")
         alert(`Failed to send message: ${data.error || "Unknown error"}`)
       }
     } catch (error) {
-      console.error("Error sending message:", error)
+      logger.error("Error sending message:", error)
       alert("Error sending message. Please check your connection and try again.")
     } finally {
       setSendingMessage(false)
@@ -365,7 +365,7 @@ export default function CommunicationCenter() {
                   <Textarea
                     value={newMessage}
                     onChange={(e) => {
-                      console.log("Message input changed:", e.target.value);
+                      logger.info("Message input changed:", e.target.value);
                       setNewMessage(e.target.value);
                     }}
                     placeholder="Type your message..."
@@ -385,14 +385,14 @@ export default function CommunicationCenter() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => console.log("Test button clicked!")}
+                        onClick={() => logger.info("Test button clicked!")}
                       >
                         Test Click
                       </Button>
                     </div>
                     <Button 
                       onClick={() => {
-                        console.log("Button clicked!"); // Debug
+                        logger.info("Button clicked!"); // Debug
                         handleSendMessage();
                       }} 
                       disabled={!newMessage.trim() || !selectedConversation || sendingMessage}

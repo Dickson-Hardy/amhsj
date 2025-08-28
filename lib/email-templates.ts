@@ -13,7 +13,7 @@ function getEmailLogo(size: 'small' | 'medium' | 'large' = 'medium') {
   }
   
   const { width, height } = sizes[size]
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL'
   
   return {
     url: `${baseUrl}/logo-amhsj.png`,
@@ -1629,7 +1629,7 @@ export const emailTemplates = {
           </div>
           <div class="footer">
             <p>&copy; 2024 American Medical Journal for Health Sciences. All rights reserved.</p>
-            <p>For guidelines questions: <a href="mailto:editorial@amhsj.org">editorial@amhsj.org</a></p>
+            <p>For guidelines questions: <a href="process.env.EMAIL_FROMeditorial@amhsj.org">editorial@amhsj.org</a></p>
             <p>Rejection processed on ${new Date().toLocaleString()}</p>
           </div>
         </div>

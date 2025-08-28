@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const position = searchParams.get("position")
     const activeOnly = searchParams.get("active") === "true"
 
-    let whereConditions: any[] = []
+    let whereConditions: unknown[] = []
 
     if (position) {
       whereConditions.push(eq(advertisements.position, position))
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       advertisements: ads,
     })
   } catch (error) {
-    console.error("Error fetching advertisements:", error)
+    logger.error("Error fetching advertisements:", error)
     return NextResponse.json(
       { error: "Failed to fetch advertisements" },
       { status: 500 }
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user || (session.user as any).role !== "admin") {
+    if (!session?.user || (session.user as unknown).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       position,
       isActive: true,
       expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      createdBy: (session.user as any).id,
+      createdBy: (session.user as unknown).id,
     }).returning()
 
     return NextResponse.json({
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       advertisement: newAd,
     })
   } catch (error) {
-    console.error("Error creating advertisement:", error)
+    logger.error("Error creating advertisement:", error)
     return NextResponse.json(
       { error: "Failed to create advertisement" },
       { status: 500 }
@@ -93,7 +93,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user || (session.user as any).role !== "admin") {
+    if (!session?.user || (session.user as unknown).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -107,7 +107,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const updateData: any = { updatedAt: new Date() }
+    const updateData: unknown = { updatedAt: new Date() }
     
     if (title !== undefined) updateData.title = title
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl
@@ -133,7 +133,7 @@ export async function PUT(request: NextRequest) {
       advertisement: updatedAd,
     })
   } catch (error) {
-    console.error("Error updating advertisement:", error)
+    logger.error("Error updating advertisement:", error)
     return NextResponse.json(
       { error: "Failed to update advertisement" },
       { status: 500 }
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user || (session.user as any).role !== "admin") {
+    if (!session?.user || (session.user as unknown).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -176,7 +176,7 @@ export async function DELETE(request: NextRequest) {
       message: "Advertisement deleted successfully",
     })
   } catch (error) {
-    console.error("Error deleting advertisement:", error)
+    logger.error("Error deleting advertisement:", error)
     return NextResponse.json(
       { error: "Failed to delete advertisement" },
       { status: 500 }

@@ -54,7 +54,7 @@ export async function GET() {
 
     return NextResponse.json(editorsWithWorkload)
   } catch (error) {
-    console.error('Error fetching editor workloads:', error)
+    logger.error('Error fetching editor workloads:', error)
     return NextResponse.json(
       { error: 'Failed to fetch editor workloads' },
       { status: 500 }

@@ -3,12 +3,20 @@
  * Enterprise monitoring endpoints for system health and security
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest } from 'next/server'
+import { z } from 'zod'
+import * as crypto from "crypto"
+import {
+  requireAuth,
+  createApiResponse,
+  createErrorResponse,
+  validateRequest,
+  withErrorHandler,
+  ROLES
+} from "@/lib/api-utils"
+import { logger } from "@/lib/logger"
 import { db } from "@/lib/db"
 import { sql } from "drizzle-orm"
-import { z } from 'zod'
 
 // Input validation schemas
 const MonitoringQuerySchema = z.object({
@@ -17,101 +25,119 @@ const MonitoringQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(1000).optional().default(100),
 })
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || !['admin', 'editor'].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      )
-    }
+    // Require admin or editor permissions
+    const { user } = await requireAuth(req, [ROLES.ADMIN, ROLES.ASSOCIATE_EDITOR])
+    
+    logger.api("Monitoring API GET request", { 
+      requestId, 
+      userId: user.id, 
+      userRole: user.role 
+    })
 
     const { searchParams } = new URL(req.url)
     const endpoint = searchParams.get('endpoint')
 
+    let result
     switch (endpoint) {
       case 'dashboard':
-        return handleDashboardRequest(req)
+        result = await handleDashboardRequest(req, requestId)
+        break
       
       case 'performance':
-        return handlePerformanceRequest(req)
+        result = await handlePerformanceRequest(req, requestId)
+        break
       
       case 'system-health':
-        return handleSystemHealthRequest(req)
+        result = await handleSystemHealthRequest(req, requestId)
+        break
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid endpoint' },
-          { status: 400 }
-        )
+        logger.api("Invalid monitoring endpoint requested", { requestId, endpoint })
+        throw new Error('Invalid endpoint')
     }
-  } catch (error) {
-    console.error('Monitoring API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
 
-export async function POST(req: NextRequest) {
+    logger.api("Monitoring API request completed", { requestId, endpoint })
+    return result
+  } catch (error) {
+    logger.error("Monitoring API error", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
+  }
+})
+
+export const POST = withErrorHandler(async (req: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+    // Require authentication for POST operations
+    const { user } = await requireAuth(req, [ROLES.ADMIN, ROLES.ASSOCIATE_EDITOR, ROLES.AUTHOR])
+    
+    logger.api("Monitoring API POST request", { 
+      requestId, 
+      userId: user.id, 
+      userRole: user.role 
+    })
 
     const { searchParams } = new URL(req.url)
     const endpoint = searchParams.get('endpoint')
     const body = await req.json()
 
+    let result
     switch (endpoint) {
       case 'log-event':
-        return handleEventLogging(req, body)
+        result = await handleEventLogging(req, body)
+        break
       
       case 'resolve-alert':
-        return handleAlertResolution(req, body)
+        result = await handleAlertResolution(req, body)
+        break
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid endpoint' },
-          { status: 400 }
-        )
+        logger.api("Invalid monitoring POST endpoint requested", { requestId, endpoint })
+        throw new Error('Invalid endpoint')
     }
+
+    logger.api("Monitoring API POST request completed", { requestId, endpoint })
+    return result
   } catch (error) {
-    console.error('Monitoring API POST error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    logger.error("Monitoring API POST error", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
   }
-}
+})
 
 // Dashboard data handler
-async function handleDashboardRequest(req: NextRequest) {
+async function handleDashboardRequest(req: NextRequest, requestId: string) {
   try {
     const { searchParams } = new URL(req.url)
     const query = MonitoringQuerySchema.parse(Object.fromEntries(searchParams))
 
     const dashboardData = await getDashboardData(query.timeframe)
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    logger.api("Dashboard data retrieved", { requestId, timeframe: query.timeframe })
+
+    return createApiResponse(
+      {
         timestamp: Date.now(),
         ...dashboardData
-      }
-    })
-  } catch (error) {
-    console.error('Dashboard request error:', error)
-    return NextResponse.json(
-      { error: 'Failed to load dashboard data' },
-      { status: 500 }
+      },
+      "Dashboard data retrieved successfully",
+      requestId
     )
+  } catch (error) {
+    logger.error("Dashboard request error", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw new Error('Failed to load dashboard data')
   }
 }
 
@@ -131,7 +157,10 @@ async function handlePerformanceRequest(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Performance request error:', error)
+    logger.error('Performance request error', { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return NextResponse.json(
       { error: 'Failed to load performance data' },
       { status: 500 }
@@ -149,7 +178,10 @@ async function handleSystemHealthRequest(req: NextRequest) {
       data: healthData
     })
   } catch (error) {
-    console.error('System health request error:', error)
+    logger.error('System health request error', { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return NextResponse.json(
       { error: 'Failed to load system health data' },
       { status: 500 }
@@ -174,7 +206,10 @@ async function handleEventLogging(req: NextRequest, body: any) {
       message: 'Event logged successfully',
     })
   } catch (error) {
-    console.error('Event logging error:', error)
+    logger.error('Event logging error', { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return NextResponse.json(
       { error: 'Failed to log event' },
       { status: 500 }
@@ -199,7 +234,9 @@ async function handleAlertResolution(req: NextRequest, body: any) {
       message: 'Alert resolved successfully',
     })
   } catch (error) {
-    console.error('Alert resolution error:', error)
+    logger.error('Alert resolution error', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return NextResponse.json(
       { error: 'Failed to resolve alert' },
       { status: 500 }
@@ -242,7 +279,9 @@ async function getDashboardData(timeframe: string) {
       }
     }
   } catch (error) {
-    console.error('Error getting dashboard data:', error)
+    logger.error('Error getting dashboard data', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return {
       overview: {
         systemHealth: 'healthy',
@@ -302,7 +341,9 @@ async function getPerformanceData(timeframe: string) {
       }
     }
   } catch (error) {
-    console.error('Error getting performance data:', error)
+    logger.error('Error getting performance data', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return {
       pageViews: [],
       errors: [],

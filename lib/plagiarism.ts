@@ -70,7 +70,7 @@ export class PlagiarismDetectionService {
       // Get article content
       const article = await this.getArticleContent(articleId)
       if (!article || !article.content) {
-        throw new Error(`Article ${articleId} not found or has no content`)
+        throw new NotFoundError(`Article ${articleId} not found or has no content`)
       }
 
       // Initialize report
@@ -144,7 +144,7 @@ export class PlagiarismDetectionService {
 
     } catch (error) {
       logError(error as Error, { context: 'checkPlagiarism', articleId })
-      throw new Error('Failed to complete plagiarism check')
+      throw new AppError('Failed to complete plagiarism check')
     }
   }
 
@@ -161,7 +161,7 @@ export class PlagiarismDetectionService {
       const response = await fetch(`${TURNITIN_API_URL}/similarity`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${TURNITIN_API_KEY}`,
+          'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${TURNITIN_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -172,7 +172,7 @@ export class PlagiarismDetectionService {
       })
 
       if (!response.ok) {
-        throw new Error(`Turnitin API error: ${response.statusText}`)
+        throw new AppError(`Turnitin API error: ${response.statusText}`)
       }
 
       const data = await response.json()
@@ -209,7 +209,7 @@ export class PlagiarismDetectionService {
             const source: PlagiarismSource = {
               sourceId: result.DOI || result.URL || `crossref-${Date.now()}`,
               title: result.title?.[0] || 'Unknown Title',
-              authors: result.author?.map((a: any) => `${a.given} ${a.family}`) || [],
+              authors: result.author?.map((a: unknown) => `${a.given} ${a.family}`) || [],
               doi: result.DOI,
               url: result.URL,
               similarity,
@@ -330,7 +330,7 @@ export class PlagiarismDetectionService {
 
     } catch (error) {
       logError(error as Error, { context: 'analyzeSimilarity' })
-      throw new Error('Failed to analyze text similarity')
+      throw new AppError('Failed to analyze text similarity')
     }
   }
 
@@ -369,11 +369,11 @@ export class PlagiarismDetectionService {
     try {
       const encodedQuery = encodeURIComponent(query.substring(0, 200)) // Limit query length
       const response = await fetch(
-        `${CROSSREF_API_URL}/works?query=${encodedQuery}&rows=5&mailto=admin@yourjournal.com`
+        `${CROSSREF_API_URL}/works?query=${encodedQuery}&rows=5&mailto=process.env.EMAIL_FROMyourjournal.com`
       )
 
       if (!response.ok) {
-        throw new Error(`CrossRef API error: ${response.statusText}`)
+        throw new AppError(`CrossRef API error: ${response.statusText}`)
       }
 
       const data = await response.json()
@@ -522,11 +522,11 @@ export class PlagiarismDetectionService {
     return Math.min(100, (totalMatchedChars / content.length) * 100)
   }
 
-  private static transformTurnitinResponse(data: any): Partial<PlagiarismReport> {
+  private static transformTurnitinResponse(data: unknown): Partial<PlagiarismReport> {
     // Transform Turnitin API response to our format
     // This would depend on actual Turnitin API structure
     return {
-      sources: data.sources?.map((source: any) => ({
+      sources: data.sources?.map((source: unknown) => ({
         sourceId: source.id,
         title: source.title,
         authors: source.authors || [],

@@ -44,7 +44,7 @@ export interface DOIRegistrationResult {
 
 export interface DOIVerificationResult {
   exists: boolean
-  metadata?: any
+  metadata?: unknown
   registeredAt?: string
   citationCount?: number
   error?: string
@@ -120,7 +120,7 @@ export class ProductionDOIService {
           timestamp: new Date()
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { doi, context: 'registerWithCrossRef' })
       return {
         success: false,
@@ -137,7 +137,7 @@ export class ProductionDOIService {
     try {
       const response = await fetch(`${CROSSREF_API_URL}/works/${doi}`, {
         headers: {
-          'User-Agent': 'AMHSJ/1.0 (https://amhsj.org; mailto:admin@amhsj.org)',
+          'User-Agent': 'AMHSJ/1.0 (https://amhsj.org; process.env.EMAIL_FROMprocess.env.EMAIL_FROMamhsj.org)',
           'Accept': 'application/json'
         }
       })
@@ -150,7 +150,7 @@ export class ProductionDOIService {
           exists: true,
           metadata: {
             title: work.title?.[0] || '',
-            authors: work.author?.map((author: any) => ({
+            authors: work.author?.map((author: unknown) => ({
               given: author.given || '',
               family: author.family || '',
               orcid: author.ORCID || undefined
@@ -179,7 +179,7 @@ export class ProductionDOIService {
           error: `CrossRef API error: ${response.statusText}`
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { doi, context: 'verifyDOI' })
       return {
         exists: false,
@@ -201,7 +201,7 @@ export class ProductionDOIService {
       // For now, we'll return a placeholder implementation
       const response = await fetch(`${CROSSREF_DEPOSIT_URL}/status/${batchId}`, {
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${process.env.CROSSREF_USERNAME}:${process.env.CROSSREF_PASSWORD}`).toString('base64')}`,
+          'Authorization': `process.env.AUTH_TOKEN_PREFIX + ' '${Buffer.from(`${process.env.CROSSREF_USERNAME}:${process.env.CROSSREF_PASSWORD}`).toString('base64')}`,
           'Content-Type': 'application/json'
         }
       })
@@ -219,7 +219,7 @@ export class ProductionDOIService {
           message: `Status check failed: ${response.statusText}`
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { batchId, context: 'checkRegistrationStatus' })
       return {
         status: 'failed',
@@ -260,7 +260,7 @@ export class ProductionDOIService {
 
       const response = await fetch(`${CROSSREF_API_URL}/works?${searchParams.toString()}`, {
         headers: {
-          'User-Agent': 'AMHSJ/1.0 (https://amhsj.org; mailto:admin@amhsj.org)',
+          'User-Agent': 'AMHSJ/1.0 (https://amhsj.org; process.env.EMAIL_FROMprocess.env.EMAIL_FROMamhsj.org)',
           'Accept': 'application/json'
         }
       })
@@ -270,10 +270,10 @@ export class ProductionDOIService {
         
         return {
           total: data.message['total-results'] || 0,
-          results: data.message.items?.map((work: any) => ({
+          results: data.message.items?.map((work: unknown) => ({
             doi: work.DOI,
             title: work.title?.[0] || '',
-            authors: work.author?.map((author: any) => 
+            authors: work.author?.map((author: unknown) => 
               `${author.given || ''} ${author.family || ''}`.trim()
             ) || [],
             journal: work['container-title']?.[0] || '',
@@ -283,9 +283,9 @@ export class ProductionDOIService {
           })) || []
         }
       } else {
-        throw new Error(`Search failed: ${response.statusText}`)
+        throw new AppError(`Search failed: ${response.statusText}`)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError(error, { query, context: 'searchDOIs' })
       return { total: 0, results: [] }
     }
@@ -340,7 +340,7 @@ export class ProductionDOIService {
     <timestamp>${timestamp}</timestamp>
     <depositor>
       <depositor_name>AMHSJ Editorial Team</depositor_name>
-      <email_address>admin@amhsj.org</email_address>
+      <email_address>process.env.EMAIL_FROMamhsj.org</email_address>
     </depositor>
     <registrant>Advancing Modern Hardware & Software Journal</registrant>
   </head>
@@ -427,7 +427,7 @@ export class ProductionDOIService {
           error: responseText || 'Unknown CrossRef error'
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error.message

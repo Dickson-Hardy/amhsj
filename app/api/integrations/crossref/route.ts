@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       articleData = {
         articleId: article.id,
         title: article.title,
-        authors: article.authors.map((author: any) => ({
+        authors: article.authors.map((author: unknown) => ({
           given: author.firstName,
           family: author.lastName,
           orcid: author.orcid,

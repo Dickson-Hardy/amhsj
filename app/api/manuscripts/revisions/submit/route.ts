@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logError(error, { endpoint: '/api/manuscripts/revisions/submit' })
     return NextResponse.json({
       success: false,

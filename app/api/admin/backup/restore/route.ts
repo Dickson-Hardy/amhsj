@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         restoreResult = await restoreFull(backupFile)
         break
       default:
-        throw new Error('Invalid restore type')
+        throw new ValidationError('Invalid restore type')
     }
 
     // Log restore completion
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Restore failed:', error)
+    logger.error('Restore failed:', error)
     
     // Log restore failure
     await db.insert(adminLogs).values({
@@ -82,7 +82,7 @@ async function restoreDatabase(backupFile: string) {
   try {
     await fs.access(backupPath)
   } catch {
-    throw new Error('Backup file not found')
+    throw new NotFoundError('Backup file not found')
   }
 
   const dbUrl = process.env.DATABASE_URL || ''
@@ -100,7 +100,7 @@ async function restoreDatabase(backupFile: string) {
     await execAsync(command)
     return { type: 'database', status: 'restored', file: backupFile }
   } catch (error) {
-    throw new Error(`Database restore failed: ${error}`)
+    throw new AppError(`Database restore failed: ${error}`)
   }
 }
 
@@ -111,7 +111,7 @@ async function restoreFiles(backupFile: string) {
   try {
     await fs.access(backupPath)
   } catch {
-    throw new Error('Backup file not found')
+    throw new NotFoundError('Backup file not found')
   }
 
   // Extract files to their original locations
@@ -123,14 +123,14 @@ async function restoreFiles(backupFile: string) {
   } else if (backupFile.endsWith('.tar')) {
     command = `tar -xf "${backupPath}" -C "${extractPath}"`
   } else {
-    throw new Error('Unsupported backup file format')
+    throw new AppError('Unsupported backup file format')
   }
 
   try {
     await execAsync(command)
     return { type: 'files', status: 'restored', file: backupFile }
   } catch (error) {
-    throw new Error(`Files restore failed: ${error}`)
+    throw new AppError(`Files restore failed: ${error}`)
   }
 }
 
@@ -160,7 +160,7 @@ async function restoreFull(manifestFile: string) {
     
     return { type: 'full', status: 'restored', components: results, manifest }
   } catch (error) {
-    throw new Error(`Full restore failed: ${error}`)
+    throw new AppError(`Full restore failed: ${error}`)
   }
 }
 
@@ -204,7 +204,7 @@ export async function GET() {
       )
     })
   } catch (error) {
-    console.error('Error listing backups:', error)
+    logger.error('Error listing backups:', error)
     return NextResponse.json(
       { error: 'Failed to list available backups' },
       { status: 500 }
