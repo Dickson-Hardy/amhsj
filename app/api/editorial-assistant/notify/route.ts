@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { EditorialAssistantEmailService } from "@/lib/email/editorial-assistant-notifications"
 import { logError } from "@/lib/logger"
-import { z } from "z"
+import { z } from "zod"
 
 // Notification request validation schema
 const notificationSchema = z.object({

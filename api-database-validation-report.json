@@ -1,0 +1,2248 @@
+{
+  "apiEndpoints": [
+    {
+      "path": "/admin/advertisements",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\advertisements\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "advertisements"
+      ]
+    },
+    {
+      "path": "/admin/analytics/dashboard",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\analytics\\dashboard\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/applications",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\applications\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/archive/articles/assign",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\archive\\articles\\assign\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues",
+        "submissions",
+        "volumes"
+      ]
+    },
+    {
+      "path": "/admin/archive/issues",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\archive\\issues\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues",
+        "submissions",
+        "volumes"
+      ]
+    },
+    {
+      "path": "/admin/archive/issues/[id]/publish",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\archive\\issues\\[id]\\publish\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues"
+      ]
+    },
+    {
+      "path": "/admin/archive/volumes",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\archive\\volumes\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "issues",
+        "volumes"
+      ]
+    },
+    {
+      "path": "/admin/articles",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\articles\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "downloads",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/articles/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\articles\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "downloads",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/backup/create",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\backup\\create\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/admin/backup/download/[filename]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\backup\\download\\[filename]\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/backup/restore",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\backup\\restore\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/backup/schedule",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\backup\\schedule\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/current-issue/archive",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\current-issue\\archive\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "issues"
+      ]
+    },
+    {
+      "path": "/admin/current-issue",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\current-issue\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues"
+      ]
+    },
+    {
+      "path": "/admin/dashboard-stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\dashboard-stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/doi/export",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\doi\\export\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues",
+        "submissions",
+        "users",
+        "volumes"
+      ]
+    },
+    {
+      "path": "/admin/doi/validate",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\doi\\validate\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/admin/email-settings",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\email-settings\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "admin_logs",
+        "email_settings",
+        "notifications"
+      ]
+    },
+    {
+      "path": "/admin/issues",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\issues\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues"
+      ]
+    },
+    {
+      "path": "/admin/logs",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\logs\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/news",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\news\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/news/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\news\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/news/[id]/toggle-publish",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\news\\[id]\\toggle-publish\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/review-deadlines",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\review-deadlines\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/reviewer-applications/[id]/approve",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\reviewer-applications\\[id]\\approve\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/reviewer-applications/[id]/reject",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\reviewer-applications\\[id]\\reject\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/reviewers/available",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\reviewers\\available\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/reviewers/invite",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\reviewers\\invite\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/reviewers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\reviewers\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/reviewers/[id]/status",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\reviewers\\[id]\\status\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/seo",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\seo\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/settings",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\settings\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": [
+        "admin_logs",
+        "journal_settings"
+      ]
+    },
+    {
+      "path": "/admin/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/submissions/[id]/email",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\submissions\\[id]\\email\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "conversations",
+        "messages",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/admin/submissions/[id]/reviewers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\submissions\\[id]\\reviewers\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "comments",
+        "notifications",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/submissions/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\submissions\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "comments",
+        "conversations",
+        "messages",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/submissions/[id]/status",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\submissions\\[id]\\status\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "notifications",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/admin/system/audit",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\system\\audit\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/system/health",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\system\\health\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/system/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\system\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/system/notifications",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\system\\notifications\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "issues",
+        "notifications",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/time-limits",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\time-limits\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/admin/upload-advertisement",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\upload-advertisement\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "advertisements"
+      ]
+    },
+    {
+      "path": "/admin/users",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\users\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "tablesUsed": [
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/users/[id]/role",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\users\\[id]\\role\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/users/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\users\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/admin/users/[id]/status",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\users\\[id]\\status\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/ai",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\ai\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/ai-assessment",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\ai-assessment\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/analytics/export",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\analytics\\export\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "page_views",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/analytics/journal-stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\analytics\\journal-stats\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/analytics/user-stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\analytics\\user-stats\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/archive",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\archive\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "downloads",
+        "issues",
+        "users",
+        "volumes"
+      ]
+    },
+    {
+      "path": "/articles/filters",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\articles\\filters\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/articles",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\articles\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/articles/[id]/download",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\articles\\[id]\\download\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "downloads"
+      ]
+    },
+    {
+      "path": "/articles/[id]/preview",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\articles\\[id]\\preview\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/articles/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\articles\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "downloads",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/articles/[id]/view",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\articles\\[id]\\view\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/auth/orcid/callback",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\auth\\orcid\\callback\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/auth/orcid",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\auth\\orcid\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/auth/register",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\auth\\register\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "tablesUsed": [
+        "editor_profiles",
+        "reviewer_profiles",
+        "user_applications",
+        "user_publications",
+        "user_qualifications",
+        "user_references",
+        "users"
+      ]
+    },
+    {
+      "path": "/auth/reset-password",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\auth\\reset-password\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/auth/verify-email",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\auth\\verify-email\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/auth/[...nextauth]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\auth\\[...nextauth]\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/collaboration",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\collaboration\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comments"
+      ]
+    },
+    {
+      "path": "/cron/cleanup",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\cron\\cleanup\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "admin_logs",
+        "monitoring_events",
+        "page_views",
+        "users"
+      ]
+    },
+    {
+      "path": "/cron/email-digest",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\cron\\email-digest\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/cron/health",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\cron\\health\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/cron/maintenance",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\cron\\maintenance\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "notifications",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/current-issue-data",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\current-issue-data\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues",
+        "volumes"
+      ]
+    },
+    {
+      "path": "/editor/assignment/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editor\\assignment\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "users"
+      ]
+    },
+    {
+      "path": "/editor-in-chief/appeals",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editor-in-chief\\appeals\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/editor-in-chief/editors",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editor-in-chief\\editors\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/editor-in-chief/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editor-in-chief\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "citations",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/editor-in-chief/submissions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editor-in-chief\\submissions\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/editorial-assistant/assign-associate-editor",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editorial-assistant\\assign-associate-editor\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/editorial-assistant/manuscripts",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editorial-assistant\\manuscripts\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/editorial-assistant/notify",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editorial-assistant\\notify\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications"
+      ]
+    },
+    {
+      "path": "/editorial-assistant/screening",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editorial-assistant\\screening\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions"
+      ]
+    },
+    {
+      "path": "/editorial-assistant/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editorial-assistant\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions"
+      ]
+    },
+    {
+      "path": "/editorial-board/apply",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editorial-board\\apply\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "audit_logs",
+        "notifications",
+        "users"
+      ]
+    },
+    {
+      "path": "/editors/reviewers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editors\\reviewers\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/editors/[id]/manuscripts",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editors\\[id]\\manuscripts\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/editors/[id]/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\editors\\[id]\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/email/health",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\email\\health\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "issues",
+        "notifications",
+        "reviews",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/email/test",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\email\\test\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comments"
+      ]
+    },
+    {
+      "path": "/errors/report",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\errors\\report\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/external-integrations",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\external-integrations\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "citations",
+        "users"
+      ]
+    },
+    {
+      "path": "/files/[id]/download",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\files\\[id]\\download\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/files/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\files\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/guest-editor/call-for-papers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\guest-editor\\call-for-papers\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/guest-editor/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\guest-editor\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/guest-editor/reviewers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\guest-editor\\reviewers\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/guest-editor/special-issue",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\guest-editor\\special-issue\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/guest-editor/submissions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\guest-editor\\submissions\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/health",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\health\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/health-check",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\health-check\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/integrations/citations",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\integrations\\citations\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "citations"
+      ]
+    },
+    {
+      "path": "/integrations/crossref",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\integrations\\crossref\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/integrations/doi",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\integrations\\doi\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/integrations/orcid",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\integrations\\orcid\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/integrations/plagiarism",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\integrations\\plagiarism\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/maintenance/subscribe",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\maintenance\\subscribe\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications"
+      ]
+    },
+    {
+      "path": "/managing-editor/adjust-workload",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\managing-editor\\adjust-workload\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/managing-editor/alerts",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\managing-editor\\alerts\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/managing-editor/editors",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\managing-editor\\editors\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/managing-editor/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\managing-editor\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/managing-editor/task-action",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\managing-editor\\task-action\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/managing-editor/tasks",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\managing-editor\\tasks\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/manuscripts/revisions/submit",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\revisions\\submit\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/manuscripts/[id]/assign-reviewer",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\assign-reviewer\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/comments",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\comments\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comment_replies",
+        "comments",
+        "manuscript_comments",
+        "notifications",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/comments/[commentId]/replies",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\comments\\[commentId]\\replies\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comment_replies",
+        "comments",
+        "manuscript_comments",
+        "notifications",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/comments/[commentId]/resolve",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\comments\\[commentId]\\resolve\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comments",
+        "manuscript_comments",
+        "notifications",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/decision",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\decision\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "comments",
+        "notifications"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/messages",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\messages\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "conversations",
+        "messages",
+        "users"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/messages/[messageId]/read",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\messages\\[messageId]\\read\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "messages"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/reviews",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\reviews\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "comments",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/manuscripts/[id]/revisions/history",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\manuscripts\\[id]\\revisions\\history\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/messages/conversations/create",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\messages\\conversations\\create\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "conversations",
+        "messages",
+        "users"
+      ]
+    },
+    {
+      "path": "/messages/conversations",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\messages\\conversations\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "conversations",
+        "messages"
+      ]
+    },
+    {
+      "path": "/messages/mark-read",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\messages\\mark-read\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "conversations",
+        "messages"
+      ]
+    },
+    {
+      "path": "/messages",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\messages\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "conversations",
+        "issues",
+        "messages",
+        "users"
+      ]
+    },
+    {
+      "path": "/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "page_views",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/monitoring/analytics/events",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\monitoring\\analytics\\events\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/monitoring/analytics/performance",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\monitoring\\analytics\\performance\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/monitoring/health",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\monitoring\\health\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/monitoring",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\monitoring\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": [
+        "admin_logs",
+        "articles",
+        "monitoring_events",
+        "page_views",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/news",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\news\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues",
+        "users"
+      ]
+    },
+    {
+      "path": "/notifications/mark-all-read",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\notifications\\mark-all-read\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications"
+      ]
+    },
+    {
+      "path": "/notifications",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\notifications\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications"
+      ]
+    },
+    {
+      "path": "/notifications/[id]/read",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\notifications\\[id]\\read\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications"
+      ]
+    },
+    {
+      "path": "/orcid",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\orcid\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/placeholder/[...params]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\placeholder\\[...params]\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/plagiarism/check",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\plagiarism\\check\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/production-editor/articles",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\production-editor\\articles\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/production-editor/issues",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\production-editor\\issues\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "issues"
+      ]
+    },
+    {
+      "path": "/production-editor/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\production-editor\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "issues",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/production-editor/tasks",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\production-editor\\tasks\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/questionnaire/conflict-check",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\questionnaire\\conflict-check\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviewer/apply",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviewer\\apply\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviewer/dashboard",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviewer\\dashboard\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviewer/invitation/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviewer\\invitation\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviewer/invitation/[id]/[action]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviewer\\invitation\\[id]\\[action]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviewers/[id]/assignments",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviewers\\[id]\\assignments\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviewers/[id]/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviewers\\[id]\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviews/invite",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviews\\invite\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "notifications",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviews",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviews\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/reviews/[id]/accept",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviews\\[id]\\accept\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews"
+      ]
+    },
+    {
+      "path": "/reviews/[id]/decline",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviews\\[id]\\decline\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comments",
+        "reviews"
+      ]
+    },
+    {
+      "path": "/reviews/[id]/submit",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\reviews\\[id]\\submit\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comments",
+        "reviews"
+      ]
+    },
+    {
+      "path": "/search/advanced",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\search\\advanced\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/search",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\search\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "users"
+      ]
+    },
+    {
+      "path": "/search/suggestions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\search\\suggestions\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/section-editor/assign-reviewer",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\section-editor\\assign-reviewer\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/section-editor/decision",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\section-editor\\decision\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "comments",
+        "editorial_decisions",
+        "notifications"
+      ]
+    },
+    {
+      "path": "/section-editor/metrics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\section-editor\\metrics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/section-editor/reviewers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\section-editor\\reviewers\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/section-editor/scope",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\section-editor\\scope\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/section-editor/submissions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\section-editor\\submissions\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/sections/[section]/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\sections\\[section]\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews"
+      ]
+    },
+    {
+      "path": "/sections/[section]/submissions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\sections\\[section]\\submissions\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/seo",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\seo\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/seo/sitemap",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\seo\\sitemap\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles"
+      ]
+    },
+    {
+      "path": "/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "users"
+      ]
+    },
+    {
+      "path": "/status",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\status\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/submission/eligibility",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\submission\\eligibility\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/submissions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\submissions\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": [
+        "submissions"
+      ]
+    },
+    {
+      "path": "/submissions/[id]/comments",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\submissions\\[id]\\comments\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "comments",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/submissions/[id]/versions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\submissions\\[id]\\versions\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "article_versions",
+        "submissions"
+      ]
+    },
+    {
+      "path": "/support/ticket",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\support\\ticket\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/system-info",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\system-info\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/upload/advertisement",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\upload\\advertisement\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "advertisements"
+      ]
+    },
+    {
+      "path": "/upload",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\upload\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/user/analytics",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\analytics\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "citations",
+        "downloads",
+        "reviews",
+        "users"
+      ]
+    },
+    {
+      "path": "/user/change-password",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\change-password\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/user/messages",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\messages\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "conversations",
+        "messages",
+        "users"
+      ]
+    },
+    {
+      "path": "/user/messages/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\messages\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "messages"
+      ]
+    },
+    {
+      "path": "/user/messages/[id]/archive",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\messages\\[id]\\archive\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "messages"
+      ]
+    },
+    {
+      "path": "/user/messages/[id]/read",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\messages\\[id]\\read\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "messages"
+      ]
+    },
+    {
+      "path": "/user/messages/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\messages\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "messages"
+      ]
+    },
+    {
+      "path": "/user/preferences",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\preferences\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/user/profile/cv",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\profile\\cv\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/user/profile",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\profile\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/user/switch-role",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\switch-role\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "users"
+      ]
+    },
+    {
+      "path": "/users/[id]/activities",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\users\\[id]\\activities\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/users/[id]/insights",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\users\\[id]\\insights\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "citations",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/users/[id]/stats",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\users\\[id]\\stats\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "users"
+      ]
+    },
+    {
+      "path": "/users/[id]/submissions",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\users\\[id]\\submissions\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "articles",
+        "comments",
+        "reviews",
+        "submissions",
+        "users"
+      ]
+    },
+    {
+      "path": "/version",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\version\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "tablesUsed": []
+    },
+    {
+      "path": "/websocket",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\websocket\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "notifications",
+        "users"
+      ]
+    },
+    {
+      "path": "/workflow/assign-reviewers",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\workflow\\assign-reviewers\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/workflow/assign-reviewers-enhanced",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\workflow\\assign-reviewers-enhanced\\route.ts",
+      "methods": [],
+      "tablesUsed": []
+    },
+    {
+      "path": "/workflow/status/[id]",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\workflow\\status\\[id]\\route.ts",
+      "methods": [],
+      "tablesUsed": [
+        "submissions"
+      ]
+    },
+    {
+      "path": "/workflow/submit",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\workflow\\submit\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "tablesUsed": [
+        "submissions"
+      ]
+    }
+  ],
+  "databaseTables": [
+    "admin_logs",
+    "advertisements",
+    "article_versions",
+    "articles",
+    "associate_editor_assignments",
+    "associate_editor_availability",
+    "audit_logs",
+    "citations",
+    "comment_replies",
+    "comments",
+    "communication_templates",
+    "conversations",
+    "downloads",
+    "editor_assignments",
+    "editor_profiles",
+    "editorial_assistant_notifications",
+    "editorial_assistant_profiles",
+    "editorial_assistant_single",
+    "editorial_decisions",
+    "email_logs",
+    "email_settings",
+    "issues",
+    "journal_issues",
+    "journal_settings",
+    "manuscript_comments",
+    "manuscript_screenings",
+    "messages",
+    "monitoring_events",
+    "notifications",
+    "page_views",
+    "quality_metrics",
+    "quality_reports",
+    "recommended_reviewers",
+    "review_invitations",
+    "reviewer_profiles",
+    "reviews",
+    "screening_templates",
+    "screening_workflow_rules",
+    "submissions",
+    "system_settings",
+    "user_applications",
+    "user_documents",
+    "user_publications",
+    "user_qualifications",
+    "user_references",
+    "users",
+    "volumes",
+    "workflow_history",
+    "workflow_time_limits"
+  ],
+  "missingTables": [],
+  "tableUsageIssues": [
+    {
+      "endpoint": "/admin/analytics/dashboard",
+      "issue": "Contains mock data references",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\analytics\\dashboard\\route.ts"
+    },
+    {
+      "endpoint": "/admin/backup/schedule",
+      "issue": "Contains mock data references",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\backup\\schedule\\route.ts"
+    },
+    {
+      "endpoint": "/admin/news",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\news\\route.ts"
+    },
+    {
+      "endpoint": "/admin/system/audit",
+      "issue": "Contains mock data references",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\admin\\system\\audit\\route.ts"
+    },
+    {
+      "endpoint": "/ai",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\ai\\route.ts"
+    },
+    {
+      "endpoint": "/analytics/user-stats",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\analytics\\user-stats\\route.ts"
+    },
+    {
+      "endpoint": "/health-check",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\health-check\\route.ts"
+    },
+    {
+      "endpoint": "/status",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\status\\route.ts"
+    },
+    {
+      "endpoint": "/system-info",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\system-info\\route.ts"
+    },
+    {
+      "endpoint": "/user/analytics",
+      "issue": "Contains mock data references",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\user\\analytics\\route.ts"
+    },
+    {
+      "endpoint": "/version",
+      "issue": "No database tables detected",
+      "file": "C:\\Users\\CMD\\Downloads\\amjhs\\app\\api\\version\\route.ts"
+    }
+  ],
+  "mockDataStatus": [
+    {
+      "type": "component_mock",
+      "path": "\\components\\advanced-features-dashboard.tsx",
+      "hasContent": true
+    },
+    {
+      "type": "component_mock",
+      "path": "\\components\\monitoring-dashboard.tsx",
+      "hasContent": true
+    }
+  ],
+  "recommendations": [
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'advertisements' is empty - consider adding seed data",
+      "action": "Create seed data for advertisements table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'article_versions' is empty - consider adding seed data",
+      "action": "Create seed data for article_versions table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'associate_editor_assignments' is empty - consider adding seed data",
+      "action": "Create seed data for associate_editor_assignments table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'associate_editor_availability' is empty - consider adding seed data",
+      "action": "Create seed data for associate_editor_availability table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'audit_logs' is empty - consider adding seed data",
+      "action": "Create seed data for audit_logs table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'citations' is empty - consider adding seed data",
+      "action": "Create seed data for citations table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'comment_replies' is empty - consider adding seed data",
+      "action": "Create seed data for comment_replies table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'comments' is empty - consider adding seed data",
+      "action": "Create seed data for comments table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'downloads' is empty - consider adding seed data",
+      "action": "Create seed data for downloads table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'editor_profiles' is empty - consider adding seed data",
+      "action": "Create seed data for editor_profiles table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'editorial_assistant_notifications' is empty - consider adding seed data",
+      "action": "Create seed data for editorial_assistant_notifications table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'editorial_decisions' is empty - consider adding seed data",
+      "action": "Create seed data for editorial_decisions table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'email_logs' is empty - consider adding seed data",
+      "action": "Create seed data for email_logs table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'issues' is empty - consider adding seed data",
+      "action": "Create seed data for issues table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'journal_issues' is empty - consider adding seed data",
+      "action": "Create seed data for journal_issues table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'manuscript_comments' is empty - consider adding seed data",
+      "action": "Create seed data for manuscript_comments table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'manuscript_screenings' is empty - consider adding seed data",
+      "action": "Create seed data for manuscript_screenings table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'messages' is empty - consider adding seed data",
+      "action": "Create seed data for messages table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'monitoring_events' is empty - consider adding seed data",
+      "action": "Create seed data for monitoring_events table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'notifications' is empty - consider adding seed data",
+      "action": "Create seed data for notifications table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'page_views' is empty - consider adding seed data",
+      "action": "Create seed data for page_views table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'quality_reports' is empty - consider adding seed data",
+      "action": "Create seed data for quality_reports table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'review_invitations' is empty - consider adding seed data",
+      "action": "Create seed data for review_invitations table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'reviewer_profiles' is empty - consider adding seed data",
+      "action": "Create seed data for reviewer_profiles table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'reviews' is empty - consider adding seed data",
+      "action": "Create seed data for reviews table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'screening_workflow_rules' is empty - consider adding seed data",
+      "action": "Create seed data for screening_workflow_rules table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'user_applications' is empty - consider adding seed data",
+      "action": "Create seed data for user_applications table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'user_documents' is empty - consider adding seed data",
+      "action": "Create seed data for user_documents table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'user_publications' is empty - consider adding seed data",
+      "action": "Create seed data for user_publications table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'user_qualifications' is empty - consider adding seed data",
+      "action": "Create seed data for user_qualifications table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'user_references' is empty - consider adding seed data",
+      "action": "Create seed data for user_references table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'volumes' is empty - consider adding seed data",
+      "action": "Create seed data for volumes table"
+    },
+    {
+      "type": "empty_table",
+      "priority": "medium",
+      "message": "Table 'workflow_history' is empty - consider adding seed data",
+      "action": "Create seed data for workflow_history table"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'associate_editor_assignments' is not used by any API endpoints",
+      "action": "Review if associate_editor_assignments table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'associate_editor_availability' is not used by any API endpoints",
+      "action": "Review if associate_editor_availability table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'communication_templates' is not used by any API endpoints",
+      "action": "Review if communication_templates table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'editor_assignments' is not used by any API endpoints",
+      "action": "Review if editor_assignments table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'editorial_assistant_notifications' is not used by any API endpoints",
+      "action": "Review if editorial_assistant_notifications table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'editorial_assistant_profiles' is not used by any API endpoints",
+      "action": "Review if editorial_assistant_profiles table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'editorial_assistant_single' is not used by any API endpoints",
+      "action": "Review if editorial_assistant_single table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'email_logs' is not used by any API endpoints",
+      "action": "Review if email_logs table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'journal_issues' is not used by any API endpoints",
+      "action": "Review if journal_issues table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'manuscript_screenings' is not used by any API endpoints",
+      "action": "Review if manuscript_screenings table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'quality_metrics' is not used by any API endpoints",
+      "action": "Review if quality_metrics table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'quality_reports' is not used by any API endpoints",
+      "action": "Review if quality_reports table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'recommended_reviewers' is not used by any API endpoints",
+      "action": "Review if recommended_reviewers table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'review_invitations' is not used by any API endpoints",
+      "action": "Review if review_invitations table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'screening_templates' is not used by any API endpoints",
+      "action": "Review if screening_templates table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'screening_workflow_rules' is not used by any API endpoints",
+      "action": "Review if screening_workflow_rules table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'system_settings' is not used by any API endpoints",
+      "action": "Review if system_settings table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'user_documents' is not used by any API endpoints",
+      "action": "Review if user_documents table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'workflow_history' is not used by any API endpoints",
+      "action": "Review if workflow_history table is needed or implement API endpoints"
+    },
+    {
+      "type": "unused_table",
+      "priority": "low",
+      "message": "Table 'workflow_time_limits' is not used by any API endpoints",
+      "action": "Review if workflow_time_limits table is needed or implement API endpoints"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'reviews' is used by 44 endpoints but has no data",
+      "action": "Urgently add seed data for reviews table used by: /admin/analytics/dashboard, /admin/backup/create, /admin/dashboard-stats, /admin/reviewers/available, /admin/submissions/[id]/reviewers, /admin/submissions/[id], /admin/system/health, /admin/system/metrics, /admin/system/notifications, /admin/users, /admin/users/[id], /analytics/export, /articles/[id], /cron/email-digest, /editor-in-chief/metrics, /editors/reviewers, /editors/[id]/manuscripts, /editors/[id]/stats, /email/health, /guest-editor/call-for-papers, /guest-editor/metrics, /managing-editor/alerts, /managing-editor/editors, /managing-editor/metrics, /managing-editor/tasks, /manuscripts/[id]/assign-reviewer, /manuscripts/[id]/reviews, /metrics, /monitoring/health, /monitoring, /reviewer/invitation/[id]/[action], /reviewers/[id]/assignments, /reviewers/[id]/stats, /reviews/invite, /reviews, /reviews/[id]/accept, /reviews/[id]/decline, /reviews/[id]/submit, /section-editor/reviewers, /sections/[section]/stats, /sections/[section]/submissions, /user/analytics, /users/[id]/activities, /users/[id]/submissions"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'issues' is used by 16 endpoints but has no data",
+      "action": "Urgently add seed data for issues table used by: /admin/archive/articles/assign, /admin/archive/issues, /admin/archive/issues/[id]/publish, /admin/archive/volumes, /admin/current-issue/archive, /admin/current-issue, /admin/doi/export, /admin/issues, /admin/system/notifications, /archive, /current-issue-data, /email/health, /messages, /news, /production-editor/issues, /production-editor/metrics"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'volumes' is used by 6 endpoints but has no data",
+      "action": "Urgently add seed data for volumes table used by: /admin/archive/articles/assign, /admin/archive/issues, /admin/archive/volumes, /admin/doi/export, /archive, /current-issue-data"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'downloads' is used by 6 endpoints but has no data",
+      "action": "Urgently add seed data for downloads table used by: /admin/articles, /admin/articles/[id], /archive, /articles/[id]/download, /articles/[id], /user/analytics"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'notifications' is used by 23 endpoints but has no data",
+      "action": "Urgently add seed data for notifications table used by: /admin/email-settings, /admin/submissions/[id]/reviewers, /admin/submissions/[id]/status, /admin/system/audit, /admin/system/health, /admin/system/metrics, /admin/system/notifications, /cron/maintenance, /editorial-assistant/notify, /editorial-board/apply, /email/health, /maintenance/subscribe, /manuscripts/[id]/comments, /manuscripts/[id]/comments/[commentId]/replies, /manuscripts/[id]/comments/[commentId]/resolve, /manuscripts/[id]/decision, /notifications/mark-all-read, /notifications, /notifications/[id]/read, /reviewer/apply, /reviews/invite, /section-editor/decision, /websocket"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'messages' is used by 13 endpoints but has no data",
+      "action": "Urgently add seed data for messages table used by: /admin/submissions/[id]/email, /admin/submissions/[id], /manuscripts/[id]/messages, /manuscripts/[id]/messages/[messageId]/read, /messages/conversations/create, /messages/conversations, /messages/mark-read, /messages, /user/messages, /user/messages/stats, /user/messages/[id]/archive, /user/messages/[id]/read, /user/messages/[id]"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'comments' is used by 14 endpoints but has no data",
+      "action": "Urgently add seed data for comments table used by: /admin/submissions/[id]/reviewers, /admin/submissions/[id], /collaboration, /email/test, /manuscripts/[id]/comments, /manuscripts/[id]/comments/[commentId]/replies, /manuscripts/[id]/comments/[commentId]/resolve, /manuscripts/[id]/decision, /manuscripts/[id]/reviews, /reviews/[id]/decline, /reviews/[id]/submit, /section-editor/decision, /submissions/[id]/comments, /users/[id]/submissions"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'page_views' is used by 4 endpoints but has no data",
+      "action": "Urgently add seed data for page_views table used by: /analytics/export, /cron/cleanup, /metrics, /monitoring"
+    },
+    {
+      "type": "high_usage_empty",
+      "priority": "high",
+      "message": "Table 'citations' is used by 5 endpoints but has no data",
+      "action": "Urgently add seed data for citations table used by: /editor-in-chief/metrics, /external-integrations, /integrations/citations, /user/analytics, /users/[id]/insights"
+    }
+  ]
+}

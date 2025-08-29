@@ -11,7 +11,7 @@ import {
 } from "@/lib/api-utils"
 import { logger } from "@/lib/logger"
 import { db } from "@/lib/db"
-import { submissions } from "@/lib/db/schema"
+import { submissions, articles } from "@/lib/db/schema"
 import { eq, and, sql, desc } from "drizzle-orm"
 import { workflowManager } from "@/lib/workflow"
 
@@ -153,9 +153,16 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
         status: submissions.status,
         submittedAt: submissions.submittedAt,
         createdAt: submissions.createdAt,
-        updatedAt: submissions.updatedAt
+        updatedAt: submissions.updatedAt,
+        // Include article information
+        articleTitle: articles.title,
+        articleAbstract: articles.abstract,
+        articleCategory: articles.category,
+        articleKeywords: articles.keywords,
+        articleStatus: articles.status
       })
       .from(submissions)
+      .leftJoin(articles, eq(submissions.articleId, articles.id))
 
     let countQuery = db
       .select({ count: sql<number>`count(*)` })

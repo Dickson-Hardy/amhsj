@@ -1,0 +1,1101 @@
+{
+  "testRunId": "api_flow_test_1756460740307",
+  "startTime": "2025-08-29T09:45:40.307Z",
+  "baseUrl": "http://localhost:3000",
+  "scenarios": [
+    {
+      "name": "Successful Publication Flow",
+      "description": "Author submits → Reviews conducted → Accepted → Published",
+      "startTime": "2025-08-29T09:45:40.327Z",
+      "success": true,
+      "error": null,
+      "endTime": "2025-08-29T09:47:34.547Z"
+    },
+    {
+      "name": "Revision Required Flow",
+      "description": "Author submits → Reviews request revisions → Author revises → Accepted",
+      "startTime": "2025-08-29T09:47:34.663Z",
+      "success": true,
+      "error": null,
+      "endTime": "2025-08-29T09:47:52.737Z"
+    },
+    {
+      "name": "User Management Flow",
+      "description": "Admin manages users and roles",
+      "startTime": "2025-08-29T09:47:52.747Z",
+      "success": true,
+      "error": null,
+      "endTime": "2025-08-29T09:48:33.164Z"
+    },
+    {
+      "name": "Communication Flow",
+      "description": "Messages and notifications throughout the process",
+      "startTime": "2025-08-29T09:48:33.166Z",
+      "success": true,
+      "error": null,
+      "endTime": "2025-08-29T09:48:39.162Z"
+    }
+  ],
+  "apiCalls": [
+    {
+      "endpoint": "/api/submissions",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 29435,
+      "timestamp": "2025-08-29T09:46:09.776Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123",
+          "Cookie": "next-auth.session-token=mock_session"
+        },
+        "body": {
+          "title": "AI-Driven Medical Diagnosis: A Comprehensive Study",
+          "abstract": "This study examines the implementation of artificial intelligence in medical diagnosis systems. Through extensive research and testing, we demonstrate significant improvements in diagnostic accuracy and patient outcomes. The research covers machine learning algorithms, neural networks, and their practical applications in healthcare settings.",
+          "keywords": [
+            "artificial intelligence",
+            "medical diagnosis",
+            "machine learning",
+            "healthcare"
+          ],
+          "category": "Medical Technology",
+          "authors": [
+            {
+              "firstName": "John",
+              "lastName": "Doe",
+              "email": "author@example.com",
+              "affiliation": "Medical University",
+              "isCorrespondingAuthor": true
+            }
+          ],
+          "files": [
+            {
+              "url": "https://example.com/manuscript.pdf",
+              "type": "manuscript",
+              "name": "main_manuscript.pdf",
+              "fileId": "file_12345"
+            }
+          ],
+          "coverLetter": "Dear Editor, we are pleased to submit our manuscript...",
+          "ethicalApproval": true,
+          "conflictOfInterest": false
+        }
+      },
+      "response": {
+        "success": false,
+        "error": "Authentication required",
+        "timestamp": "2025-08-29T09:46:09.728Z",
+        "code": "AUTHENTICATION_REQUIRED",
+        "requestId": "708d0527-cbc1-4c96-bc3c-26f4841a3a77"
+      }
+    },
+    {
+      "endpoint": "/api/reviews?status=pending",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 19200,
+      "timestamp": "2025-08-29T09:46:28.990Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_reviewer_session_789"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/reviews",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 1683,
+      "timestamp": "2025-08-29T09:46:30.678Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_reviewer_session_789"
+        },
+        "body": {
+          "articleId": "test_article_123",
+          "recommendation": "accept",
+          "comments": "This manuscript presents excellent research with significant contributions to the field. The methodology is robust and the conclusions are well-supported.",
+          "confidentialComments": "The author has addressed all previous concerns adequately.",
+          "rating": 5
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/reviews",
+      "method": "PUT",
+      "status": 401,
+      "success": false,
+      "responseTime": 2219,
+      "timestamp": "2025-08-29T09:46:32.901Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_reviewer_session_789"
+        },
+        "body": {
+          "reviewId": "review_456",
+          "recommendation": "minor_revision",
+          "comments": "Updated review comments with additional suggestions...",
+          "rating": 4
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages?limit=20&page=1",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 15590,
+      "timestamp": "2025-08-29T09:46:48.506Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 3865,
+      "timestamp": "2025-08-29T09:46:52.379Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": {
+          "recipientId": "author_123",
+          "subject": "Request for Minor Revisions",
+          "content": "Dear Author, based on the reviewer feedback, we request minor revisions to your manuscript...",
+          "messageType": "editorial_communication",
+          "priority": "normal"
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages?messageId=msg_789",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 788,
+      "timestamp": "2025-08-29T09:46:53.172Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications?unread=true&limit=10",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 6098,
+      "timestamp": "2025-08-29T09:46:59.275Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications",
+      "method": "PATCH",
+      "status": 401,
+      "success": false,
+      "responseTime": 1733,
+      "timestamp": "2025-08-29T09:47:01.010Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "notificationId": "notif_123",
+          "isRead": true
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications",
+      "method": "PATCH",
+      "status": 401,
+      "success": false,
+      "responseTime": 645,
+      "timestamp": "2025-08-29T09:47:01.662Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "markAllAsRead": true
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications?id=notif_456",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 1550,
+      "timestamp": "2025-08-29T09:47:03.220Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/articles?status=published&page=1&limit=20",
+      "method": "GET",
+      "status": 200,
+      "success": true,
+      "responseTime": 22651,
+      "timestamp": "2025-08-29T09:47:25.896Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "id": "5650e9e4-446b-4f44-8c23-1d0714ee592c",
+            "title": "Minimally Invasive Surgical Techniques: Outcomes and Patient Satisfaction",
+            "abstract": "This study compares minimally invasive surgical techniques with traditional surgical approaches across multiple surgical specialties. Our analysis of 800 procedures shows reduced complications, shorter hospital stays, and improved patient satisfaction scores with minimally invasive approaches.",
+            "content": null,
+            "keywords": [
+              "minimally invasive surgery",
+              "surgical outcomes",
+              "patient satisfaction",
+              "medical innovation",
+              "surgical techniques"
+            ],
+            "category": "Surgery",
+            "status": "published",
+            "doi": "10.1234/amhsj.2024.4.001",
+            "doiRegistered": false,
+            "doiRegisteredAt": null,
+            "crossrefMetadata": null,
+            "volume": "Vol. 15",
+            "issue": "Issue 4",
+            "pages": "40-55",
+            "publishedDate": "2025-08-09T08:45:15.411Z",
+            "submittedDate": "2025-07-15T08:45:15.411Z",
+            "authorId": "7650a813-c5d8-4995-bb19-60d8852190b4",
+            "coAuthors": [
+              {
+                "email": "jane.doe@coauthor.edu",
+                "lastName": "Doe",
+                "firstName": "Jane",
+                "affiliation": "Co-Author University",
+                "isCorrespondingAuthor": false
+              }
+            ],
+            "reviewerIds": [],
+            "editorId": null,
+            "files": [],
+            "views": 1754,
+            "downloads": 605,
+            "metadata": {},
+            "createdAt": "2025-08-29T08:45:15.411Z",
+            "updatedAt": "2025-08-29T08:45:15.411Z"
+          },
+          {
+            "id": "d70ff04a-38f7-472d-9edf-83e0dee3ab5c",
+            "title": "Pediatric Immunization Strategies: A Longitudinal Study",
+            "abstract": "This longitudinal study examines the effectiveness of various pediatric immunization strategies over a 5-year period. We analyzed vaccination rates, adverse events, and long-term health outcomes in a cohort of 2,000 children. Our findings support updated immunization guidelines for optimal child health protection.",
+            "content": null,
+            "keywords": [
+              "pediatrics",
+              "immunization",
+              "vaccination",
+              "child health",
+              "preventive medicine"
+            ],
+            "category": "Pediatrics",
+            "status": "published",
+            "doi": "10.1234/amhsj.2024.3.001",
+            "doiRegistered": false,
+            "doiRegisteredAt": null,
+            "crossrefMetadata": null,
+            "volume": "Vol. 15",
+            "issue": "Issue 3",
+            "pages": "30-45",
+            "publishedDate": "2025-08-09T08:45:15.104Z",
+            "submittedDate": "2025-07-15T08:45:15.104Z",
+            "authorId": "f34ea31e-3d08-4cc6-99e6-025fbc059aa1",
+            "coAuthors": [
+              {
+                "email": "jane.doe@coauthor.edu",
+                "lastName": "Doe",
+                "firstName": "Jane",
+                "affiliation": "Co-Author University",
+                "isCorrespondingAuthor": false
+              }
+            ],
+            "reviewerIds": [],
+            "editorId": null,
+            "files": [],
+            "views": 589,
+            "downloads": 146,
+            "metadata": {},
+            "createdAt": "2025-08-29T08:45:15.104Z",
+            "updatedAt": "2025-08-29T08:45:15.104Z"
+          },
+          {
+            "id": "27502690-7bbf-4ddc-856f-e8820cadf529",
+            "title": "Emergency Department Protocols for Critical Patient Management",
+            "abstract": "This research evaluates the effectiveness of standardized emergency department protocols in managing critical patients. Our analysis of 1,200 emergency cases shows improved patient outcomes and reduced treatment times when following evidence-based protocols. The study provides recommendations for emergency medicine best practices.",
+            "content": null,
+            "keywords": [
+              "emergency medicine",
+              "patient protocols",
+              "critical care",
+              "emergency procedures",
+              "healthcare quality"
+            ],
+            "category": "Emergency Medicine",
+            "status": "published",
+            "doi": "10.1234/amhsj.2024.2.001",
+            "doiRegistered": false,
+            "doiRegisteredAt": null,
+            "crossrefMetadata": null,
+            "volume": "Vol. 15",
+            "issue": "Issue 2",
+            "pages": "20-35",
+            "publishedDate": "2025-08-09T08:45:14.787Z",
+            "submittedDate": "2025-07-15T08:45:14.787Z",
+            "authorId": "5ecb5f0b-1115-42ce-83f8-6fe8fe6e5f53",
+            "coAuthors": [
+              {
+                "email": "jane.doe@coauthor.edu",
+                "lastName": "Doe",
+                "firstName": "Jane",
+                "affiliation": "Co-Author University",
+                "isCorrespondingAuthor": false
+              }
+            ],
+            "reviewerIds": [],
+            "editorId": null,
+            "files": [],
+            "views": 1500,
+            "downloads": 377,
+            "metadata": {},
+            "createdAt": "2025-08-29T08:45:14.787Z",
+            "updatedAt": "2025-08-29T08:45:14.787Z"
+          },
+          {
+            "id": "c1debebb-a009-4425-97ef-eda5f34333c0",
+            "title": "Clinical Outcomes of Novel Cardiac Intervention Techniques: A Comprehensive Analysis",
+            "abstract": "This study presents a detailed analysis of novel cardiac intervention techniques and their impact on patient outcomes. We conducted a prospective cohort study involving 500 patients over 18 months. The research demonstrates significant improvements in cardiovascular health metrics and reduced recovery times compared to traditional intervention methods.",
+            "content": null,
+            "keywords": [
+              "cardiac intervention",
+              "clinical outcomes",
+              "cardiovascular health",
+              "medical procedures",
+              "patient care"
+            ],
+            "category": "Cardiology",
+            "status": "published",
+            "doi": "10.1234/amhsj.2024.1.001",
+            "doiRegistered": false,
+            "doiRegisteredAt": null,
+            "crossrefMetadata": null,
+            "volume": "Vol. 15",
+            "issue": "Issue 1",
+            "pages": "10-25",
+            "publishedDate": "2025-08-09T08:45:14.508Z",
+            "submittedDate": "2025-07-15T08:45:14.508Z",
+            "authorId": "988484b0-ab7a-4c25-b595-eef1f2c422b9",
+            "coAuthors": [
+              {
+                "email": "jane.doe@coauthor.edu",
+                "lastName": "Doe",
+                "firstName": "Jane",
+                "affiliation": "Co-Author University",
+                "isCorrespondingAuthor": false
+              }
+            ],
+            "reviewerIds": [],
+            "editorId": null,
+            "files": [],
+            "views": 860,
+            "downloads": 614,
+            "metadata": {},
+            "createdAt": "2025-08-29T08:45:14.508Z",
+            "updatedAt": "2025-08-29T08:45:14.508Z"
+          }
+        ],
+        "pagination": {
+          "totalPages": null,
+          "hasMore": false
+        },
+        "timestamp": "2025-08-29T09:47:25.780Z",
+        "message": 20,
+        "requestId": 4
+      }
+    },
+    {
+      "endpoint": "/api/articles",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 6177,
+      "timestamp": "2025-08-29T09:47:32.097Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": {
+          "title": "Revolutionary AI Techniques in Healthcare",
+          "authorId": "author_123",
+          "abstract": "This article explores cutting-edge AI applications...",
+          "content": "Full article content here...",
+          "category": "Technology",
+          "keywords": [
+            "AI",
+            "Healthcare",
+            "Innovation"
+          ]
+        }
+      },
+      "response": {
+        "success": false,
+        "error": "Authentication required",
+        "timestamp": "2025-08-29T09:47:32.093Z",
+        "code": "AUTHENTICATION_REQUIRED",
+        "requestId": "706542dd-21f0-40d9-803e-e86681aaf8ad"
+      }
+    },
+    {
+      "endpoint": "/api/articles?id=article_789",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 2386,
+      "timestamp": "2025-08-29T09:47:34.496Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_admin_session_000"
+        },
+        "body": null
+      },
+      "response": {
+        "success": false,
+        "error": "Authentication required",
+        "timestamp": "2025-08-29T09:47:34.428Z",
+        "code": "AUTHENTICATION_REQUIRED",
+        "requestId": "a05a195c-8621-4f92-8584-7a6868ab9c7f"
+      }
+    },
+    {
+      "endpoint": "/api/submissions",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 1287,
+      "timestamp": "2025-08-29T09:47:35.974Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123",
+          "Cookie": "next-auth.session-token=mock_session"
+        },
+        "body": {
+          "title": "AI-Driven Medical Diagnosis: A Comprehensive Study",
+          "abstract": "This study examines the implementation of artificial intelligence in medical diagnosis systems. Through extensive research and testing, we demonstrate significant improvements in diagnostic accuracy and patient outcomes. The research covers machine learning algorithms, neural networks, and their practical applications in healthcare settings.",
+          "keywords": [
+            "artificial intelligence",
+            "medical diagnosis",
+            "machine learning",
+            "healthcare"
+          ],
+          "category": "Medical Technology",
+          "authors": [
+            {
+              "firstName": "John",
+              "lastName": "Doe",
+              "email": "author@example.com",
+              "affiliation": "Medical University",
+              "isCorrespondingAuthor": true
+            }
+          ],
+          "files": [
+            {
+              "url": "https://example.com/manuscript.pdf",
+              "type": "manuscript",
+              "name": "main_manuscript.pdf",
+              "fileId": "file_12345"
+            }
+          ],
+          "coverLetter": "Dear Editor, we are pleased to submit our manuscript...",
+          "ethicalApproval": true,
+          "conflictOfInterest": false
+        }
+      },
+      "response": {
+        "success": false,
+        "error": "Authentication required",
+        "timestamp": "2025-08-29T09:47:35.962Z",
+        "code": "AUTHENTICATION_REQUIRED",
+        "requestId": "b908f56c-7c0d-4cc2-a9b3-d7f901c8d7a1"
+      }
+    },
+    {
+      "endpoint": "/api/reviews?status=pending",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 2137,
+      "timestamp": "2025-08-29T09:47:38.134Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_reviewer_session_789"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/reviews",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 911,
+      "timestamp": "2025-08-29T09:47:39.053Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_reviewer_session_789"
+        },
+        "body": {
+          "articleId": "test_article_123",
+          "recommendation": "accept",
+          "comments": "This manuscript presents excellent research with significant contributions to the field. The methodology is robust and the conclusions are well-supported.",
+          "confidentialComments": "The author has addressed all previous concerns adequately.",
+          "rating": 5
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/reviews",
+      "method": "PUT",
+      "status": 401,
+      "success": false,
+      "responseTime": 3256,
+      "timestamp": "2025-08-29T09:47:42.312Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_reviewer_session_789"
+        },
+        "body": {
+          "reviewId": "review_456",
+          "recommendation": "minor_revision",
+          "comments": "Updated review comments with additional suggestions...",
+          "rating": 4
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages?limit=20&page=1",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 2191,
+      "timestamp": "2025-08-29T09:47:44.518Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 1956,
+      "timestamp": "2025-08-29T09:47:46.482Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": {
+          "recipientId": "author_123",
+          "subject": "Request for Minor Revisions",
+          "content": "Dear Author, based on the reviewer feedback, we request minor revisions to your manuscript...",
+          "messageType": "editorial_communication",
+          "priority": "normal"
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages?messageId=msg_789",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 1105,
+      "timestamp": "2025-08-29T09:47:47.592Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications?unread=true&limit=10",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 1952,
+      "timestamp": "2025-08-29T09:47:49.555Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications",
+      "method": "PATCH",
+      "status": 401,
+      "success": false,
+      "responseTime": 1252,
+      "timestamp": "2025-08-29T09:47:50.814Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "notificationId": "notif_123",
+          "isRead": true
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications",
+      "method": "PATCH",
+      "status": 401,
+      "success": false,
+      "responseTime": 875,
+      "timestamp": "2025-08-29T09:47:51.696Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "markAllAsRead": true
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications?id=notif_456",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 1004,
+      "timestamp": "2025-08-29T09:47:52.705Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/admin/users?role=all&page=1&limit=50",
+      "method": "GET",
+      "status": 500,
+      "success": false,
+      "responseTime": 12247,
+      "timestamp": "2025-08-29T09:48:05.027Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_admin_session_000"
+        },
+        "body": null
+      },
+      "response": {
+        "success": false,
+        "error": "Database operation failed",
+        "timestamp": "2025-08-29T09:48:04.946Z",
+        "requestId": "c1c8a8f5-ff7a-466b-9601-b49dbe32be4c"
+      }
+    },
+    {
+      "endpoint": "/api/admin/users",
+      "method": "PATCH",
+      "status": 500,
+      "success": false,
+      "responseTime": 4268,
+      "timestamp": "2025-08-29T09:48:09.387Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_admin_session_000"
+        },
+        "body": {
+          "userId": "user_123",
+          "role": "reviewer",
+          "isActive": true,
+          "isVerified": true
+        }
+      },
+      "response": {
+        "success": false,
+        "error": "Database operation failed",
+        "timestamp": "2025-08-29T09:48:09.383Z",
+        "requestId": "ef3d4dd0-2530-4d39-85d2-f52f4704f331"
+      }
+    },
+    {
+      "endpoint": "/api/user/profile",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 20260,
+      "timestamp": "2025-08-29T09:48:29.655Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/user/profile",
+      "method": "PUT",
+      "status": 401,
+      "success": false,
+      "responseTime": 3495,
+      "timestamp": "2025-08-29T09:48:33.158Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "name": "Dr. John Doe",
+          "affiliation": "Advanced Medical Research Institute",
+          "expertise": [
+            "Artificial Intelligence",
+            "Medical Diagnosis",
+            "Machine Learning"
+          ],
+          "bio": "Dr. Doe is a leading researcher in AI applications for healthcare...",
+          "orcid": "0000-0000-0000-0000"
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages?limit=20&page=1",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 663,
+      "timestamp": "2025-08-29T09:48:33.837Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages",
+      "method": "POST",
+      "status": 401,
+      "success": false,
+      "responseTime": 616,
+      "timestamp": "2025-08-29T09:48:34.455Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": {
+          "recipientId": "author_123",
+          "subject": "Request for Minor Revisions",
+          "content": "Dear Author, based on the reviewer feedback, we request minor revisions to your manuscript...",
+          "messageType": "editorial_communication",
+          "priority": "normal"
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/messages?messageId=msg_789",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 977,
+      "timestamp": "2025-08-29T09:48:35.446Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_editor_session_456"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications?unread=true&limit=10",
+      "method": "GET",
+      "status": 401,
+      "success": false,
+      "responseTime": 868,
+      "timestamp": "2025-08-29T09:48:36.316Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications",
+      "method": "PATCH",
+      "status": 401,
+      "success": false,
+      "responseTime": 986,
+      "timestamp": "2025-08-29T09:48:37.308Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "notificationId": "notif_123",
+          "isRead": true
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications",
+      "method": "PATCH",
+      "status": 401,
+      "success": false,
+      "responseTime": 923,
+      "timestamp": "2025-08-29T09:48:38.238Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": {
+          "markAllAsRead": true
+        }
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    },
+    {
+      "endpoint": "/api/notifications?id=notif_456",
+      "method": "DELETE",
+      "status": 401,
+      "success": false,
+      "responseTime": 898,
+      "timestamp": "2025-08-29T09:48:39.146Z",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer mock_author_session_123"
+        },
+        "body": null
+      },
+      "response": {
+        "error": "Unauthorized"
+      }
+    }
+  ],
+  "emailNotifications": [
+    {
+      "type": "notification_settings_updated",
+      "recipient": "author@example.com",
+      "subject": "Notification Preferences Updated",
+      "timestamp": "2025-08-29T09:47:03.226Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "notification_settings_updated",
+      "recipient": "author@example.com",
+      "subject": "Notification Preferences Updated",
+      "timestamp": "2025-08-29T09:47:52.712Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "revision_required",
+      "recipient": "author@example.com",
+      "subject": "Revision Required for Your Manuscript",
+      "timestamp": "2025-08-29T09:47:52.728Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "revision_submitted",
+      "recipient": "author@example.com",
+      "subject": "Revision Successfully Submitted",
+      "timestamp": "2025-08-29T09:47:52.729Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "admin_action_completed",
+      "recipient": "admin@example.com",
+      "subject": "User Management Action Completed",
+      "timestamp": "2025-08-29T09:48:33.163Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "notification_settings_updated",
+      "recipient": "author@example.com",
+      "subject": "Notification Preferences Updated",
+      "timestamp": "2025-08-29T09:48:39.149Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "deadline_reminder",
+      "recipient": "reviewer@example.com",
+      "subject": "Review Deadline Approaching",
+      "timestamp": "2025-08-29T09:48:39.152Z",
+      "status": "sent",
+      "data": {}
+    },
+    {
+      "type": "system_maintenance",
+      "recipient": "all@example.com",
+      "subject": "Scheduled System Maintenance Notice",
+      "timestamp": "2025-08-29T09:48:39.156Z",
+      "status": "sent",
+      "data": {}
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "totalScenarios": 4,
+    "successfulScenarios": 4,
+    "totalAPICalls": 36,
+    "successfulCalls": 1,
+    "failedCalls": 35,
+    "successRate": "2.8%",
+    "averageResponseTime": "178147ms",
+    "totalEmails": 8,
+    "totalErrors": 0,
+    "emailTypeBreakdown": {
+      "notification_settings_updated": 3,
+      "revision_required": 1,
+      "revision_submitted": 1,
+      "admin_action_completed": 1,
+      "deadline_reminder": 1,
+      "system_maintenance": 1
+    },
+    "apiEndpointUsage": {
+      "POST /api/submissions": 2,
+      "GET /api/reviews?status=pending": 2,
+      "POST /api/reviews": 2,
+      "PUT /api/reviews": 2,
+      "GET /api/messages?limit=20&page=1": 3,
+      "POST /api/messages": 3,
+      "DELETE /api/messages?messageId=msg_789": 3,
+      "GET /api/notifications?unread=true&limit=10": 3,
+      "PATCH /api/notifications": 6,
+      "DELETE /api/notifications?id=notif_456": 3,
+      "GET /api/articles?status=published&page=1&limit=20": 1,
+      "POST /api/articles": 1,
+      "DELETE /api/articles?id=article_789": 1,
+      "GET /api/admin/users?role=all&page=1&limit=50": 1,
+      "PATCH /api/admin/users": 1,
+      "GET /api/user/profile": 1,
+      "PUT /api/user/profile": 1
+    },
+    "endTime": "2025-08-29T09:48:39.168Z"
+  }
+}

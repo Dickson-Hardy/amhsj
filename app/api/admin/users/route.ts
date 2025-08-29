@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import * as crypto from "crypto"
+import { z } from "zod"
 import { requireAuth, ROLES } from "@/lib/api-utils"
 import { 
   createApiResponse, 
@@ -13,6 +14,14 @@ import { db } from "@/lib/db"
 import { users, submissions, reviews } from "@/lib/db/schema"
 import { desc, ilike, eq, count, sql, and } from "drizzle-orm"
 import { logger } from "@/lib/logger"
+
+// Validation schema for query parameters
+const adminUsersQuerySchema = z.object({
+  page: z.string().optional().transform(val => val ? parseInt(val) : 1),
+  limit: z.string().optional().transform(val => val ? Math.min(parseInt(val), 100) : 20),
+  search: z.string().optional(),
+  role: z.enum(['all', 'admin', 'associate_editor', 'reviewer', 'author']).optional().default('all')
+})
 
 async function getUsers(request: NextRequest) {
   const requestId = crypto.randomUUID()
@@ -28,9 +37,11 @@ async function getUsers(request: NextRequest) {
       endpoint: "/api/admin/users"
     })
 
-    // Parse query parameters
-    const { page, limit, search } = parseQueryParams(request)
-    const role = request.nextUrl.searchParams.get("role")
+    // Parse and validate query parameters
+    const { searchParams } = new URL(request.url)
+    const queryData = adminUsersQuerySchema.parse(Object.fromEntries(searchParams))
+    
+    const { page, limit, search, role } = queryData
     const offset = (page - 1) * limit
 
     // Build query conditions
@@ -134,6 +145,19 @@ async function getUsers(request: NextRequest) {
     )
 
   } catch (error) {
+    if (error.name === 'ZodError') {
+      logger.error("Invalid query parameters", {
+        error: error.errors,
+        requestId
+      })
+      return createErrorResponse(
+        "Invalid query parameters",
+        400,
+        requestId,
+        error.errors
+      )
+    }
+    
     if (error.name === 'AuthenticationError' || error.name === 'AuthorizationError') {
       throw error
     }
@@ -143,3 +167,115 @@ async function getUsers(request: NextRequest) {
 }
 
 export const GET = withErrorHandler(getUsers)
+
+// Validation schema for user updates
+const userUpdateSchema = z.object({
+  userId: z.string().uuid("Invalid user ID"),
+  role: z.enum(['admin', 'associate_editor', 'reviewer', 'author']).optional(),
+  isActive: z.boolean().optional(),
+  isVerified: z.boolean().optional()
+})
+
+async function updateUser(request: NextRequest) {
+  const requestId = crypto.randomUUID()
+  
+  try {
+    // Authenticate and authorize
+    const session = await requireAuth(request, [ROLES.ADMIN])
+    
+    logger.api("Admin user update request initiated", {
+      userId: session.user.id,
+      userRole: session.user.role,
+      requestId,
+      endpoint: "/api/admin/users PATCH"
+    })
+
+    const body = await request.json()
+    const updateData = userUpdateSchema.parse(body)
+    
+    const { userId, role, isActive, isVerified } = updateData
+
+    // Prevent self-deactivation or role change
+    if (userId === session.user.id) {
+      if (isActive === false) {
+        return createErrorResponse(
+          "Cannot deactivate your own account",
+          400,
+          requestId
+        )
+      }
+      if (role && role !== session.user.role) {
+        return createErrorResponse(
+          "Cannot change your own role",
+          400,
+          requestId
+        )
+      }
+    }
+
+    // Build update object
+    const updateFields = {}
+    if (role !== undefined) updateFields.role = role
+    if (isActive !== undefined) updateFields.isActive = isActive
+    if (isVerified !== undefined) updateFields.isVerified = isVerified
+    updateFields.updatedAt = new Date()
+
+    // Update user
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateFields)
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isActive: users.isActive,
+        isVerified: users.isVerified,
+        updatedAt: users.updatedAt
+      })
+
+    if (!updatedUser) {
+      return createErrorResponse(
+        "User not found",
+        404,
+        requestId
+      )
+    }
+
+    logger.api("User updated successfully", {
+      adminId: session.user.id,
+      updatedUserId: userId,
+      changes: updateFields,
+      requestId
+    })
+
+    return createApiResponse(
+      updatedUser,
+      "User updated successfully",
+      requestId
+    )
+
+  } catch (error) {
+    if (error.name === 'ZodError') {
+      logger.error("Invalid user update data", {
+        error: error.errors,
+        requestId
+      })
+      return createErrorResponse(
+        "Invalid user update data",
+        400,
+        requestId,
+        error.errors
+      )
+    }
+    
+    if (error.name === 'AuthenticationError' || error.name === 'AuthorizationError') {
+      throw error
+    }
+    
+    return handleDatabaseError(error)
+  }
+}
+
+export const PATCH = withErrorHandler(updateUser)

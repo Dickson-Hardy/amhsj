@@ -23,7 +23,12 @@
     "db:test": "node scripts/test-editorial-assistant-login.js",
     "email:test": "node scripts/test-email-notifications.js",
     "editorial:setup": "npm run db:setup && npm run email:test",
-    "editorial:verify": "npm run db:test"
+    "editorial:verify": "npm run db:test",
+    "enforce:single-assistant": "node scripts/enforce-single-editorial-assistant.cjs",
+    "enforce:simple": "node scripts/run-simple-constraint.cjs",
+    "enforce:basic": "node scripts/run-basic-constraint.cjs",
+    "fix:editorial": "node scripts/fix-editorial-assistant.cjs",
+    "role:setup": "npm run fix:editorial"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -117,6 +122,7 @@
     "next-auth": "latest",
     "next-themes": "^0.4.4",
     "node-cron": "^4.2.1",
+    "node-fetch": "^2.7.0",
     "nodemailer": "latest",
     "path": "latest",
     "pg": "latest",

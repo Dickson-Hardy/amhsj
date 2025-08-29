@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn, getSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -17,6 +17,7 @@ import Image from "next/image"
 export default function LoginPage() {
   const { success, error: showErrorToast } = useToast()
   const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || null
   const returnUrl = searchParams.get('returnUrl') || null
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -24,6 +25,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+
+  // Redirect to editorial assistant login if the callback URL is for editorial assistant
+  useEffect(() => {
+    if (callbackUrl && callbackUrl.includes('/editorial-assistant')) {
+      const redirectUrl = `/editorial-assistant/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      router.replace(redirectUrl)
+    }
+  }, [callbackUrl, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

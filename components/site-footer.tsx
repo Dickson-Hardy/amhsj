@@ -31,7 +31,7 @@ export default function SiteFooter() {
           <p className="text-xs">© {new Date().getFullYear()} AMHSJ. All rights reserved.</p>
           <nav className="flex flex-wrap gap-4 text-xs">
             <Link href="/about" className="hover:text-gray-800">About</Link>
-            <Link href="/author-guidelines" className="hover:text-gray-800">Author Guidelines</Link>
+            <Link href="/author/guidelines" className="hover:text-gray-800">Author Guidelines</Link>
             <Link href="/submission-guidelines" className="hover:text-gray-800">Submission</Link>
             <Link href="/manuscript-template" className="hover:text-gray-800">Templates</Link>
             <Link href="/help" className="hover:text-gray-800">Help</Link>

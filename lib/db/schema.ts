@@ -84,6 +84,44 @@ export const users = pgTable("users", {
   specializations: jsonb("specializations").$type<string[]>(),
   languagesSpoken: jsonb("languages_spoken").$type<string[]>(),
   researchInterests: jsonb("research_interests").$type<string[]>(),
+  // User preferences
+  emailPreferences: jsonb("email_preferences").$type<{
+    submissionUpdates: boolean
+    reviewRequests: boolean
+    publicationAlerts: boolean
+    newsletter: boolean
+    marketing: boolean
+    digest: boolean
+    digestFrequency: "daily" | "weekly" | "monthly"
+  }>(),
+  submissionDefaults: jsonb("submission_defaults").$type<{
+    defaultCategory: string
+    defaultKeywords: string[]
+    defaultAbstract: string
+    autoSave: boolean
+    autoSaveInterval: number
+    defaultLanguage: string
+  }>(),
+  privacySettings: jsonb("privacy_settings").$type<{
+    profileVisibility: "public" | "private" | "authors_only"
+    showEmail: boolean
+    showPhone: boolean
+    showInstitution: boolean
+    allowContact: boolean
+  }>(),
+  languageSettings: jsonb("language_settings").$type<{
+    interfaceLanguage: string
+    submissionLanguage: string
+    preferredReviewLanguage: string
+  }>(),
+  notificationSettings: jsonb("notification_settings").$type<{
+    browserNotifications: boolean
+    emailNotifications: boolean
+    smsNotifications: boolean
+    quietHours: boolean
+    quietHoursStart: string
+    quietHoursEnd: string
+  }>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
@@ -275,8 +313,16 @@ export const messages = pgTable("messages", {
   id: uuid("id").defaultRandom().primaryKey(),
   conversationId: uuid("conversation_id").references(() => conversations.id),
   senderId: uuid("sender_id").references(() => users.id),
+  recipientId: uuid("recipient_id").references(() => users.id),
+  subject: text("subject"),
   content: text("content").notNull(),
-  attachments: jsonb("attachments").$type<{ name: string; url: string; type: string }[]>(),
+  messageType: text("message_type").default("general"), // editorial, review, system, general
+  priority: text("priority").default("medium"), // low, medium, high, urgent
+  status: text("status").default("unread"), // unread, read, replied, archived
+  submissionId: uuid("submission_id").references(() => articles.id),
+  isReply: boolean("is_reply").default(false),
+  parentMessageId: uuid("parent_message_id").references(() => messages.id),
+  attachments: jsonb("attachments").$type<{ name: string; url: string; type: string; size: number }[]>(),
   isRead: boolean("is_read").default(false),
   readBy: jsonb("read_by").$type<{ userId: string; readAt: string }[]>(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -573,4 +619,18 @@ export const workflowTimeLimits = pgTable("workflow_time_limits", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+// Communication templates for email notifications
+export const communication_templates = pgTable("communication_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  template_name: text("template_name").notNull().unique(),
+  template_type: text("template_type").notNull().default("email"),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  variables: jsonb("variables").$type<string[]>(),
+  is_active: boolean("is_active").default(true),
+  created_by: uuid("created_by").references(() => users.id),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 })

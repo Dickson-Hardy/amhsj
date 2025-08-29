@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn, getSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +19,8 @@ interface EditorialAssistantLoginProps {
 
 export default function EditorialAssistantLogin({ onSuccess, redirectTo }: EditorialAssistantLoginProps) {
   const { success, error: showErrorToast } = useToast()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl')
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -62,7 +64,7 @@ export default function EditorialAssistantLogin({ onSuccess, redirectTo }: Edito
         }
         
         // Redirect to editorial assistant dashboard or specified redirect
-        const targetUrl = redirectTo || "/editorial-assistant"
+        const targetUrl = redirectTo || callbackUrl || "/editorial-assistant"
         router.push(targetUrl)
       }
     } catch (error) {

@@ -7,6 +7,7 @@ import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { logAuth, logError } from "./logger"
+import { AppError, ValidationError } from "./error-utils"
 
 // NextAuth configuration
 export const authOptions: NextAuthOptions = {
@@ -27,9 +28,17 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Get user from database
+          // Get user from database - only select the columns we need
           const [user] = await db
-            .select()
+            .select({
+              id: users.id,
+              email: users.email,
+              name: users.name,
+              password: users.password,
+              role: users.role,
+              isVerified: users.isVerified,
+              isActive: users.isActive,
+            })
             .from(users)
             .where(eq(users.email, credentials.email))
             .limit(1)
@@ -52,7 +61,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           }
         } catch (error) {
-          logger.error("Auth error:", error)
+          logError(error as Error, { context: 'authentication' })
           return null
         }
       }
@@ -76,7 +85,7 @@ export const authOptions: NextAuthOptions = {
             logAuth(`process.env.AUTH_TOKEN_PREFIXrefreshed for user ${token.sub}`, token.sub, 'token_refresh')
           }
         } catch (error) {
-          logger.error("Error refreshing token:", error)
+          logError(error as Error, { context: 'token_refresh' })
         }
       }
       
@@ -119,7 +128,7 @@ async function sendVerificationEmail(email: string, verificationToken: string) {
     await sendEmailVerification(email, userName, verificationUrl)
     logAuth(`Verification email sent to ${email}`, undefined, 'email_verification_sent')
   } catch (error) {
-    logger.error(`Failed to send verification email to ${email}:`, error)
+    logError(error as Error, { context: 'send_verification_email' })
     throw new AppError("Failed to send verification email")
   }
 }
@@ -168,8 +177,8 @@ export async function signup(email: string, password: string, name: string) {
 
     return { success: true, message: "User created. Please verify your email." }
   } catch (error: unknown) {
-    logger.error("Signup error:", error)
-    return { success: false, message: error.message || "Signup failed." }
+    logError(error as Error, { context: 'signup' })
+    return { success: false, message: (error as Error).message || "Signup failed." }
   }
 }
 
@@ -197,8 +206,8 @@ export async function login(email: string, password: string) {
 
     return { success: true, token }
   } catch (error: unknown) {
-    logger.error("Login error:", error)
-    return { success: false, message: error.message || "Login failed." }
+    logError(error as Error, { context: 'login' })
+    return { success: false, message: (error as Error).message || "Login failed." }
   }
 }
 
@@ -213,7 +222,7 @@ export async function verifyEmail(email: string, token: string) {
 
     return { success: true, message: "Email verified successfully!" }
   } catch (error: unknown) {
-    logger.error("Email verification error:", error)
+    logError(error as Error, { context: 'email_verification' })
     return { success: false, message: "Email verification failed." }
   }
 }
@@ -240,7 +249,7 @@ export async function requestPasswordReset(email: string) {
     await sendPasswordReset(email, user.name ? user.name : email.split('@')[0], resetUrl)
     return { success: true, message: "If an account with that email exists, a password reset link has been sent." }
   } catch (error: unknown) {
-    logger.error("Password reset request error:", error)
+    logError(error as Error, { context: 'password_reset_request' })
     return { success: false, message: "Password reset request failed." }
   }
 }
@@ -261,8 +270,8 @@ export async function resetPassword(token: string, newPassword: string) {
 
     return { success: true, message: "Password reset successfully!" }
   } catch (error: unknown) {
-    logger.error("Password reset error:", error)
-    return { success: false, message: error.message || "Password reset failed." }
+    logError(error as Error, { context: 'password_reset' })
+    return { success: false, message: (error as Error).message || "Password reset failed." }
   }
 }
 
@@ -292,7 +301,7 @@ export async function updateProfile(
 
     return { success: true, message: "Profile updated successfully!" }
   } catch (error: unknown) {
-    logger.error("Profile update error:", error)
+    logError(error as Error, { context: 'profile_update' })
     return { success: false, message: "Profile update failed." }
   }
 }
@@ -325,7 +334,7 @@ export async function getUserProfile(userId: string) {
       }
     }
   } catch (error: unknown) {
-    logger.error("Get user profile error:", error)
+    logError(error as Error, { context: 'get_user_profile' })
     return { success: false, message: "Failed to get user profile." }
   }
 }
@@ -347,7 +356,7 @@ async function getUserByEmail(
       name: user.name,
     }
   } catch (error) {
-    logger.error("Error getting user by email:", error)
+    logError(error as Error, { context: 'get_user_by_email' })
     return null
   }
 }
@@ -367,7 +376,7 @@ async function createUser(email: string, hashedPassword: string, name: string): 
 
     return { id: user.id, email: user.email }
   } catch (error) {
-    logger.error("Error creating user:", error)
+    logError(error as Error, { context: 'create_user' })
     throw error
   }
 }
@@ -379,7 +388,7 @@ async function saveVerificationToken(userId: string, token: string): Promise<voi
       throw new AppError("Failed to save verification token")
     }
   } catch (error) {
-    logger.error("Error saving verification token:", error)
+    logError(error as Error, { context: 'save_verification_token' })
     throw error
   }
 }

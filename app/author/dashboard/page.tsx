@@ -235,7 +235,7 @@ export default function AuthorDashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/submit')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/author/submit')}>
             <CardContent className="p-6 text-center">
               <Plus className="h-12 w-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Submit New Article</h3>
@@ -243,7 +243,7 @@ export default function AuthorDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/submissions')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/author/submissions')}>
             <CardContent className="p-6 text-center">
               <FileText className="h-12 w-12 mx-auto mb-4 text-green-600" />
               <h3 className="text-lg font-semibold text-slate-900 mb-2">My Submissions</h3>
@@ -265,7 +265,7 @@ export default function AuthorDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Recent Submissions</CardTitle>
-              <Button variant="outline" onClick={() => router.push('/submissions')}>
+              <Button variant="outline" onClick={() => router.push('/author/submissions')}>
                 View All
               </Button>
             </div>
@@ -276,7 +276,7 @@ export default function AuthorDashboard() {
                 <FileText className="h-12 w-12 mx-auto mb-4 text-slate-400" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">No submissions yet</h3>
                 <p className="text-slate-600 mb-4">Start by submitting your first research article.</p>
-                <Button onClick={() => router.push('/submit')}>
+                <Button onClick={() => router.push('/author/submit')}>
                   Submit Your First Article
                 </Button>
               </div>
@@ -309,7 +309,7 @@ export default function AuthorDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => router.push(`/submissions/${submission.id}`)}
+                        onClick={() => router.push(`/author/submissions/${submission.id}`)}
                       >
                         View Details
                         <ArrowRight className="h-4 w-4 ml-1" />

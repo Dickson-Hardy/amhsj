@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { RouteGuard } from "@/components/route-guard"
+import EditorLayout from "@/components/layouts/editor-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -203,22 +205,28 @@ export default function ManagingEditorDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-      </div>
+      <RouteGuard allowedRoles={["managing-editor", "admin"]}>
+        <EditorLayout>
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+          </div>
+        </EditorLayout>
+      </RouteGuard>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Settings className="h-8 w-8 text-blue-600" />
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Managing Editor Dashboard</h1>
-          <p className="text-gray-600">Editorial workflow management and operations oversight</p>
-        </div>
-      </div>
+    <RouteGuard allowedRoles={["managing-editor", "admin"]}>
+      <EditorLayout>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <Settings className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Managing Editor Dashboard</h1>
+              <p className="text-gray-600">Editorial workflow management and operations oversight</p>
+            </div>
+          </div>
 
       {/* System Alerts */}
       {systemAlerts.length > 0 && (
@@ -605,6 +613,8 @@ export default function ManagingEditorDashboard() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </EditorLayout>
+    </RouteGuard>
   )
 }

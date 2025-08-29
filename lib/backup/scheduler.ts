@@ -1,6 +1,7 @@
 import cron from 'node-cron'
 import { db } from '@/lib/db'
 import { adminLogs } from '@/lib/db/schema'
+import { sql } from 'drizzle-orm'
 import { logError, logInfo, logWarn } from '@/lib/logger'
 
 // Simple error classes since @/lib/errors doesn't exist
@@ -152,21 +153,13 @@ class BackupScheduler {
 
   private async logActivity(action: string, details: string) {
     try {
-      // Try to insert with all required fields
-      await db.insert(adminLogs).values({
-        id: `backup_${Date.now()}_${Math.random().toString(36).substring(2)}`,
-        adminId: 'backup-system',
-        adminEmail: 'system@backup.amjhs.org',
-        action,
-        resourceType: 'backup',
-        resourceId: 'scheduler',
-        details,
-        ipAddress: 'localhost',
-        userAgent: 'backup-scheduler',
-        createdAt: new Date(),
-      })
+      // Use the actual admin_logs table structure
+      await db.execute(sql`
+        INSERT INTO admin_logs (action, performed_by, details, created_at)
+        VALUES (${action}, ${'backup-system'}, ${JSON.stringify({ details, ipAddress: 'localhost', userAgent: 'backup-scheduler' })}, NOW())
+      `)
     } catch (error) {
-      // If the insert fails due to missing columns, just log it and continue
+      // If the insert fails, just log it and continue
       // This prevents backup operations from failing due to logging issues
       logWarn(`Failed to log backup activity (continuing without logging): ${isAppError(error) ? error.message : (error instanceof Error ? error.message : String(error))}`)
     }

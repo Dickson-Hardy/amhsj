@@ -35,7 +35,7 @@ export function ProfileCompletionAlert({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => router.push('/submit')}
+              onClick={() => router.push('/author/submit')}
               className="ml-auto border-green-300 text-green-700 hover:bg-green-100"
             >
               Submit Article

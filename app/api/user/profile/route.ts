@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { profileUpdateSchema } from "@/lib/enhanced-validations"
 import { db } from "@/lib/db"
-import { users, editorProfiles } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
-import { logError } from "@/lib/logger"
+import { users, editorProfiles, submissions, reviews } from "@/lib/db/schema"
+import { eq, and, not } from "drizzle-orm"
+import { logError, logInfo } from "@/lib/logger"
 import { ProfileCompletenessService } from "@/lib/profile-completeness"
 
 export async function GET() {
@@ -117,35 +118,22 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const {
-      name,
-      affiliation,
-      bio,
-      orcid,
-      expertise,
-      specializations,
-      researchInterests,
-      languagesSpoken,
-      profileCompleteness
-    } = body
-
-    // Validate required fields
-    if (!name || name.trim().length < 2) {
-      return NextResponse.json({ error: "Name must be at least 2 characters" }, { status: 400 })
-    }
+    
+    // Enhanced validation using Zod schema
+    const validatedData = profileUpdateSchema.parse(body)
 
     // Update user profile
     const updatedProfile = await db
       .update(users)
       .set({
-        name: name.trim(),
-        affiliation: affiliation?.trim() || null,
-        orcid: orcid?.trim() || null,
-        bio: bio?.trim() || null,
-        expertise: expertise || [],
-        specializations: specializations || [],
-        researchInterests: researchInterests || [],
-        languagesSpoken: languagesSpoken || [],
+        name: validatedData.name.trim(),
+        affiliation: validatedData.affiliation?.trim() || null,
+        orcid: validatedData.orcid?.trim() || null,
+        bio: validatedData.bio?.trim() || null,
+        expertise: validatedData.expertise || [],
+        specializations: validatedData.specializations || [],
+        researchInterests: validatedData.researchInterests || [],
+        languagesSpoken: validatedData.languagesSpoken || [],
         updatedAt: new Date(),
       })
       .where(eq(users.id, session.user.id))
@@ -186,7 +174,92 @@ export async function PUT(request: Request) {
       newScore: newCompleteness
     })
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Validation failed", 
+        details: error.errors 
+      }, { status: 400 })
+    }
+    
     logError(error as Error, { endpoint: `/api/user/profile`, action: 'update' })
     return NextResponse.json({ success: false, error: "Failed to update user profile" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const confirmDelete = searchParams.get("confirm") === "true"
+
+    if (!confirmDelete) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Account deletion must be confirmed with ?confirm=true" 
+      }, { status: 400 })
+    }
+
+    // Check if user has active submissions or reviews
+    const activeSubmissions = await db
+      .select({ id: submissions.id })
+      .from(submissions)
+      .where(and(
+        eq(submissions.authorId, session.user.id),
+        not(eq(submissions.status, "withdrawn"))
+      ))
+      .limit(1)
+
+    const activeReviews = await db
+      .select({ id: reviews.id })
+      .from(reviews)
+      .where(and(
+        eq(reviews.reviewerId, session.user.id),
+        not(eq(reviews.status, "completed"))
+      ))
+      .limit(1)
+
+    if (activeSubmissions.length > 0 || activeReviews.length > 0) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Cannot delete account with active submissions or reviews. Please complete or withdraw them first." 
+      }, { status: 400 })
+    }
+
+    // Soft delete - deactivate account instead of hard delete
+    const [deletedUser] = await db
+      .update(users)
+      .set({ 
+        isActive: false,
+        deletedAt: new Date(),
+        email: `deleted_${session.user.id}@example.com`, // Anonymize email
+        name: `Deleted User ${session.user.id.slice(0, 8)}` // Anonymize name
+      })
+      .where(eq(users.id, session.user.id))
+      .returning({ id: users.id })
+
+    if (!deletedUser) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Failed to delete account" 
+      }, { status: 500 })
+    }
+
+    logInfo("User account deleted", { 
+      userId: session.user.id,
+      deletedAt: new Date().toISOString()
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: "Account deleted successfully"
+    })
+  } catch (error) {
+    logError(error as Error, { endpoint: `/api/user/profile`, action: 'delete' })
+    return NextResponse.json({ success: false, error: "Failed to delete account" }, { status: 500 })
   }
 }

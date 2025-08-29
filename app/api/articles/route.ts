@@ -181,3 +181,82 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw error
   }
 })
+
+export const DELETE = withErrorHandler(async (request: NextRequest) => {
+  const requestId = crypto.randomUUID()
+  
+  try {
+    const session = await requireAuth(request, [ROLES.ADMIN, ROLES.ASSOCIATE_EDITOR])
+    
+    logger.api("Article deletion request", { 
+      requestId, 
+      userId: session.user.id, 
+      userRole: session.user.role 
+    })
+
+    const { searchParams } = new URL(request.url)
+    const articleId = searchParams.get("id")
+
+    if (!articleId) {
+      return createErrorResponse(
+        "Article ID is required",
+        400,
+        requestId
+      )
+    }
+
+    // Check if article exists and user has permission
+    const [article] = await db
+      .select()
+      .from(articles)
+      .where(eq(articles.id, articleId))
+      .limit(1)
+
+    if (!article) {
+      return createErrorResponse(
+        "Article not found",
+        404,
+        requestId
+      )
+    }
+
+    // Only allow deletion if article is in draft or rejected status
+    if (!['draft', 'rejected', 'withdrawn'].includes(article.status)) {
+      return createErrorResponse(
+        "Can only delete articles in draft, rejected, or withdrawn status",
+        400,
+        requestId
+      )
+    }
+
+    // Soft delete the article
+    const [deletedArticle] = await db
+      .update(articles)
+      .set({ 
+        status: 'deleted',
+        deletedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(articles.id, articleId))
+      .returning({ id: articles.id, title: articles.title })
+
+    logger.api("Article deleted successfully", { 
+      requestId, 
+      articleId: deletedArticle.id, 
+      title: deletedArticle.title,
+      deletedBy: session.user.id
+    })
+
+    return createApiResponse(
+      { articleId: deletedArticle.id },
+      "Article deleted successfully",
+      requestId
+    )
+  } catch (error) {
+    logger.error("Failed to delete article", { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    })
+    throw error
+  }
+})

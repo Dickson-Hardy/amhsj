@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { RouteGuard } from "@/components/route-guard"
+import EditorLayout from "@/components/layouts/editor-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +24,7 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import RoleSwitcher from "@/components/role-switcher"
 
 interface Manuscript {
   id: string
@@ -149,21 +152,35 @@ export default function EditorialAssistantDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
+      <RouteGuard allowedRoles={["editorial-assistant", "admin"]}>
+        <EditorLayout>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          </div>
+        </EditorLayout>
+      </RouteGuard>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <RouteGuard allowedRoles={["editorial-assistant", "admin"]}>
+      <EditorLayout>
+        <div className="space-y-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Editorial Assistant Dashboard
+            </h1>
+            <p className="text-gray-600">
+              Manage manuscript screening and associate editor assignments
+            </p>
+          </div>
+
+      {/* Role Switcher */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Editorial Assistant Dashboard
-        </h1>
-        <p className="text-gray-600">
-          Manage manuscript screening and associate editor assignments
-        </p>
+        <RoleSwitcher onRoleChange={(newRole) => {
+          // Refresh the page to show new role-based content
+          window.location.reload()
+        }} />
       </div>
 
       {/* Statistics Cards */}
@@ -425,6 +442,8 @@ export default function EditorialAssistantDashboard() {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </EditorLayout>
+    </RouteGuard>
   )
 }

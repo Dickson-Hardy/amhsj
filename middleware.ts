@@ -5,6 +5,24 @@ import { apiRateLimit, authRateLimit } from "@/lib/rate-limit"
 export default withAuth(
   async function middleware(req) {
     try {
+      // Special handling for editorial assistant routes
+      if (req.nextUrl.pathname.startsWith("/editorial-assistant") && 
+          req.nextUrl.pathname !== "/editorial-assistant/login") {
+        // If user is not authenticated, redirect to editorial assistant login
+        if (!req.nextauth.token) {
+          const loginUrl = new URL("/editorial-assistant/login", req.url)
+          loginUrl.searchParams.set("callbackUrl", req.url)
+          return NextResponse.redirect(loginUrl)
+        }
+        
+        // If authenticated but not the right role, redirect to general dashboard
+        const userRole = req.nextauth.token.role
+        if (userRole !== "editorial-assistant" && 
+            !["admin", "editor-in-chief", "managing-editor"].includes(userRole)) {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+      }
+
       // Maintenance Mode Check (Production Only)
       if (process.env.NODE_ENV === 'production' && process.env.MAINTENANCE_MODE === 'true') {
         const isMaintenancePage = req.nextUrl.pathname.startsWith('/maintenance')
@@ -119,6 +137,11 @@ export default withAuth(
         const pathname = req.nextUrl.pathname
         const userRole = token?.role
 
+        // Editorial Assistant routes
+        if (pathname.startsWith("/editorial-assistant")) {
+          return userRole === "editorial-assistant" || ["admin", "editor-in-chief", "managing-editor"].includes(userRole || "")
+        }
+
         // Admin routes - highest level access
         if (pathname.startsWith("/admin")) {
           return userRole === "admin"
@@ -154,6 +177,11 @@ export default withAuth(
           return ["editor", "section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
         }
 
+        // Editorial Assistant routes
+        if (pathname.startsWith("/editorial-assistant")) {
+          return userRole === "editorial-assistant" || ["admin", "editor-in-chief", "managing-editor"].includes(userRole || "")
+        }
+
         // Reviewer routes
         if (pathname.startsWith("/reviewer")) {
           return ["reviewer", "editor", "section-editor", "managing-editor", "editor-in-chief", "admin"].includes(userRole || "")
@@ -186,6 +214,7 @@ export const config = {
     "/guest-editor/:path*",
     "/production-editor/:path*",
     "/editor/:path*",
+    "/editorial-assistant/:path*",
     "/reviewer/:path*",
     "/api/:path*"
   ],

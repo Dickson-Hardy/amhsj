@@ -44,15 +44,15 @@ interface AuthorLayoutProps {
 const authorSidebarItems = [
   { href: '/author/dashboard', icon: Home, label: 'Dashboard', description: 'Submission overview' },
   { href: '/author/profile', icon: User, label: 'My Profile', description: 'Complete your profile' },
-  { href: '/submit', icon: Plus, label: 'New Submission', description: 'Submit manuscript' },
-  { href: '/submissions', icon: FileText, label: 'My Submissions', description: 'View all manuscripts' },
-  { href: '/submissions?filter=revisions', icon: Upload, label: 'Revisions Required', description: 'Respond to reviews' },
-  { href: '/submissions?tab=reviews', icon: Eye, label: 'Review Status', description: 'Peer review progress' },
-  { href: '/submissions?filter=published', icon: CheckCircle, label: 'Published Works', description: 'Published articles' },
-  { href: '/dashboard?tab=messages', icon: MessageSquare, label: 'Editorial Messages', description: 'Editor communications' },
-  { href: '/dashboard?tab=analytics', icon: BarChart3, label: 'Publication Metrics', description: 'Impact & citations' },
-  { href: '/author-guidelines', icon: BookOpen, label: 'Submission Guidelines', description: 'Author guidelines' },
-  { href: '/dashboard?tab=preferences', icon: Settings, label: 'Preferences', description: 'Account settings' }
+  { href: '/author/submit', icon: Plus, label: 'New Submission', description: 'Submit manuscript' },
+  { href: '/author/submissions', icon: FileText, label: 'My Submissions', description: 'View all manuscripts' },
+  { href: '/author/submissions?filter=revisions', icon: Upload, label: 'Revisions Required', description: 'Respond to reviews' },
+  { href: '/author/submissions?tab=reviews', icon: Eye, label: 'Review Status', description: 'Peer review progress' },
+  { href: '/author/submissions?filter=published', icon: CheckCircle, label: 'Published Works', description: 'Published articles' },
+  { href: '/author/messages', icon: MessageSquare, label: 'Editorial Messages', description: 'Editor communications' },
+  { href: '/author/analytics', icon: BarChart3, label: 'Publication Metrics', description: 'Impact & citations' },
+  { href: '/author/guidelines', icon: BookOpen, label: 'Submission Guidelines', description: 'Author guidelines' },
+  { href: '/author/preferences', icon: Settings, label: 'Preferences', description: 'Account settings' }
 ]
 
 export default function AuthorLayout({ children }: AuthorLayoutProps) {
@@ -99,24 +99,24 @@ export default function AuthorLayout({ children }: AuthorLayoutProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
+                             <DropdownMenuItem asChild>
+                 <Link href="/author/profile">
+                   <User className="mr-2 h-4 w-4" />
+                   Author Profile
+                 </Link>
+               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/profile">
-                  <User className="mr-2 h-4 w-4" />
-                  Author Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/author-guidelines">
+                <Link href="/author/guidelines">
                   <BookOpen className="mr-2 h-4 w-4" />
                   Submission Guidelines
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard?tab=preferences">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Account Settings
-                </Link>
-              </DropdownMenuItem>
+                             <DropdownMenuItem asChild>
+                 <Link href="/author/preferences">
+                   <Settings className="mr-2 h-4 w-4" />
+                   Account Settings
+                 </Link>
+               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => signOut()} className="text-red-600 focus:text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />

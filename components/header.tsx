@@ -61,7 +61,7 @@ export function Header() {
     {
       title: "Submission Guidelines",
       items: [
-        { title: "Author Guidelines", href: "/author-guidelines", description: "Detailed submission instructions" },
+        { title: "Author Guidelines", href: "/author/guidelines", description: "Detailed submission instructions" },
         { title: "Submission Process", href: "/submission-guidelines", description: "Step-by-step submission guide" },
         { title: "Manuscript Format", href: "/submission-guidelines/format", description: "Formatting requirements" },
         { title: "Peer Review Process", href: "/peer-review", description: "How we review submissions" },
@@ -80,7 +80,7 @@ export function Header() {
         { title: "Frequently Asked Questions", href: "/faq", description: "Common questions and answers" },
         { title: "Help Center", href: "/help", description: "Get help with submissions" },
         { title: "Technical Support", href: "/help/technical", description: "Technical assistance" },
-        { title: "Author Resources", href: "/help/authors", description: "Resources for authors" },
+        { title: "Author Resources", href: "/author/help", description: "Resources for authors" },
       ],
     },
   ]

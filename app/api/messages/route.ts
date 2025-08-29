@@ -2,9 +2,10 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { logError } from "@/lib/logger"
+import { messageCreationSchema } from "@/lib/enhanced-validations"
 import { db } from "@/lib/db"
 import { messages, conversations, users } from "@/lib/db/schema"
-import { eq, and, sql, desc } from "drizzle-orm"
+import { eq, and, desc, or } from "drizzle-orm"
 
 export async function GET(request: Request) {
   try {
@@ -83,37 +84,33 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     
+    // Enhanced validation
+    const validatedData = messageCreationSchema.parse(body)
+    
     // Check if this is a conversation-based message (existing system)
-    if (body.conversationId) {
-      const { conversationId, content, attachments } = body
-
-      if (!conversationId || !content?.trim()) {
-        return NextResponse.json({ error: "Conversation ID and content are required" }, { status: 400 })
-      }
-
-      logger.info("Sending message to conversation:", conversationId, "Content:", content.trim())
-
-      // Verify user has access to this conversation (simplified check for now)
+    if (validatedData.conversationId) {
+      // Verify user has access to this conversation
       const conversation = await db
         .select()
         .from(conversations)
-        .where(eq(conversations.id, conversationId))
+        .where(eq(conversations.id, validatedData.conversationId))
         .limit(1)
 
       if (conversation.length === 0) {
         return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
       }
 
-      logger.info("Found conversation:", conversation[0])
-
       // Insert the new message
       const [newMessage] = await db
         .insert(messages)
         .values({
-          conversationId,
+          conversationId: validatedData.conversationId,
           senderId: session.user.id,
-          content: content.trim(),
-          attachments: attachments || [],
+          content: validatedData.content.trim(),
+          subject: validatedData.subject,
+          messageType: validatedData.messageType,
+          priority: validatedData.priority,
+          attachments: validatedData.attachments || [],
           isRead: false,
         })
         .returning()
@@ -126,7 +123,7 @@ export async function POST(request: Request) {
           lastMessageId: newMessage.id,
           updatedAt: new Date(),
         })
-        .where(eq(conversations.id, conversationId))
+        .where(eq(conversations.id, validatedData.conversationId))
 
       return NextResponse.json({
         success: true,
@@ -135,18 +132,11 @@ export async function POST(request: Request) {
       })
     } else {
       // New direct message system (for general messages)
-      const { recipientType, subject, content, submissionId } = body
-
-      if (!subject?.trim() || !content?.trim()) {
-        return NextResponse.json({ error: "Subject and content are required" }, { status: 400 })
-      }
-
       // Determine recipient based on type
       let recipientId = ""
       let recipientName = ""
       
-      if (recipientType === 'admin') {
-        // Find an admin user
+      if (validatedData.recipientType === 'admin') {
         const admin = await db
           .select({ id: users.id, name: users.name })
           .from(users)
@@ -156,19 +146,17 @@ export async function POST(request: Request) {
           recipientId = admin[0].id
           recipientName = admin[0].name || "Administrator"
         }
-      } else if (recipientType === 'editor') {
-        // Find an editor user
+      } else if (validatedData.recipientType === 'editor') {
         const editor = await db
           .select({ id: users.id, name: users.name })
           .from(users)
-          .where(sql`role IN ('editor-in-chief', 'managing-editor', 'section-editor')`)
+          .where(sql`role IN ('editor', 'managing-editor', 'section-editor')`)
           .limit(1)
         if (editor.length) {
           recipientId = editor[0].id
           recipientName = editor[0].name || "Editor"
         }
-      } else if (recipientType === 'support') {
-        // Find support/admin user for technical issues
+      } else if (validatedData.recipientType === 'support') {
         const support = await db
           .select({ id: users.id, name: users.name })
           .from(users)
@@ -188,10 +176,10 @@ export async function POST(request: Request) {
       const [newConversation] = await db
         .insert(conversations)
         .values({
-          subject,
-          type: "general",
-          relatedId: submissionId || null,
-          relatedTitle: submissionId ? `Submission ${submissionId}` : subject,
+          subject: validatedData.subject,
+          type: validatedData.messageType || "general",
+          relatedId: validatedData.submissionId || null,
+          relatedTitle: validatedData.submissionId ? `Submission ${validatedData.submissionId}` : validatedData.subject,
           participants: [
             { id: session.user.id, name: session.user.name || "User", role: session.user.role || "user" }
           ],
@@ -205,8 +193,11 @@ export async function POST(request: Request) {
         .values({
           conversationId: newConversation.id,
           senderId: session.user.id,
-          content: content.trim(),
-          attachments: [],
+          content: validatedData.content.trim(),
+          subject: validatedData.subject,
+          messageType: validatedData.messageType,
+          priority: validatedData.priority,
+          attachments: validatedData.attachments || [],
           isRead: false,
         })
         .returning()
@@ -227,7 +218,98 @@ export async function POST(request: Request) {
       })
     }
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Validation failed", 
+        details: error.errors 
+      }, { status: 400 })
+    }
+    
     logError(error as Error, { endpoint: "/api/messages POST" })
     return NextResponse.json({ success: false, error: "Failed to send message" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const messageId = searchParams.get("messageId")
+    const conversationId = searchParams.get("conversationId")
+
+    if (!messageId && !conversationId) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "messageId or conversationId is required" 
+      }, { status: 400 })
+    }
+
+    if (messageId) {
+      // Delete specific message (only if user is sender)
+      const deletedMessage = await db
+        .delete(messages)
+        .where(and(
+          eq(messages.id, messageId),
+          eq(messages.senderId, session.user.id)
+        ))
+        .returning()
+
+      if (!deletedMessage.length) {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Message not found or unauthorized" 
+        }, { status: 404 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Message deleted successfully"
+      })
+    }
+
+    if (conversationId) {
+      // Delete entire conversation (only if user is participant)
+      const conversation = await db
+        .select()
+        .from(conversations)
+        .where(and(
+          eq(conversations.id, conversationId),
+          or(
+            eq(conversations.participant1Id, session.user.id),
+            eq(conversations.participant2Id, session.user.id)
+          )
+        ))
+        .limit(1)
+
+      if (!conversation.length) {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Conversation not found or unauthorized" 
+        }, { status: 404 })
+      }
+
+      // Delete all messages in conversation first
+      await db
+        .delete(messages)
+        .where(eq(messages.conversationId, conversationId))
+
+      // Then delete the conversation
+      await db
+        .delete(conversations)
+        .where(eq(conversations.id, conversationId))
+
+      return NextResponse.json({
+        success: true,
+        message: "Conversation deleted successfully"
+      })
+    }
+  } catch (error) {
+    logError(error as Error, { endpoint: "/api/messages DELETE" })
+    return NextResponse.json({ success: false, error: "Failed to delete message/conversation" }, { status: 500 })
   }
 }
